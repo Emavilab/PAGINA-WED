@@ -41,6 +41,9 @@
             transition: transform 0.5s ease-in-out;
         }
         .product-card:hover .product-actions { opacity: 1; transform: translateY(0); }
+        .modal-blur { backdrop-filter: blur(8px); }
+        .cart-overlay.hidden { display: none; }
+        .cart-sidebar.hidden { transform: translateX(100%); }
     </style>
 </head>
 <body class="bg-white dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display transition-colors duration-300">
@@ -75,11 +78,11 @@
 <span class="material-symbols-outlined">package_2</span>
 <span class="text-[11px] font-semibold uppercase mt-0.5 whitespace-nowrap">Mis Pedidos</span>
 </a>
-<a class="flex flex-col items-center text-slate-600 dark:text-slate-300 hover:text-primary transition-colors relative group" href="#">
+<button onclick="document.getElementById('cartOverlay').classList.remove('hidden'); document.getElementById('cartSidebar').classList.remove('hidden');" class="flex flex-col items-center text-slate-600 dark:text-slate-300 hover:text-primary transition-colors relative group">
 <span class="material-symbols-outlined text-2xl">shopping_cart</span>
 <span class="text-[11px] font-semibold uppercase mt-0.5">Carrito</span>
 <span class="absolute -top-1 -right-1 bg-primary text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">0</span>
-</a>
+</button>
 </div>
 </div>
 <nav class="hidden lg:flex items-center space-x-10 py-3 border-t border-slate-100 dark:border-slate-800">
@@ -415,6 +418,122 @@
 </div>
 </div>
 </div>
-</footer>
+<!-- Overlay y Carrito Modal -->
+<div id="cartOverlay" class="cart-overlay hidden fixed inset-0 bg-slate-900/60 modal-blur z-[110]" onclick="document.getElementById('cartOverlay').classList.add('hidden'); document.getElementById('cartSidebar').classList.add('hidden');"></div>
+<aside id="cartSidebar" class="cart-sidebar hidden fixed top-0 right-0 h-full w-full max-w-md bg-white dark:bg-slate-900 z-[120] shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 transition-transform">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-2xl">shopping_cart</span>
+<h2 class="text-xl font-bold text-slate-900 dark:text-white">Tu Carrito</h2>
+<span class="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full">3 ítems</span>
+</div>
+<button onclick="document.getElementById('cartOverlay').classList.add('hidden'); document.getElementById('cartSidebar').classList.add('hidden');" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined block">close</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto p-6 space-y-6">
+<div class="flex gap-4 group">
+<div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden flex-shrink-0">
+<img alt="Reloj Minimalista" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyMui6hcPTjNBKyHfNzFAYeygXtkWmyHWn_C4wfn7rFaCjoq0M9SOHWEGdEm3vJS9fCaRyrLFWl8rJPlNYpJo0mMFbNQvNwvC2G_1L-8yDyBNd0hxhpxq8_qejsD0xdiz06FkU-STszocNHnaZYyupjQEbkKeQMKkKYzo6PzT8vcaUNYB2Dm-ZN5SOkaRnBc2hkkASEtDayluznVaXBeb9S_iHpz--Wa-OPMFapelO1RAPkyovvh282UPQfDEP-BAKPx3gJlapjOU"/>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">Reloj Minimalista</h3>
+<button class="text-slate-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-lg">delete</span>
+</button>
+</div>
+<div class="flex items-center justify-between mt-2">
+<div class="flex items-center border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden">
+<button class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-xs block">remove</span>
+</button>
+<span class="px-3 py-1 text-xs font-bold">1</span>
+<button class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-xs block">add</span>
+</button>
+</div>
+<span class="font-bold text-slate-900 dark:text-white">$120.00</span>
+</div>
+</div>
+</div>
+<div class="flex gap-4 group">
+<div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden flex-shrink-0">
+<img alt="Auriculares Premium" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCT7e4-xYKK9BEORzJsQInY6ov1KHRukfrtqYr8Bp805kbglQeSiGjGQ2eT3nWfKzLTSloP9zwOezy9bAUAIS_4SXGvj-13II1E3PrOFYNu1pODtrSm50StPhQoN2msoexJckY7D95lSQMJaPDHrc_8kXJtj5hjPNRTL3F356QfhcTHLI2cExTAfCGKsbBYzKqbD2Z1CBES4lQH_t9JIfGL09fhaFy8j5dvGNcDOuNIpe1lx938j2EUP1KMOihctbCZm8qemH1jPbc"/>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">Auriculares Premium</h3>
+<button class="text-slate-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-lg">delete</span>
+</button>
+</div>
+<div class="flex items-center justify-between mt-2">
+<div class="flex items-center border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden">
+<button class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-xs block">remove</span>
+</button>
+<span class="px-3 py-1 text-xs font-bold">1</span>
+<button class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-xs block">add</span>
+</button>
+</div>
+<span class="font-bold text-slate-900 dark:text-white">$299.99</span>
+</div>
+</div>
+</div>
+<div class="flex gap-4 group">
+<div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden flex-shrink-0">
+<img alt="Zapatillas Deportivas" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLd2pqhfzNagD1xOa8CIB4G1pzg9eyxfH2W3Sxrg88_p1clkkq40CX3SusjDeKqho2ZD1fOlz4wpnKYSyhlNPq68GJIAcgR53qKXnuGBJhJEKVKKk-Ijq8I7OfT7AcxNbxet_se8LhCCptkSyhdHvbfhujVtMk0yUn7QpqSN0CqY2q0o9QeUDX3oxV9Hs1xtMjiPXGggXMmd0ajay0NHlW2ty3ZAMUKiSLToSEbdR1DuXiao4GA2qf93IkNY4Lqa5ulQY44iARKqE"/>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">Zapatillas Deportivas</h3>
+<button class="text-slate-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-lg">delete</span>
+</button>
+</div>
+<div class="flex items-center justify-between mt-2">
+<div class="flex items-center border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden">
+<button class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-xs block">remove</span>
+</button>
+<span class="px-3 py-1 text-xs font-bold">1</span>
+<button class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-xs block">add</span>
+</button>
+</div>
+<span class="font-bold text-slate-900 dark:text-white">$110.00</span>
+</div>
+</div>
+</div>
+</div>
+<div class="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800">
+<div class="space-y-3 mb-6">
+<div class="flex justify-between text-sm text-slate-600 dark:text-slate-400">
+<span>Subtotal</span>
+<span>$529.99</span>
+</div>
+<div class="flex justify-between text-sm text-slate-600 dark:text-slate-400">
+<span>Impuestos (15%)</span>
+<span>$79.50</span>
+</div>
+<div class="flex justify-between text-lg font-bold text-slate-900 dark:text-white pt-3 border-t border-slate-200 dark:border-slate-700">
+<span>Total</span>
+<span>$609.49</span>
+</div>
+</div>
+<div class="space-y-3">
+<button class="w-full bg-primary hover:bg-primary-dark text-white py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">payments</span>
+                Finalizar Compra
+            </button>
+<button class="w-full border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 py-3 rounded-xl font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                Ver Carrito
+            </button>
+</div>
+<p class="text-center text-xs text-slate-500 mt-4">Envío gratis aplicado para este pedido 🚚</p>
+</div>
+</aside>
 
 </body></html>

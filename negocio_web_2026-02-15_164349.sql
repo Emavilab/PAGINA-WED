@@ -245,6 +245,7 @@ CREATE TABLE `marcas` (
   `id_marca` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(100) NOT NULL,
   `estado` enum('activo','inactivo') DEFAULT 'activo',
+  `logo` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id_marca`),
   UNIQUE KEY `nombre` (`nombre`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -498,4 +499,4 @@ CREATE TABLE `usuarios` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-15 16:36:14
+-- Dump completed on 2026-02-15 16:44:00

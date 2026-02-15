@@ -66,18 +66,31 @@
 </button>
 </div>
 <div class="flex items-center gap-5 lg:gap-8">
-<a class="flex flex-col items-center text-slate-600 dark:text-slate-300 hover:text-primary transition-colors group" href="#">
+<div class="relative group">
+<button onclick="toggleAccountMenu()" class="flex flex-col items-center text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">
 <span class="material-symbols-outlined">person</span>
 <span class="text-[11px] font-semibold uppercase mt-0.5">Cuenta</span>
-</a>
-<a class="flex flex-col items-center text-slate-600 dark:text-slate-300 hover:text-primary transition-colors group" href="#">
+</button>
+<!-- Dropdown Menu -->
+<div id="accountMenu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800 z-50">
+<button onclick="loadLogin(); toggleAccountMenu();" class="w-full text-left flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 transition-colors bg-none border-none cursor-pointer">
+<span class="material-symbols-outlined text-lg">login</span>
+<span class="text-sm font-semibold">Iniciar Sesión</span>
+</button>
+<button onclick="loadRegistrarse(); toggleAccountMenu();" class="w-full text-left flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors bg-none border-none cursor-pointer">
+<span class="material-symbols-outlined text-lg">person_add</span>
+<span class="text-sm font-semibold">Registrarse</span>
+</button>
+</div>
+</div>
+<button onclick="loadListaDeseos()" class="flex flex-col items-center text-slate-600 dark:text-slate-300 hover:text-primary transition-colors group bg-none border-none cursor-pointer">
 <span class="material-symbols-outlined">favorite</span>
 <span class="text-[11px] font-semibold uppercase mt-0.5 whitespace-nowrap">Lista de Deseos</span>
-</a>
-<a class="flex flex-col items-center text-slate-600 dark:text-slate-300 hover:text-primary transition-colors group" href="#">
+</button>
+<button onclick="loadHistorialPedidos()" class="flex flex-col items-center text-slate-600 dark:text-slate-300 hover:text-primary transition-colors group bg-none border-none cursor-pointer">
 <span class="material-symbols-outlined">package_2</span>
 <span class="text-[11px] font-semibold uppercase mt-0.5 whitespace-nowrap">Mis Pedidos</span>
-</a>
+</button>
 <button onclick="document.getElementById('cartOverlay').classList.remove('hidden'); document.getElementById('cartSidebar').classList.remove('hidden');" class="flex flex-col items-center text-slate-600 dark:text-slate-300 hover:text-primary transition-colors relative group">
 <span class="material-symbols-outlined text-2xl">shopping_cart</span>
 <span class="text-[11px] font-semibold uppercase mt-0.5">Carrito</span>
@@ -92,12 +105,12 @@
 <a class="text-sm font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1" href="#">
 <span class="material-symbols-outlined text-xl">sell</span> Ofertas
                 </a>
-<a class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary" href="#">Contáctanos</a>
+<button onclick="loadContacto()" class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary">Contáctanos</button>
 <a class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary" href="#">Sucursales</a>
 </nav>
 </div>
 </header>
-<main>
+<main id="mainContent">
 <section class="relative bg-slate-100 dark:bg-slate-900 group">
 <div class="carousel-container relative h-[500px] lg:h-[600px] w-full">
 <div class="absolute inset-0 flex flex-col lg:flex-row items-center">
@@ -524,7 +537,7 @@
 </div>
 </div>
 <div class="space-y-3">
-<button class="w-full bg-primary hover:bg-primary-dark text-white py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+<button onclick="loadFinalizarCompra()" class="w-full bg-primary hover:bg-primary-dark text-white py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
 <span class="material-symbols-outlined">payments</span>
                 Finalizar Compra
             </button>
@@ -535,5 +548,99 @@
 <p class="text-center text-xs text-slate-500 mt-4">Envío gratis aplicado para este pedido 🚚</p>
 </div>
 </aside>
+
+<script>
+function loadContacto() {
+    fetch('contactanos.php')
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('mainContent').innerHTML = data;
+            // Scroll hacia arriba para ver el contenido
+            window.scrollTo(0, 0);
+        })
+        .catch(error => console.error('Error al cargar contactanos:', error));
+}
+
+function loadLogin() {
+    fetch('login.php')
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('mainContent').innerHTML = data;
+            // Scroll hacia arriba para ver el contenido
+            window.scrollTo(0, 0);
+        })
+        .catch(error => console.error('Error al cargar login:', error));
+}
+
+function loadRegistrarse() {
+    fetch('crear_cuenta.php')
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('mainContent').innerHTML = data;
+            // Scroll hacia arriba para ver el contenido
+            window.scrollTo(0, 0);
+        })
+        .catch(error => console.error('Error al cargar registro:', error));
+}
+
+function loadFinalizarCompra() {
+    // Cerrar el carrito
+    document.getElementById('cartOverlay').classList.add('hidden');
+    document.getElementById('cartSidebar').classList.add('hidden');
+    
+    // Cargar la página de finalizar compra
+    fetch('finalizarcompra.php')
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('mainContent').innerHTML = data;
+            // Scroll hacia arriba para ver el contenido
+            window.scrollTo(0, 0);
+        })
+        .catch(error => console.error('Error al cargar finalizarcompra:', error));
+}
+
+function loadHistorialPedidos() {
+    fetch('historialpedidoC.php')
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('mainContent').innerHTML = data;
+            // Scroll hacia arriba para ver el contenido
+            window.scrollTo(0, 0);
+        })
+        .catch(error => console.error('Error al cargar historialpedidoC:', error));
+}
+
+function loadListaDeseos() {
+    fetch('listadedeseo.php')
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('mainContent').innerHTML = data;
+            // Scroll hacia arriba para ver el contenido
+            window.scrollTo(0, 0);
+        })
+        .catch(error => console.error('Error al cargar listadedeseo:', error));
+}
+
+// Función para volver al contenido original (opcional)
+function loadHome() {
+    location.reload();
+}
+// Función para toggle del menú de cuenta
+function toggleAccountMenu() {
+    const menu = document.getElementById('accountMenu');
+    menu.classList.toggle('hidden');
+}
+
+// Cerrar el menú cuando se hace clic fuera de él
+document.addEventListener('click', function(event) {
+    const accountMenu = document.getElementById('accountMenu');
+    const accountButton = event.target.closest('button');
+    
+    if (!accountButton || !accountButton.textContent.includes('Cuenta')) {
+        if (accountMenu && !accountMenu.contains(event.target)) {
+            accountMenu.classList.add('hidden');
+        }
+    }
+});</script>
 
 </body></html>

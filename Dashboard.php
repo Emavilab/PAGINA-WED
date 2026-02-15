@@ -76,7 +76,11 @@
 <span class="material-icons-round">manage_accounts</span>
 <span class="font-medium">Usuarios</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all" href="#">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('mensajeria.php', event)">
+<span class="material-icons-round">mail</span>
+<span class="font-medium">Mensajería</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('configuracion.php', event)">
 <span class="material-icons-round">settings</span>
 <span class="font-medium">Configuraciones</span>
 </a>
@@ -310,6 +314,10 @@ function loadPage(page, event) {
         pageTitle.textContent = 'Pedidos';
     } else if (page === 'usuarios.php') {
         pageTitle.textContent = 'Usuarios';
+    } else if (page === 'mensajeria.php') {
+        pageTitle.textContent = 'Mensajería';
+    } else if (page === 'configuracion.php') {
+        pageTitle.textContent = 'Configuraciones';
     }
     
     // Actualizar el estado activo del sidebar
@@ -330,17 +338,56 @@ function loadPage(page, event) {
         fetch(page)
             .then(response => response.text())
             .then(data => {
-                mainContent.innerHTML = data;
+                // Crear un contenedor temporal para parsear el HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = data;
                 
-                // Agregar event listener al modal después de cargar el contenido
-                const formModal = document.getElementById('formModal');
-                if (formModal) {
-                    formModal.addEventListener('click', function(e) {
-                        if (e.target === this) {
-                            closeFormModal();
+                // Extraer estilos
+                const styles = tempDiv.querySelectorAll('style');
+                styles.forEach(style => {
+                    document.head.appendChild(style.cloneNode(true));
+                });
+                
+                // Obtener solo el contenido HTML (sin estilos y scripts)
+                let htmlContent = data;
+                htmlContent = htmlContent.replace(/<style[\s\S]*?<\/style>/g, '');
+                htmlContent = htmlContent.replace(/<script[\s\S]*?<\/script>/g, '');
+                
+                mainContent.innerHTML = htmlContent;
+                
+                // Extraer y ejecutar los scripts
+                const scriptMatches = data.match(/<script[\s\S]*?<\/script>/g);
+                if (scriptMatches) {
+                    scriptMatches.forEach(scriptTag => {
+                        const scriptContent = scriptTag.replace(/<script[^>]*>|<\/script>/g, '');
+                        try {
+                            eval(scriptContent);
+                        } catch (error) {
+                            console.error('Error executing script:', error);
                         }
                     });
                 }
+                
+                // Reinicializar funciones según la página cargada (con un pequeño delay)
+                setTimeout(() => {
+                    if (page === 'mensajeria.php' && typeof initMensajeriaFunctions === 'function') {
+                        initMensajeriaFunctions();
+                    }
+                    
+                    if (page === 'configuracion.php' && typeof initConfiguracionFunctions === 'function') {
+                        initConfiguracionFunctions();
+                    }
+                    
+                    // Agregar event listener al modal después de cargar el contenido
+                    const formModal = document.getElementById('formModal');
+                    if (formModal) {
+                        formModal.addEventListener('click', function(e) {
+                            if (e.target === this) {
+                                closeFormModal();
+                            }
+                        });
+                    }
+                }, 0);
             })
             .catch(error => {
                 mainContent.innerHTML = '<div class="text-center text-red-500"><p>Error al cargar la página</p></div>';

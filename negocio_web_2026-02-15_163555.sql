@@ -1,4 +1,3 @@
--- Active: 1739769794752@@127.0.0.1@3306@negocio_web
 -- MySQL dump 10.13  Distrib 8.0.33, for Win64 (x86_64)
 --
 -- Host: 127.0.0.1    Database: negocio_web
@@ -105,7 +104,6 @@ CREATE TABLE `clientes` (
   `id_cliente` int(11) NOT NULL AUTO_INCREMENT,
   `id_usuario` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL,
-  `telefono` varchar(20) DEFAULT NULL,
   `estado` enum('activo','bloqueado') DEFAULT 'activo',
   `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id_cliente`),
@@ -260,6 +258,35 @@ CREATE TABLE `marcas` (
 /*!40000 ALTER TABLE `marcas` ENABLE KEYS */;
 
 --
+-- Table structure for table `mensajes_contacto`
+--
+
+DROP TABLE IF EXISTS `mensajes_contacto`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `mensajes_contacto` (
+  `id_mensaje` int(11) NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(100) NOT NULL,
+  `correo` varchar(100) NOT NULL,
+  `telefono` varchar(20) DEFAULT NULL,
+  `asunto` varchar(150) NOT NULL,
+  `mensaje` text NOT NULL,
+  `estado` enum('nuevo','leido','respondido','cerrado') DEFAULT 'nuevo',
+  `fecha_mensaje` timestamp NOT NULL DEFAULT current_timestamp(),
+  `fecha_respuesta` timestamp NULL DEFAULT NULL,
+  `respuesta` text DEFAULT NULL,
+  PRIMARY KEY (`id_mensaje`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `mensajes_contacto`
+--
+
+/*!40000 ALTER TABLE `mensajes_contacto` DISABLE KEYS */;
+/*!40000 ALTER TABLE `mensajes_contacto` ENABLE KEYS */;
+
+--
 -- Table structure for table `metodos_envio`
 --
 
@@ -381,7 +408,6 @@ CREATE TABLE `productos` (
   `nombre` varchar(100) NOT NULL,
   `descripcion` text DEFAULT NULL,
   `precio` decimal(10,2) NOT NULL,
-  `imagen` varchar(255) DEFAULT NULL,
   `stock` int(11) DEFAULT 0,
   `estado` enum('disponible','agotado') DEFAULT 'disponible',
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -419,7 +445,7 @@ CREATE TABLE `roles` (
   `descripcion` varchar(150) DEFAULT NULL,
   PRIMARY KEY (`id_rol`),
   UNIQUE KEY `nombre` (`nombre`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -427,7 +453,7 @@ CREATE TABLE `roles` (
 --
 
 /*!40000 ALTER TABLE `roles` DISABLE KEYS */;
-INSERT INTO `roles` VALUES (1,'admin','Administrador del sistema'),(2,'vendedor','Gestión de pedidos');
+INSERT INTO `roles` VALUES (1,'admin','Administrador del sistema'),(2,'vendedor','Gestión de pedidos'),(3,'cliente','Cliente de la tienda');
 /*!40000 ALTER TABLE `roles` ENABLE KEYS */;
 
 --
@@ -472,4 +498,4 @@ CREATE TABLE `usuarios` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-13 14:08:06
+-- Dump completed on 2026-02-15 16:36:14

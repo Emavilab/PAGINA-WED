@@ -84,7 +84,7 @@ header('Content-Type: application/json');
 echo json_encode([
     'exito' => true,
     'mensaje' => 'Cuenta creada exitosamente',
-    'redirect' => 'index1.php'
+    'redirect' => '../index1.php'
 ]);
 
 ?>

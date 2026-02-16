@@ -73,14 +73,14 @@ registrarSesion(
 );
 
 // Determinar página de redirección según rol
-$redirect = 'index1.php'; // Default
+$redirect = '../index1.php'; // Default
 
 if ($usuario['id_rol'] == 1) {
-    $redirect = 'Dashboard.php'; // Administrador
+    $redirect = '../admin/Dashboard.php'; // Administrador
 } elseif ($usuario['id_rol'] == 2) {
-    $redirect = 'Dashboard.php'; // Vendedor
+    $redirect = '../admin/Dashboard.php'; // Vendedor
 } elseif ($usuario['id_rol'] == 3) {
-    $redirect = 'index1.php'; // Cliente
+    $redirect = '../index1.php'; // Cliente
 }
 
 header('Content-Type: application/json');

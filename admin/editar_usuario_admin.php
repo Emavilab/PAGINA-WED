@@ -2,10 +2,10 @@
 /**
  * Editar Usuario desde Admin
  * Procesa la actualización de usuarios (admin, vendedor o cliente)
- * (La autenticación está protegida en usuarios.php)
  */
 
 require_once '../core/conexion.php';
+require_once '../core/sesiones.php';
 
 // Iniciar sesión si no está iniciada
 if (session_status() === PHP_SESSION_NONE) {
@@ -14,6 +14,13 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Asegurarse de que siempre retornamos JSON
 header('Content-Type: application/json; charset=utf-8');
+
+// Validar autenticación - Solo admin (rol 1) y vendedor (rol 2) pueden editar usuarios
+if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2)) {
+    http_response_code(403);
+    echo json_encode(['exito' => false, 'mensaje' => 'No tienes permisos para editar usuarios']);
+    exit();
+}
 
 // Solo procesar POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

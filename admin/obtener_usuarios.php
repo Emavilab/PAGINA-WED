@@ -2,12 +2,24 @@
 /**
  * Obtener Usuarios
  * Retorna lista de usuarios desde la base de datos en formato JSON
- * (La autenticación está protegida en usuarios.php)
  */
 
 require_once '../core/conexion.php';
+require_once '../core/sesiones.php';
+
+// Iniciar sesión si no está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 header('Content-Type: application/json; charset=utf-8');
+
+// Validar autenticación - Solo admin (rol 1) y vendedor (rol 2) pueden ver usuarios
+if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2)) {
+    http_response_code(403);
+    echo json_encode(['exito' => false, 'mensaje' => 'No tienes permisos para ver usuarios']);
+    exit();
+}
 
 try {
     // Obtener parámetros

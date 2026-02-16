@@ -15,7 +15,7 @@ if (!usuarioAutenticado()) {
 // Verificar permisos: solo rol 1 (admin) y rol 2 (vendedor)
 if ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2) {
     // Usuario sin permisos, redirigir a index
-    header("Location: index1.php");
+    header("Location: ../index1.php");
     exit();
 }
 
@@ -81,33 +81,33 @@ $usuario = obtenerDatosUsuario();
 <span class="font-medium">Dashboard</span>
 </a>
 <?php if ($_SESSION['id_rol'] == 1): // Solo para administrador ?>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('productos.php', event)">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../client/productos.php', event)">
 <span class="material-icons-round">inventory_2</span>
 <span class="font-medium">Productos</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('categoria.php', event)">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../client/categoria.php', event)">
 <span class="material-icons-round">category</span>
 <span class="font-medium">Categorías</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('clientes.php', event)">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../client/clientes.php', event)">
 <span class="material-icons-round">people</span>
 <span class="font-medium">Clientes</span>
 </a>
 <?php endif; ?>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('pedidosadmin.php', event)">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./pedidosadmin.php', event)">
 <span class="material-icons-round">shopping_cart</span>
 <span class="font-medium">Pedidos</span>
 </a>
 <?php if ($_SESSION['id_rol'] == 1): // Solo para administrador ?>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('usuarios.php', event)">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./usuarios.php', event)">
 <span class="material-icons-round">manage_accounts</span>
 <span class="font-medium">Usuarios</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('mensajeria.php', event)">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../client/mensajeria.php', event)">
 <span class="material-icons-round">mail</span>
 <span class="font-medium">Mensajería</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('configuracion.php', event)">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../core/configuracion.php', event)">
 <span class="material-icons-round">settings</span>
 <span class="font-medium">Configuraciones</span>
 </a>
@@ -329,37 +329,40 @@ function loadPage(page, event) {
     const pageTitle = document.getElementById('page-title');
     const navLinks = document.querySelectorAll('.nav-link');
     
-    // Actualizar el título según la página
-    if (page === 'Dashboard.php') {
+    // Actualizar el título según la página (verificar solo el nombre del archivo)
+    if (page.includes('Dashboard.php')) {
         pageTitle.textContent = 'Dashboard';
-    } else if (page === 'productos.php') {
+    } else if (page.includes('productos.php')) {
         pageTitle.textContent = 'Productos';
-    } else if (page === 'categoria.php') {
+    } else if (page.includes('categoria.php')) {
         pageTitle.textContent = 'Categorías';
-    } else if (page === 'clientes.php') {
+    } else if (page.includes('clientes.php')) {
         pageTitle.textContent = 'Clientes';
-    } else if (page === 'pedidosadmin.php') {
+    } else if (page.includes('pedidosadmin.php')) {
         pageTitle.textContent = 'Pedidos';
-    } else if (page === 'usuarios.php') {
+    } else if (page.includes('usuarios.php')) {
         pageTitle.textContent = 'Usuarios';
-    } else if (page === 'mensajeria.php') {
+    } else if (page.includes('mensajeria.php')) {
         pageTitle.textContent = 'Mensajería';
-    } else if (page === 'configuracion.php') {
+    } else if (page.includes('configuracion.php')) {
         pageTitle.textContent = 'Configuraciones';
     }
     
-    // Actualizar el estado activo del sidebar
+    // Actualizar el estado activo del sidebar (extraer solo el nombre del archivo)
+    const fileName = page.split('/').pop(); // Obtener solo el nombre del archivo
     navLinks.forEach(link => {
         link.classList.remove('sidebar-active');
         link.classList.add('text-slate-400', 'hover:text-white', 'hover:bg-slate-800');
-        if (link.getAttribute('onclick') && link.getAttribute('onclick').includes(page)) {
+        
+        const onclick = link.getAttribute('onclick');
+        if (onclick && (onclick.includes(fileName) || onclick.includes(page))) {
             link.classList.remove('text-slate-400', 'hover:text-white', 'hover:bg-slate-800');
             link.classList.add('sidebar-active');
         }
     });
     
     // Cargar el contenido dinámicamente
-    if (page === 'Dashboard.php') {
+    if (page.includes('Dashboard.php')) {
         // Mostrar el dashboard por defecto
         location.reload();
     } else {
@@ -446,7 +449,7 @@ document.addEventListener('keydown', function(e) {
 // Función para cerrar sesión
 function cerrarSesion() {
     if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
-        window.location.href = 'cerrar_sesion.php';
+        window.location.href = '../core/cerrar_sesion.php';
     }
 }
 </script>

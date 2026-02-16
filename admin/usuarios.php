@@ -3,7 +3,7 @@ require_once '../core/sesiones.php';
 require_once '../core/conexion.php';
 
 if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2)) {
-    header("Location: index1.php");
+    header("Location: ../index1.php");
     exit();
 }
 
@@ -232,113 +232,134 @@ Siguiente
 </div>
 
 <script>
-// Variables globales
-let paginaActual = 1;
-let datosUsuarios = {
-    usuarios: <?php echo json_encode($usuarios_iniciales); ?>,
-    total: <?php echo $total_usuarios; ?>,
-    pagina: 1,
-    por_pagina: 10,
-    total_paginas: <?php echo ceil($total_usuarios / 10); ?>
-};
-
-// Funciones de utilidad
-function obtenerInicialesNombre(nombre) {
-    return nombre.split(' ').map(part => part[0]).join('').toUpperCase();
-}
-
-function limpiarFiltros() {
-    document.querySelector('input[placeholder*="Buscar"]').value = '';
-    document.getElementById('filtro-rol').value = '';
-    document.getElementById('filtro-estado').value = '';
-    paginaActual = 1;
-    cargarUsuarios();
-}
-
-function getColorRol(idRol) {
-    switch(idRol) {
-        case 1:
-            return { bg: 'bg-red-50', text: 'text-red-700', darkBg: 'dark:bg-red-900/30', darkText: 'dark:text-red-400', border: 'border-red-100 dark:border-red-900/50', icon: 'workspace_premium' };
-        case 2:
-            return { bg: 'bg-blue-50', text: 'text-blue-700', darkBg: 'dark:bg-blue-900/30', darkText: 'dark:text-blue-400', border: 'border-blue-100 dark:border-blue-900/50', icon: 'person' };
-        case 3:
-            return { bg: 'bg-green-50', text: 'text-green-700', darkBg: 'dark:bg-green-900/30', darkText: 'dark:text-green-400', border: 'border-green-100 dark:border-green-900/50', icon: 'shopping_cart' };
-        default:
-            return { bg: 'bg-slate-50', text: 'text-slate-700', darkBg: 'dark:bg-slate-900/30', darkText: 'dark:text-slate-400', border: 'border-slate-100 dark:border-slate-900/50', icon: 'help' };
-    }
-}
-
-function getColorBg(nombre) {
-    const hslColors = [
-        'hsl(0, 100%, 92%)',
-        'hsl(220, 100%, 92%)',
-        'hsl(120, 100%, 92%)',
-        'hsl(280, 100%, 92%)',
-        'hsl(40, 100%, 92%)'
-    ];
-    const index = nombre.charCodeAt(0) % hslColors.length;
-    return hslColors[index];
-}
-
-function formatearFecha(fecha) {
-    const date = new Date(fecha);
-    const opciones = { year: 'numeric', month: 'short', day: 'numeric' };
-    return date.toLocaleDateString('es-ES', opciones);
-}
-
-function renderizarTabla(usuarios) {
-    const tbody = document.getElementById('tabla-usuarios');
+// Namespace para evitar conflictos globales
+(function initUsuarios() {
+    'use strict';
     
-    if (usuarios.length === 0) {
-        tbody.innerHTML = '<tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors"><td colspan="7" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400">No hay usuarios registrados</td></tr>';
-        return;
+    // Variables locales al IIFE
+    let paginaActual = 1;
+    let datosUsuarios = {
+        usuarios: <?php echo !empty($usuarios_iniciales) ? json_encode($usuarios_iniciales) : '[]'; ?>,
+        total: <?php echo $total_usuarios; ?>,
+        pagina: 1,
+        por_pagina: 10,
+        total_paginas: <?php echo $total_usuarios > 0 ? ceil($total_usuarios / 10) : 1; ?>
+    };
+    
+    // Exponer funciones globalmente para que se puedan llamar desde HTML
+    window.obtenerInicialesNombre = obtenerInicialesNombre;
+    window.limpiarFiltros = limpiarFiltros;
+    window.getColorRol = getColorRol;
+    window.getColorBg = getColorBg;
+    window.formatearFecha = formatearFecha;
+    window.renderizarTabla = renderizarTabla;
+    window.renderizarPaginacion = renderizarPaginacion;
+    window.actualizarContadores = actualizarContadores;
+    window.irPagina = irPagina;
+    window.cargarUsuarios = cargarUsuarios;
+    window.abrirModalUsuario = abrirModalUsuario;
+    window.abrirModalEditar = abrirModalEditar;
+    window.cerrarModalUsuario = cerrarModalUsuario;
+    window.confirmarEliminar = confirmarEliminar;
+    window.eliminarUsuario = eliminarUsuario;
+    
+    // Funciones de utilidad
+    function obtenerInicialesNombre(nombre) {
+        return nombre.split(' ').map(part => part[0]).join('').toUpperCase();
     }
 
-    tbody.innerHTML = usuarios.map(usuario => {
-        const color = getColorRol(usuario.id_rol);
-        const iniciales = obtenerInicialesNombre(usuario.nombre);
-        const estado = usuario.estado === 'activo' ? 'Activo' : 'Inactivo';
-        const fechaFormato = formatearFecha(usuario.fecha_creacion);
+    function limpiarFiltros() {
+        document.querySelector('input[placeholder*="Buscar"]').value = '';
+        document.getElementById('filtro-rol').value = '';
+        document.getElementById('filtro-estado').value = '';
+        paginaActual = 1;
+        cargarUsuarios();
+    }
 
-        return `
-        <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors group">
-            <td class="px-6 py-4 text-sm font-medium text-slate-400">#${String(usuario.id_usuario).padStart(3, '0')}</td>
-            <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                    <div class="h-8 w-8 rounded-full ${color.bg} ${color.darkBg} flex items-center justify-center ${color.text} ${color.darkText} font-bold text-xs">
-                        ${iniciales}
+    function getColorRol(idRol) {
+        switch(idRol) {
+            case 1:
+                return { bg: 'bg-red-50', text: 'text-red-700', darkBg: 'dark:bg-red-900/30', darkText: 'dark:text-red-400', border: 'border-red-100 dark:border-red-900/50', icon: 'workspace_premium' };
+            case 2:
+                return { bg: 'bg-blue-50', text: 'text-blue-700', darkBg: 'dark:bg-blue-900/30', darkText: 'dark:text-blue-400', border: 'border-blue-100 dark:border-blue-900/50', icon: 'person' };
+            case 3:
+                return { bg: 'bg-green-50', text: 'text-green-700', darkBg: 'dark:bg-green-900/30', darkText: 'dark:text-green-400', border: 'border-green-100 dark:border-green-900/50', icon: 'shopping_cart' };
+            default:
+                return { bg: 'bg-slate-50', text: 'text-slate-700', darkBg: 'dark:bg-slate-900/30', darkText: 'dark:text-slate-400', border: 'border-slate-100 dark:border-slate-900/50', icon: 'help' };
+        }
+    }
+
+    function getColorBg(nombre) {
+        const hslColors = [
+            'hsl(0, 100%, 92%)',
+            'hsl(220, 100%, 92%)',
+            'hsl(120, 100%, 92%)',
+            'hsl(280, 100%, 92%)',
+            'hsl(40, 100%, 92%)'
+        ];
+        const index = nombre.charCodeAt(0) % hslColors.length;
+        return hslColors[index];
+    }
+
+    function formatearFecha(fecha) {
+        const date = new Date(fecha);
+        const opciones = { year: 'numeric', month: 'short', day: 'numeric' };
+        return date.toLocaleDateString('es-ES', opciones);
+    }
+
+    function renderizarTabla(usuarios) {
+        const tbody = document.getElementById('tabla-usuarios');
+        
+        if (usuarios.length === 0) {
+            tbody.innerHTML = '<tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors"><td colspan="7" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400">No hay usuarios registrados</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = usuarios.map(usuario => {
+            const color = getColorRol(usuario.id_rol);
+            const iniciales = obtenerInicialesNombre(usuario.nombre);
+            const estado = usuario.estado === 'activo' ? 'Activo' : 'Inactivo';
+            const fechaFormato = formatearFecha(usuario.fecha_creacion);
+
+            return `
+            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors group">
+                <td class="px-6 py-4 text-sm font-medium text-slate-400">#${String(usuario.id_usuario).padStart(3, '0')}</td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                        <div class="h-8 w-8 rounded-full ${color.bg} ${color.darkBg} flex items-center justify-center ${color.text} ${color.darkText} font-bold text-xs">
+                            ${iniciales}
+                        </div>
+                        <span class="text-sm font-semibold text-slate-900 dark:text-white">${usuario.nombre}</span>
                     </div>
-                    <span class="text-sm font-semibold text-slate-900 dark:text-white">${usuario.nombre}</span>
-                </div>
-            </td>
-            <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">${usuario.correo}</td>
-            <td class="px-6 py-4">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${color.bg} ${color.text} ${color.darkBg} ${color.darkText} border ${color.border}">
-                    <span class="material-symbols-outlined !text-[14px]">${color.icon}</span>
-                    ${usuario.nombre_rol || 'Sin rol'}
-                </span>
-            </td>
-            <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 text-center">${fechaFormato}</td>
-            <td class="px-6 py-4 text-center">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${usuario.estado === 'activo' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'}">
-                    <span class="w-1.5 h-1.5 rounded-full ${usuario.estado === 'activo' ? 'bg-emerald-500' : 'bg-slate-400'} mr-1.5"></span>
-                    ${estado}
-                </span>
-            </td>
-            <td class="px-6 py-4 text-right">
-                <div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onclick="abrirModalEditar(${usuario.id_usuario})" class="p-2 text-slate-400 hover:text-primary hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all" title="Editar">
-                        <span class="material-symbols-outlined">edit</span>
-                    </button>
-                    <button onclick="confirmarEliminar(${usuario.id_usuario}, '${usuario.nombre}')" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Eliminar">
-                        <span class="material-symbols-outlined">delete</span>
-                    </button>
-                </div>
-            </td>
-        </tr>
-        `;
-    }).join('');
-}
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">${usuario.correo}</td>
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${color.bg} ${color.text} ${color.darkBg} ${color.darkText} border ${color.border}">
+                        <span class="material-symbols-outlined !text-[14px]">${color.icon}</span>
+                        ${usuario.nombre_rol || 'Sin rol'}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 text-center">${fechaFormato}</td>
+                <td class="px-6 py-4 text-center">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${usuario.estado === 'activo' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'}">
+                        <span class="w-1.5 h-1.5 rounded-full ${usuario.estado === 'activo' ? 'bg-emerald-500' : 'bg-slate-400'} mr-1.5"></span>
+                        ${estado}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-right">
+                    <div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="abrirModalEditar(${usuario.id_usuario})" class="p-2 text-slate-400 hover:text-primary hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all" title="Editar">
+                            <span class="material-symbols-outlined">edit</span>
+                        </button>
+                        <button onclick="confirmarEliminar(${usuario.id_usuario}, '${usuario.nombre}')" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Eliminar">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            `;
+        }).join('');
+    }
 
 function renderizarPaginacion() {
     const paginacion = document.getElementById('paginacion');
@@ -393,7 +414,7 @@ async function cargarUsuarios() {
     });
 
     try {
-        const response = await fetch(`admin/obtener_usuarios.php?${params}`, {
+        const response = await fetch(`obtener_usuarios.php?${params}`, {
             method: 'GET',
             credentials: 'same-origin',
             headers: {
@@ -430,17 +451,13 @@ async function cargarUsuarios() {
 
 // Cargar usuarios al iniciar
 // Nota: No usamos DOMContentLoaded porque esta página se carga dinámicamente en el Dashboard
-// Usamos setTimeout para asegurar que el DOM esté listo cuando se ejecuten estos scripts
+// Esperamos 150ms para asegurar que el DOM esté completamente listo
 
 setTimeout(() => {
-    // Renderizar datos iniciales del servidor
-    if (datosUsuarios && datosUsuarios.usuarios) {
-        renderizarTabla(datosUsuarios.usuarios);
-        renderizarPaginacion();
-        actualizarContadores();
-    }
+    // Reset de paginación cuando se carga la página
+    paginaActual = 1;
 
-    // Agregar event listeners a filtros
+    // Agregar event listeners a filtros ANTES de cargar datos
     const searchInput = document.querySelector('input[placeholder*="Buscar"]');
     if (searchInput) {
         searchInput.addEventListener('input', () => {
@@ -465,148 +482,158 @@ setTimeout(() => {
             cargarUsuarios();
         });
     }
-}, 0);
 
-// Resto de funciones existentes para modal
-let modoEdicion = false;
+    // Mostrar que está cargando
+    document.getElementById('tabla-usuarios').innerHTML = '<tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors"><td colspan="7" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400">Cargando usuarios...</td></tr>';
 
-function abrirModalUsuario() {
-    modoEdicion = false;
-    document.getElementById('titulo-modal').textContent = 'Crear Nuevo Usuario';
-    document.getElementById('btn-enviar-modal').textContent = 'Crear Usuario';
-    document.getElementById('id_usuario_edit').value = '';
-    document.getElementById('input-contraseña').required = true;
-    document.getElementById('label-contraseña').textContent = 'Contraseña';
-    document.getElementById('ayuda-contraseña').classList.add('hidden');
-    document.getElementById('div-estado').classList.add('hidden');
-    document.getElementById('form-crear-usuario').reset();
-    document.getElementById('modal-usuario').classList.remove('hidden');
-}
+    // SIEMPRE cargar desde la API para asegurar datos coherentes
+    cargarUsuarios();
+}, 150);
 
-function abrirModalEditar(idUsuario) {
-    modoEdicion = true;
-    document.getElementById('titulo-modal').textContent = 'Editar Usuario';
-    document.getElementById('btn-enviar-modal').textContent = 'Guardar Cambios';
-    document.getElementById('input-contraseña').required = false;
-    document.getElementById('label-contraseña').textContent = 'Contraseña (opcional)';
-    document.getElementById('ayuda-contraseña').classList.remove('hidden');
-    document.getElementById('div-estado').classList.remove('hidden');
-    
-    // Buscar el usuario en los datos cargados
-    const usuario = datosUsuarios.usuarios.find(u => u.id_usuario == idUsuario);
-    
-    if (usuario) {
-        document.getElementById('id_usuario_edit').value = usuario.id_usuario;
-        document.querySelector('input[name="nombre"]').value = usuario.nombre;
-        document.querySelector('input[name="correo"]').value = usuario.correo;
-        document.querySelector('input[name="contraseña"]').value = '';
-        document.querySelector('select[name="id_rol"]').value = usuario.id_rol;
-        document.querySelector('select[name="estado"]').value = usuario.estado;
+    // Resto de funciones existentes para modal
+    let modoEdicion = false;
+
+    function abrirModalUsuario() {
+        modoEdicion = false;
+        document.getElementById('titulo-modal').textContent = 'Crear Nuevo Usuario';
+        document.getElementById('btn-enviar-modal').textContent = 'Crear Usuario';
+        document.getElementById('id_usuario_edit').value = '';
+        document.getElementById('input-contraseña').required = true;
+        document.getElementById('label-contraseña').textContent = 'Contraseña';
+        document.getElementById('ayuda-contraseña').classList.add('hidden');
+        document.getElementById('div-estado').classList.add('hidden');
+        document.getElementById('form-crear-usuario').reset();
         document.getElementById('modal-usuario').classList.remove('hidden');
+    }
+
+    function abrirModalEditar(idUsuario) {
+        modoEdicion = true;
+        document.getElementById('titulo-modal').textContent = 'Editar Usuario';
+        document.getElementById('btn-enviar-modal').textContent = 'Guardar Cambios';
+        document.getElementById('input-contraseña').required = false;
+        document.getElementById('label-contraseña').textContent = 'Contraseña (opcional)';
+        document.getElementById('ayuda-contraseña').classList.remove('hidden');
+        document.getElementById('div-estado').classList.remove('hidden');
+        
+        // Buscar el usuario en los datos cargados
+        const usuario = datosUsuarios.usuarios.find(u => u.id_usuario == idUsuario);
+        
+        if (usuario) {
+            document.getElementById('id_usuario_edit').value = usuario.id_usuario;
+            document.querySelector('input[name="nombre"]').value = usuario.nombre;
+            document.querySelector('input[name="correo"]').value = usuario.correo;
+            document.querySelector('input[name="contraseña"]').value = '';
+            document.querySelector('select[name="id_rol"]').value = usuario.id_rol;
+            document.querySelector('select[name="estado"]').value = usuario.estado;
+            document.getElementById('modal-usuario').classList.remove('hidden');
+            document.querySelectorAll('[id^="error-"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById('mensaje-error-form').classList.add('hidden');
+            document.getElementById('mensaje-exito-form').classList.add('hidden');
+        } else {
+            alert('Usuario no encontrado');
+        }
+    }
+
+    function cerrarModalUsuario() {
+        document.getElementById('modal-usuario').classList.add('hidden');
+        document.getElementById('form-crear-usuario').reset();
         document.querySelectorAll('[id^="error-"]').forEach(el => el.classList.add('hidden'));
         document.getElementById('mensaje-error-form').classList.add('hidden');
         document.getElementById('mensaje-exito-form').classList.add('hidden');
-    } else {
-        alert('Usuario no encontrado');
+        modoEdicion = false;
     }
-}
 
-function cerrarModalUsuario() {
-    document.getElementById('modal-usuario').classList.add('hidden');
-    document.getElementById('form-crear-usuario').reset();
-    document.querySelectorAll('[id^="error-"]').forEach(el => el.classList.add('hidden'));
-    document.getElementById('mensaje-error-form').classList.add('hidden');
-    document.getElementById('mensaje-exito-form').classList.add('hidden');
-    modoEdicion = false;
-}
-
-function confirmarEliminar(idUsuario, nombre) {
-    if (confirm(`¿Estás seguro de que deseas eliminar al usuario "${nombre}"?\n\nEsta acción es irreversible.`)) {
-        eliminarUsuario(idUsuario);
-    }
-}
-
-async function eliminarUsuario(idUsuario) {
-    const formData = new FormData();
-    formData.append('id_usuario', idUsuario);
-
-    try {
-        const response = await fetch('admin/eliminar_usuario_admin.php', {
-            method: 'POST',
-            body: formData,
-            credentials: 'same-origin'
-        });
-
-        const data = await response.json();
-
-        if (data.exito) {
-            alert(data.mensaje);
-            paginaActual = 1;
-            cargarUsuarios();
-        } else {
-            alert('Error: ' + data.mensaje);
+    function confirmarEliminar(idUsuario, nombre) {
+        if (confirm(`¿Estás seguro de que deseas eliminar al usuario "${nombre}"?\n\nEsta acción es irreversible.`)) {
+            eliminarUsuario(idUsuario);
         }
-    } catch (error) {
-        alert('Error al eliminar usuario: ' + error.message);
     }
-}
 
-// Manejo del formulario
-document.getElementById('form-crear-usuario').addEventListener('submit', async function(e) {
-    e.preventDefault();
+    async function eliminarUsuario(idUsuario) {
+        const formData = new FormData();
+        formData.append('id_usuario', idUsuario);
 
-    // Limpiar mensajes previos
-    document.querySelectorAll('[id^="error-"]').forEach(el => el.classList.add('hidden'));
-    document.getElementById('mensaje-error-form').classList.add('hidden');
-    document.getElementById('mensaje-exito-form').classList.add('hidden');
+        try {
+            const response = await fetch('./eliminar_usuario_admin.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            });
 
-    // Obtener datos del formulario
-    const formData = new FormData(this);
-    
-    // Determinar endpoint según el modo
-    const endpoint = modoEdicion ? './editar_usuario_admin.php' : './crear_usuario_admin.php';
+            const data = await response.json();
 
-    try {
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            body: formData,
-            credentials: 'same-origin'
-        });
-
-        const data = await response.json();
-
-        if (data.exito) {
-            document.getElementById('mensaje-exito-form').textContent = data.mensaje;
-            document.getElementById('mensaje-exito-form').classList.remove('hidden');
-
-            // Limpiar formulario
-            this.reset();
-
-            // Cerrar modal y recargar tabla
-            setTimeout(() => {
-                cerrarModalUsuario();
+            if (data.exito) {
+                alert(data.mensaje);
                 paginaActual = 1;
                 cargarUsuarios();
-            }, 1500);
-        } else {
-            if (data.errores && Array.isArray(data.errores)) {
-                document.getElementById('mensaje-error-form').innerHTML = '<strong>Errores:</strong><ul class="mt-2">' + 
-                    data.errores.map(e => '<li>• ' + e + '</li>').join('') + '</ul>';
             } else {
-                document.getElementById('mensaje-error-form').textContent = data.mensaje || 'Error desconocido';
+                alert('Error: ' + data.mensaje);
             }
+        } catch (error) {
+            alert('Error al eliminar usuario: ' + error.message);
+        }
+    }
+
+    // Manejo del formulario
+    document.getElementById('form-crear-usuario').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Limpiar mensajes previos
+        document.querySelectorAll('[id^="error-"]').forEach(el => el.classList.add('hidden'));
+        document.getElementById('mensaje-error-form').classList.add('hidden');
+        document.getElementById('mensaje-exito-form').classList.add('hidden');
+
+        // Obtener datos del formulario
+        const formData = new FormData(this);
+        
+        // Determinar endpoint según el modo
+        const endpoint = modoEdicion ? './editar_usuario_admin.php' : './crear_usuario_admin.php';
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            });
+
+            const data = await response.json();
+
+            if (data.exito) {
+                document.getElementById('mensaje-exito-form').textContent = data.mensaje;
+                document.getElementById('mensaje-exito-form').classList.remove('hidden');
+
+                // Limpiar formulario
+                this.reset();
+
+                // Cerrar modal y recargar tabla
+                setTimeout(() => {
+                    cerrarModalUsuario();
+                    paginaActual = 1;
+                    cargarUsuarios();
+                }, 1500);
+            } else {
+                if (data.errores && Array.isArray(data.errores)) {
+                    document.getElementById('mensaje-error-form').innerHTML = '<strong>Errores:</strong><ul class="mt-2">' + 
+                        data.errores.map(e => '<li>• ' + e + '</li>').join('') + '</ul>';
+                } else {
+                    document.getElementById('mensaje-error-form').textContent = data.mensaje || 'Error desconocido';
+                }
+                document.getElementById('mensaje-error-form').classList.remove('hidden');
+            }
+        } catch (error) {
+            document.getElementById('mensaje-error-form').textContent = 'Error al conectar con el servidor: ' + error.message;
             document.getElementById('mensaje-error-form').classList.remove('hidden');
         }
-    } catch (error) {
-        document.getElementById('mensaje-error-form').textContent = 'Error al conectar con el servidor: ' + error.message;
-        document.getElementById('mensaje-error-form').classList.remove('hidden');
-    }
-});
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        cerrarModalUsuario();
-    }
-});
+    });
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            cerrarModalUsuario();
+        }
+    });
+
+// Cerrar IIFE
+})();
 </script>
 
 </body></html>

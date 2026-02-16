@@ -73,7 +73,7 @@ try {
     echo json_encode([
         'exito' => true,
         'mensaje' => 'Tu cuenta ha sido eliminada correctamente',
-        'redirect' => 'index1.php'
+        'redirect' => '../index1.php'
     ]);
     
 } catch (Exception $e) {

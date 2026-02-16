@@ -2,7 +2,7 @@
 require_once '../core/sesiones.php';
 
 if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2)) {
-    header("Location: index1.php");
+    header("Location: ../index1.php");
     exit();
 }
 ?>

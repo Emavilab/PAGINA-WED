@@ -713,7 +713,7 @@ function loadPerfil() {
 function cerrarSesionCliente() {
     // Confirmar antes de cerrar sesión
     if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
-        window.location.href = 'cerrar_sesion.php';
+        window.location.href = 'core/cerrar_sesion.php';
     }
 }
 

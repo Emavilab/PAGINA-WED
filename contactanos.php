@@ -36,6 +36,8 @@
             font-family: 'Inter', sans-serif;
         }
     </style>
+</head>
+<body>
 
 <main class="max-w-7xl mx-auto px-4 py-12">
 <!-- Hero Section -->
@@ -56,34 +58,81 @@
 <span class="material-icons text-primary">email</span>
                         Envíanos un mensaje
                     </h2>
-<form action="#" class="space-y-6">
+<form id="formContacto" class="space-y-6">
+
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
 <div class="space-y-2">
 <label class="text-sm font-semibold text-slate-700 dark:text-slate-300" for="nombre">Nombre completo</label>
-<input class="w-full px-4 py-3 rounded border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-primary transition-all" id="nombre" name="nombre" placeholder="Ej. Juan Pérez" type="text"/>
+<input required
+class="w-full px-4 py-3 rounded border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+id="nombre"
+name="nombre"
+type="text"
+placeholder="Ej. Juan Pérez">
 </div>
+
 <div class="space-y-2">
-<label class="text-sm font-semibold text-slate-700 dark:text-slate-300" for="email">Correo electrónico</label>
-<input class="w-full px-4 py-3 rounded border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-primary transition-all" id="email" name="email" placeholder="juan@ejemplo.com" type="email"/>
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300" for="correo">Correo electrónico</label>
+<input required
+class="w-full px-4 py-3 rounded border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+id="correo"
+name="correo"
+type="email"
+placeholder="juan@ejemplo.com">
 </div>
+
 </div>
+
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300" for="telefono">Teléfono</label>
+<input
+class="w-full px-4 py-3 rounded border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+id="telefono"
+name="telefono"
+type="text"
+placeholder="Ej. 9999-9999">
+</div>
+
 <div class="space-y-2">
 <label class="text-sm font-semibold text-slate-700 dark:text-slate-300" for="asunto">Asunto</label>
-<input class="w-full px-4 py-3 rounded border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-primary transition-all" id="asunto" name="asunto" placeholder="¿En qué podemos ayudarte?" type="text"/>
+<input required
+class="w-full px-4 py-3 rounded border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+id="asunto"
+name="asunto"
+type="text"
+placeholder="¿En qué podemos ayudarte?">
 </div>
+
 <div class="space-y-2">
 <label class="text-sm font-semibold text-slate-700 dark:text-slate-300" for="mensaje">Mensaje</label>
-<textarea class="w-full px-4 py-3 rounded border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-primary transition-all resize-none" id="mensaje" name="mensaje" placeholder="Escribe aquí los detalles de tu consulta..." rows="5"></textarea>
+<textarea required
+class="w-full px-4 py-3 rounded border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-primary transition-all resize-none"
+id="mensaje"
+name="mensaje"
+rows="5"
+placeholder="Escribe aquí los detalles de tu consulta..."></textarea>
 </div>
+
 <div class="flex items-center gap-3">
-<input class="rounded text-primary focus:ring-primary border-slate-300 dark:border-slate-700 dark:bg-slate-800" id="privacidad" type="checkbox"/>
-<label class="text-sm text-slate-600 dark:text-slate-400" for="privacidad">He leído y acepto la <a class="text-primary underline" href="#">política de privacidad</a>.</label>
+<input required
+class="rounded text-primary focus:ring-primary border-slate-300 dark:border-slate-700 dark:bg-slate-800"
+id="privacidad"
+type="checkbox">
+<label class="text-sm text-slate-600 dark:text-slate-400" for="privacidad">
+He leído y acepto la política de privacidad.
+</label>
 </div>
-<button class="w-full md:w-auto bg-primary hover:bg-primary/90 text-white font-bold py-4 px-8 rounded-lg shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2" type="submit">
+
+<button
+class="w-full md:w-auto bg-primary hover:bg-primary/90 text-white font-bold py-4 px-8 rounded-lg shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2"
+type="submit">
 <span>Enviar Mensaje</span>
 <span class="material-icons text-sm">send</span>
 </button>
+
 </form>
+
 </div>
 </div>
 <!-- Contact Info Section -->
@@ -180,4 +229,35 @@
 </div>
 </div>
 </main>
-</body></html>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+$(document).ready(function(){
+
+    $("#formContacto").submit(function(e){
+        e.preventDefault();
+
+        $.ajax({
+            url: "guardar_mensaje.php",
+            type: "POST",
+            data: $(this).serialize(),
+            success: function(respuesta){
+
+                if(respuesta.trim() === "ok"){
+                    alert("Mensaje enviado correctamente ✅");
+                    $("#formContacto")[0].reset();
+                } else {
+                    alert("Error al guardar en la base de datos ❌");
+                }
+            },
+            error: function(){
+                alert("Error de conexión con el servidor ❌");
+            }
+        });
+
+    });
+
+});
+</script>
+</body>
+</html>

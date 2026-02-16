@@ -8,7 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
 <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -37,23 +36,14 @@
             font-family: 'Inter', sans-serif;
         }
     </style>
-    
 </head>
 <body>
 
 <main class="max-w-7xl mx-auto px-4 py-12">
 <!-- Hero Section -->
-<a href="index1.php" class="flex items-center gap-2">
-    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-        <span class="material-icons-outlined text-white text-2xl">shopping_bag</span>
-    </div>
-    <span class="text-primary font-bold text-2xl">
-        ControlPlus
-    </span>
-</a>
-
 <div class="text-center mb-16">
 <nav class="flex justify-center mb-4 text-xs font-medium uppercase tracking-widest text-slate-500">
+<span class="mx-2">/</span>
 </nav>
 <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-4">Estamos para ayudarte</h1>
 <p class="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed">

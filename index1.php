@@ -126,7 +126,10 @@ $datosUsuario = $usuarioAutenticado ? obtenerDatosUsuario() : null;
 <a class="text-sm font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1" href="#">
 <span class="material-symbols-outlined text-xl">sell</span> Ofertas
                 </a>
-<button onclick="loadContacto()" class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary">Contáctanos</button>
+<button onclick="window.location.href='contactanos.php'"
+        class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary">
+    Contáctanos
+</button>
 <a class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary" href="#">Sucursales</a>
 </nav>
 </div>

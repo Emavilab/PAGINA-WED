@@ -126,7 +126,7 @@ $datosUsuario = $usuarioAutenticado ? obtenerDatosUsuario() : null;
 <a class="text-sm font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1" href="#">
 <span class="material-symbols-outlined text-xl">sell</span> Ofertas
                 </a>
-<button onclick="window.location.href='contactanos.php'"
+<button onclick="loadContactanos()"
         class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary">
     Contáctanos
 </button>
@@ -711,6 +711,35 @@ function loadPerfil() {
             window.scrollTo(0, 0);
         })
         .catch(error => console.error('Error al cargar perfil:', error));
+}
+
+function loadContactanos() {
+    fetch('pages/contactanos.php')
+        .then(response => response.text())
+        .then(data => {
+            // Crear un contenedor temporal para parsear el HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data;
+            
+            // Extraer solo el body content
+            const bodyContent = tempDiv.querySelector('body')?.innerHTML || data;
+            
+            // Insertar el contenido en mainContent
+            document.getElementById('mainContent').innerHTML = bodyContent;
+            
+            // Extraer y ejecutar scripts
+            const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/g;
+            let scriptMatch;
+            while ((scriptMatch = scriptRegex.exec(data)) !== null) {
+                const script = document.createElement('script');
+                script.textContent = scriptMatch[1];
+                document.body.appendChild(script);
+            }
+            
+            // Scroll hacia arriba para ver el contenido
+            window.scrollTo(0, 0);
+        })
+        .catch(error => console.error('Error al cargar contactanos:', error));
 }
 
 function cerrarSesionCliente() {

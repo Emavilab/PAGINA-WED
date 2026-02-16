@@ -242,32 +242,74 @@ type="submit">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
-$(document).ready(function(){
+// Usar vanilla JavaScript para mayor compatibilidad
+console.log("Script contactanos cargado");
 
-    $("#formContacto").submit(function(e){
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFormContacto);
+} else {
+    initFormContacto();
+}
+
+function initFormContacto() {
+    console.log("Inicializando formulario de contacto");
+    
+    const formContacto = document.getElementById('formContacto');
+    
+    if (!formContacto) {
+        console.error("Formulario no encontrado");
+        return;
+    }
+    
+    formContacto.addEventListener('submit', function(e) {
         e.preventDefault();
-
-        $.ajax({
-            url: "guardar_mensaje.php",
-            type: "POST",
-            data: $(this).serialize(),
-            success: function(respuesta){
-
-                if(respuesta.trim() === "ok"){
-                    alert("Mensaje enviado correctamente ✅");
-                    $("#formContacto")[0].reset();
-                } else {
-                    alert("Error al guardar en la base de datos ❌");
-                }
-            },
-            error: function(){
-                alert("Error de conexión con el servidor ❌");
+        console.log("Formulario enviado");
+        
+        const nombre = document.getElementById('nombre').value.trim();
+        const correo = document.getElementById('correo').value.trim();
+        const telefono = document.getElementById('telefono').value.trim();
+        const asunto = document.getElementById('asunto').value.trim();
+        const mensaje = document.getElementById('mensaje').value.trim();
+        const privacidad = document.getElementById('privacidad').checked;
+        
+        // Validar
+        if (!nombre || !correo || !asunto || !mensaje || !privacidad) {
+            alert("Por favor completa todos los campos requeridos");
+            return;
+        }
+        
+        // Crear FormData
+        const formData = new FormData();
+        formData.append('nombre', nombre);
+        formData.append('correo', correo);
+        formData.append('telefono', telefono);
+        formData.append('asunto', asunto);
+        formData.append('mensaje', mensaje);
+        
+        console.log("Enviando datos:", {nombre, correo, telefono, asunto, mensaje});
+        
+        // Enviar con fetch
+        fetch('pages/guardar_mensaje.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(respuesta => {
+            console.log("Respuesta:", respuesta);
+            
+            if (respuesta.trim() === 'ok') {
+                alert("Mensaje enviado correctamente ✅\nNos pondremos en contacto pronto!");
+                formContacto.reset();
+            } else {
+                alert("Error al guardar el mensaje ❌\nRespuesta: " + respuesta);
             }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("Error de conexión con el servidor ❌\n" + error);
         });
-
     });
-
-});
+}
 </script>
 </body>
 </html>

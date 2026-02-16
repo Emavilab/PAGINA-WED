@@ -48,7 +48,7 @@
 <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-3">Crear Cuenta</h1>
 <p class="text-slate-500 dark:text-slate-400">Completa tus datos para empezar tu experiencia con nosotros.</p>
 </div>
-<form action="#" class="space-y-6" method="POST">
+<form id="form-registro-modal" class="space-y-6">
 <!-- Full Name -->
 <div class="space-y-2">
 <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300" for="name">Nombre completo</label>
@@ -58,6 +58,7 @@
 </span>
 <input class="block w-full pl-10 pr-3 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200" id="name" name="name" placeholder="Ej. Juan Pérez" required="" type="text"/>
 </div>
+<div id="error-name" class="text-red-500 text-sm hidden"></div>
 </div>
 <!-- Email -->
 <div class="space-y-2">
@@ -68,6 +69,7 @@
 </span>
 <input class="block w-full pl-10 pr-3 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200" id="email" name="email" placeholder="tu@ejemplo.com" required="" type="email"/>
 </div>
+<div id="error-email" class="text-red-500 text-sm hidden"></div>
 </div>
 <!-- Password -->
 <div class="space-y-2">
@@ -81,6 +83,7 @@
 <span class="material-icons-outlined text-xl">visibility</span>
 </button>
 </div>
+<div id="error-password" class="text-red-500 text-sm hidden"></div>
 </div>
 <!-- Confirm Password -->
 <div class="space-y-2">
@@ -91,6 +94,7 @@
 </span>
 <input class="block w-full pl-10 pr-10 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200" id="confirm-password" name="confirm-password" placeholder="••••••••" required="" type="password"/>
 </div>
+<div id="error-confirm-password" class="text-red-500 text-sm hidden"></div>
 </div>
 <!-- Terms checkbox -->
 <div class="flex items-start">
@@ -103,6 +107,11 @@
                             </label>
 </div>
 </div>
+<div id="error-terms" class="text-red-500 text-sm hidden"></div>
+<!-- General Error Message -->
+<div id="mensaje-error" class="hidden bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg"></div>
+<!-- Success Message -->
+<div id="mensaje-exito" class="hidden bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg"></div>
 <!-- Main CTA -->
 <button class="w-full py-4 px-6 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg shadow-lg shadow-primary/20 transform active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary/30" type="submit">
                         Registrarse
@@ -134,4 +143,104 @@
 </div>
 </main>
 
-</body></html>
+</body>
+
+<script>
+// Manejo del formulario de registro
+function setupRegistroForm() {
+    const form = document.getElementById('form-registro-modal');
+    if (!form) return;
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Limpiar mensajes previos
+        const mensajeError = document.getElementById('mensaje-error');
+        const mensajeExito = document.getElementById('mensaje-exito');
+        if (mensajeError) mensajeError.classList.add('hidden');
+        if (mensajeExito) mensajeExito.classList.add('hidden');
+        document.querySelectorAll('[id^="error-"]').forEach(el => el.classList.add('hidden'));
+        
+        // Obtener datos del formulario
+        const formData = new FormData(this);
+        
+        try {
+            const response = await fetch('api/registrar_usuario.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.exito) {
+                // Mostrar mensaje de éxito
+                if (mensajeExito) {
+                    mensajeExito.textContent = data.mensaje;
+                    mensajeExito.classList.remove('hidden');
+                }
+                
+                // Limpiar formulario
+                form.reset();
+                
+                // Redirigir después de 2 segundos
+                setTimeout(() => {
+                    window.location.href = data.redirect;
+                }, 2000);
+            } else {
+                // Mostrar errores
+                if (mensajeError) {
+                    if (data.errores && Array.isArray(data.errores)) {
+                        mensajeError.innerHTML = '<strong>Errores:</strong><ul class="mt-2">' + 
+                            data.errores.map(e => '<li>• ' + e + '</li>').join('') + '</ul>';
+                    } else {
+                        mensajeError.textContent = data.mensaje || 'Error desconocido';
+                    }
+                    mensajeError.classList.remove('hidden');
+                }
+            }
+        } catch (error) {
+            if (mensajeError) {
+                mensajeError.textContent = 'Error al conectar con el servidor: ' + error.message;
+                mensajeError.classList.remove('hidden');
+            }
+        }
+    });
+}
+
+// Ejecutar cuando el formulario esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupRegistroForm);
+} else {
+    setupRegistroForm();
+}
+
+function loadLogin() {
+    // Cargar la página de login
+    if (typeof fetch !== 'undefined') {
+        fetch('pages/login.php')
+            .then(response => response.text())
+            .then(data => {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = data;
+                const bodyContent = tempDiv.querySelector('body')?.innerHTML || data;
+                
+                document.getElementById('mainContent').innerHTML = bodyContent;
+                
+                const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/g;
+                let scriptMatch;
+                while ((scriptMatch = scriptRegex.exec(data)) !== null) {
+                    const script = document.createElement('script');
+                    script.textContent = scriptMatch[1];
+                    document.body.appendChild(script);
+                }
+                
+                window.scrollTo(0, 0);
+            })
+            .catch(error => console.error('Error al cargar login:', error));
+    } else {
+        window.location.href = 'login.php';
+    }
+}
+</script>
+
+</html>

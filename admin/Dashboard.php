@@ -1,3 +1,27 @@
+<?php
+/**
+ * Dashboard Administrativo
+ * Solo accesible para Administrador (rol 1) y Vendedor (rol 2)
+ */
+
+require_once '../core/sesiones.php';
+
+// Verificar autenticación
+if (!usuarioAutenticado()) {
+    header("Location: login.php");
+    exit();
+}
+
+// Verificar permisos: solo rol 1 (admin) y rol 2 (vendedor)
+if ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2) {
+    // Usuario sin permisos, redirigir a index
+    header("Location: index1.php");
+    exit();
+}
+
+// Obtener datos del usuario autenticado
+$usuario = obtenerDatosUsuario();
+?>
 <!DOCTYPE html>
 <html class="light" lang="es"><head>
 <meta charset="utf-8"/>
@@ -56,6 +80,7 @@
 <span class="material-icons-round">dashboard</span>
 <span class="font-medium">Dashboard</span>
 </a>
+<?php if ($_SESSION['id_rol'] == 1): // Solo para administrador ?>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('productos.php', event)">
 <span class="material-icons-round">inventory_2</span>
 <span class="font-medium">Productos</span>
@@ -68,10 +93,12 @@
 <span class="material-icons-round">people</span>
 <span class="font-medium">Clientes</span>
 </a>
+<?php endif; ?>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('pedidosadmin.php', event)">
 <span class="material-icons-round">shopping_cart</span>
 <span class="font-medium">Pedidos</span>
 </a>
+<?php if ($_SESSION['id_rol'] == 1): // Solo para administrador ?>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('usuarios.php', event)">
 <span class="material-icons-round">manage_accounts</span>
 <span class="font-medium">Usuarios</span>
@@ -84,9 +111,10 @@
 <span class="material-icons-round">settings</span>
 <span class="font-medium">Configuraciones</span>
 </a>
+<?php endif; ?>
 </nav>
 <div class="p-4 mt-auto">
-<button class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-red-400 w-full transition-all">
+<button class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-red-400 w-full transition-all" onclick="cerrarSesion();">
 <span class="material-icons-round">logout</span>
 <span class="font-medium">Cerrar Sesión</span>
 </button>
@@ -106,10 +134,10 @@
 </button>
 <div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800">
 <div class="text-right hidden sm:block">
-<p class="text-sm font-semibold dark:text-white">Juan Admin</p>
-<p class="text-xs text-slate-500">Administrador</p>
+<p class="text-sm font-semibold dark:text-white"><?php echo htmlspecialchars($usuario['nombre'] ?? 'Usuario'); ?></p>
+<p class="text-xs text-slate-500"><?php echo htmlspecialchars($usuario['nombre_rol'] ?? 'Sin rol'); ?></p>
 </div>
-<img alt="Juan Admin Profile" class="w-10 h-10 rounded-full object-cover border-2 border-primary/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjLIRD3VjeXzAexA8RNlnwfNuxo9_3LYfXncJ7KNLB2OF5dsOzX1SN7Zzpzlo_wtsHyINXyxAjAZmxkms2AFqLczyXft-Hnlc08GhRdmd8XTPhvyfNz3B8r6mk1iL_snNH5pI3nM5ZR6cLOLJhkTijYUDTB4f758oIfwnZ7h2KsElVYJ9PspnA99elI_-NFEedvH4HJ6EyKyzESoCOE6CK2Afsa-xQLsKnrMu7yCghMeb__nwsxlrOxKL0be4Q3wzePnWYI89B-24"/>
+<img alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-primary/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjLIRD3VjeXzAexA8RNlnwfNuxo9_3LYfXncJ7KNLB2OF5dsOzX1SN7Zzpzlo_wtsHyINXyxAjAZmxkms2AFqLczyXft-Hnlc08GhRdmd8XTPhvyfNz3B8r6mk1iL_snNH5pI3nM5ZR6cLOLJhkTijYUDTB4f758oIfwnZ7h2KsElVYJ9PspnA99elI_-NFEedvH4HJ6EyKyzESoCOE6CK2Afsa-xQLsKnrMu7yCghMeb__nwsxlrOxKL0be4Q3wzePnWYI89B-24"/>
 </div>
 </div>
 </header>
@@ -348,46 +376,29 @@ function loadPage(page, event) {
                     document.head.appendChild(style.cloneNode(true));
                 });
                 
-                // Obtener solo el contenido HTML (sin estilos y scripts)
+                // Obtener solo el contenido HTML (sin estilos)
                 let htmlContent = data;
                 htmlContent = htmlContent.replace(/<style[\s\S]*?<\/style>/g, '');
+                
+                // Extraer scripts para ejecutarlos después
+                const scripts = [];
+                const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/g;
+                let match;
+                while ((match = scriptRegex.exec(data)) !== null) {
+                    scripts.push(match[1]);
+                }
+                
+                // Remover scripts del HTML
                 htmlContent = htmlContent.replace(/<script[\s\S]*?<\/script>/g, '');
                 
                 mainContent.innerHTML = htmlContent;
                 
-                // Extraer y ejecutar los scripts
-                const scriptMatches = data.match(/<script[\s\S]*?<\/script>/g);
-                if (scriptMatches) {
-                    scriptMatches.forEach(scriptTag => {
-                        const scriptContent = scriptTag.replace(/<script[^>]*>|<\/script>/g, '');
-                        try {
-                            eval(scriptContent);
-                        } catch (error) {
-                            console.error('Error executing script:', error);
-                        }
-                    });
-                }
-                
-                // Reinicializar funciones según la página cargada (con un pequeño delay)
-                setTimeout(() => {
-                    if (page === 'mensajeria.php' && typeof initMensajeriaFunctions === 'function') {
-                        initMensajeriaFunctions();
-                    }
-                    
-                    if (page === 'configuracion.php' && typeof initConfiguracionFunctions === 'function') {
-                        initConfiguracionFunctions();
-                    }
-                    
-                    // Agregar event listener al modal después de cargar el contenido
-                    const formModal = document.getElementById('formModal');
-                    if (formModal) {
-                        formModal.addEventListener('click', function(e) {
-                            if (e.target === this) {
-                                closeFormModal();
-                            }
-                        });
-                    }
-                }, 0);
+                // Ejecutar scripts después de insertar el HTML
+                scripts.forEach(scriptContent => {
+                    const script = document.createElement('script');
+                    script.textContent = scriptContent;
+                    document.body.appendChild(script);
+                });
             })
             .catch(error => {
                 mainContent.innerHTML = '<div class="text-center text-red-500"><p>Error al cargar la página</p></div>';
@@ -431,6 +442,13 @@ document.addEventListener('keydown', function(e) {
         closeFormModal();
     }
 });
+
+// Función para cerrar sesión
+function cerrarSesion() {
+    if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        window.location.href = 'cerrar_sesion.php';
+    }
+}
 </script>
 
 </body></html>

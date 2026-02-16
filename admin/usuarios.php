@@ -530,7 +530,7 @@ setTimeout(() => {
             document.getElementById('mensaje-error-form').classList.add('hidden');
             document.getElementById('mensaje-exito-form').classList.add('hidden');
         } else {
-            alert('Usuario no encontrado');
+            CustomModal.show('warning', 'No encontrado', 'Usuario no encontrado');
         }
     }
 
@@ -544,9 +544,11 @@ setTimeout(() => {
     }
 
     function confirmarEliminar(idUsuario, nombre) {
-        if (confirm(`¿Estás seguro de que deseas eliminar al usuario "${nombre}"?\n\nEsta acción es irreversible.`)) {
-            eliminarUsuario(idUsuario);
-        }
+        CustomModal.show('confirm', 'Confirmar eliminación', `¿Estás seguro de que deseas eliminar al usuario "${nombre}"? Esta acción es irreversible.`, (confirmed) => {
+            if (confirmed) {
+                eliminarUsuario(idUsuario);
+            }
+        });
     }
 
     async function eliminarUsuario(idUsuario) {
@@ -563,14 +565,15 @@ setTimeout(() => {
             const data = await response.json();
 
             if (data.exito) {
-                alert(data.mensaje);
-                paginaActual = 1;
-                cargarUsuarios();
+                CustomModal.show('success', 'Éxito', data.mensaje, () => {
+                    paginaActual = 1;
+                    cargarUsuarios();
+                });
             } else {
-                alert('Error: ' + data.mensaje);
+                CustomModal.show('error', 'Error', 'Error: ' + data.mensaje);
             }
         } catch (error) {
-            alert('Error al eliminar usuario: ' + error.message);
+            CustomModal.show('error', 'Error', 'Error al eliminar usuario: ' + error.message);
         }
     }
 

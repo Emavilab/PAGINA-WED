@@ -696,25 +696,30 @@
         }
 
         function marcarComoLeido() {
-            alert('Mensaje marcado como leído');
-            closeModal();
+            CustomModal.show('success', 'Éxito', 'Mensaje marcado como leído', () => {
+                closeModal();
+            });
         }
 
         function guardarRespuesta() {
             const respuesta = document.getElementById('respuesta-text').value;
             if (respuesta.trim()) {
-                alert('Respuesta guardada y correo enviado al cliente');
-                closeModal();
+                CustomModal.show('success', 'Éxito', 'Respuesta guardada y correo enviado al cliente', () => {
+                    closeModal();
+                });
             } else {
-                alert('Por favor escribe una respuesta');
+                CustomModal.show('warning', 'Campo vacío', 'Por favor escribe una respuesta');
             }
         }
 
         function cerrarTicket() {
-            if (confirm('¿Estás seguro de que deseas cerrar este ticket?')) {
-                alert('Ticket cerrado');
-                closeModal();
-            }
+            CustomModal.show('confirm', 'Confirmar', '¿Estás seguro de que deseas cerrar este ticket?', (confirmed) => {
+                if (confirmed) {
+                    CustomModal.show('success', 'Éxito', 'Ticket cerrado', () => {
+                        closeModal();
+                    });
+                }
+            });
         }
 
         // Función para inicializar los event listeners

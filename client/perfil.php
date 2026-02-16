@@ -270,28 +270,29 @@ function setupContraseñaForm() {
 
 // Función para eliminar cuenta
 function eliminarCuenta() {
-    if (!confirm('¿Estás completamente seguro? Esta acción no se puede deshacer.')) {
-        return;
-    }
-    
-    if (!confirm('Se eliminarán todos tus datos, pedidos e información personal. ¿Continuar?')) {
-        return;
-    }
-    
-    fetch('api/api_eliminar_cuenta.php', {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.exito) {
-            alert(data.mensaje);
-            window.location.href = data.redirect;
-        } else {
-            alert('Error: ' + data.mensaje);
-        }
-    })
-    .catch(error => {
-        alert('Error al eliminar la cuenta: ' + error.message);
+    CustomModal.show('warning', 'Confirmar eliminación', '¿Estás completamente seguro? Esta acción no se puede deshacer.', (confirmed) => {
+        if (!confirmed) return;
+        
+        CustomModal.show('warning', 'Segunda confirmación', 'Se eliminarán todos tus datos, pedidos e información personal. ¿Continuar?', (confirmed2) => {
+            if (!confirmed2) return;
+            
+            fetch('api/api_eliminar_cuenta.php', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.exito) {
+                    CustomModal.show('success', 'Éxito', data.mensaje, () => {
+                        window.location.href = data.redirect;
+                    });
+                } else {
+                    CustomModal.show('error', 'Error', 'Error: ' + data.mensaje);
+                }
+            })
+            .catch(error => {
+                CustomModal.show('error', 'Error', 'Error al eliminar la cuenta: ' + error.message);
+            });
+        });
     });
 }
 

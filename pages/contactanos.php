@@ -42,15 +42,6 @@
 <body>
 
 <main class="max-w-7xl mx-auto px-4 py-12">
-<!-- Hero Section -->
-<a href="index1.php" class="flex items-center gap-2">
-    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-        <span class="material-icons-outlined text-white text-2xl">shopping_bag</span>
-    </div>
-    <span class="text-primary font-bold text-2xl">
-        ControlPlus
-    </span>
-</a>
 
 <div class="text-center mb-16">
 <nav class="flex justify-center mb-4 text-xs font-medium uppercase tracking-widest text-slate-500">
@@ -274,7 +265,7 @@ function initFormContacto() {
         
         // Validar
         if (!nombre || !correo || !asunto || !mensaje || !privacidad) {
-            alert("Por favor completa todos los campos requeridos");
+            CustomModal.show('warning', 'Campos incompletos', 'Por favor completa todos los campos requeridos');
             return;
         }
         
@@ -298,15 +289,15 @@ function initFormContacto() {
             console.log("Respuesta:", respuesta);
             
             if (respuesta.trim() === 'ok') {
-                alert("Mensaje enviado correctamente ✅\nNos pondremos en contacto pronto!");
+                CustomModal.show('success', 'Éxito', 'Mensaje enviado correctamente. ¡Nos pondremos en contacto pronto!');
                 formContacto.reset();
             } else {
-                alert("Error al guardar el mensaje ❌\nRespuesta: " + respuesta);
+                CustomModal.show('error', 'Error', 'Error al guardar el mensaje. Respuesta: ' + respuesta);
             }
         })
         .catch(error => {
             console.error("Error:", error);
-            alert("Error de conexión con el servidor ❌\n" + error);
+            CustomModal.show('error', 'Error de conexión', 'Error de conexión con el servidor: ' + error);
         });
     });
 }

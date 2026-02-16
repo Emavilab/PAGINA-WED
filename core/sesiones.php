@@ -201,7 +201,7 @@ function esAdmin() {
  * @return bool
  */
 function esCliente() {
-    return usuarioAutenticado() && isset($_SESSION['id_rol']) && $_SESSION['id_rol'] == 2;
+    return usuarioAutenticado() && isset($_SESSION['id_rol']) && $_SESSION['id_rol'] == 3;
 }
 
 /**

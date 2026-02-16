@@ -13,7 +13,7 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: "#203650",
+                        primary: "#137fec",
                         "background-light": "#f6f7f8",
                         "background-dark": "#15191d"
                     },
@@ -32,6 +32,7 @@
     </script>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-200 min-h-screen flex items-center justify-center p-4">
+<div class="w-full flex items-center justify-center min-h-screen py-8">
 <div class="w-full max-w-md">
 <div class="bg-white dark:bg-slate-900 shadow-xl shadow-primary/5 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800">
 <div class="p-8 pb-4 text-center">
@@ -86,6 +87,8 @@
                     ¿No tienes una cuenta? 
                     <button onclick="loadRegistrarse()" class="text-primary font-bold hover:underline ml-1 bg-none border-none cursor-pointer">Regístrate gratis</button>
 </p>
+</div>
+</div>
 </div>
 </div>
 </body>
@@ -152,8 +155,27 @@ if (document.readyState === 'loading') {
 }
 
 function loadRegistrarse() {
-    // Redirigir a la página de registro
-    window.location.href = 'crear_cuenta.php';
+    fetch('pages/crear_cuenta.php')
+        .then(response => response.text())
+        .then(data => {
+            // Crear un contenedor temporal para parsear el HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data;
+            
+            // Extraer solo el body content
+            const bodyContent = tempDiv.querySelector('body')?.innerHTML || data;
+            
+            // Insertar el contenido en mainContent
+            document.getElementById('mainContent').innerHTML = bodyContent;
+            
+            // Ejecutar scripts que puedan estar en el contenido cargado
+            const scripts = tempDiv.querySelectorAll('script');
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                newScript.textContent = oldScript.textContent;
+                document.body.appendChild(newScript);
+            });
+        });
 }
 </script>
 

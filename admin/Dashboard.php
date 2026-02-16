@@ -448,9 +448,11 @@ document.addEventListener('keydown', function(e) {
 
 // Función para cerrar sesión
 function cerrarSesion() {
-    if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
-        window.location.href = '../core/cerrar_sesion.php';
-    }
+    CustomModal.show('confirm', 'Cerrar Sesión', '¿Estás seguro que deseas cerrar sesión?', (confirmed) => {
+        if (confirmed) {
+            window.location.href = '../core/cerrar_sesion.php';
+        }
+    });
 }
 </script>
 

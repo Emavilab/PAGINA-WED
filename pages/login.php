@@ -37,19 +37,20 @@
 <div class="p-8 pb-4 text-center">
 <div class="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-xl mb-6">
 </div>
-
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Iniciar Sesión</h2>
 <p class="text-slate-500 dark:text-slate-400 text-sm">Bienvenido de nuevo, por favor ingresa tus datos.</p>
 </div>
 <div class="p-8 pt-2">
-<form action="#" class="space-y-5">
+<form id="form-login-modal" class="space-y-5">
 <div class="space-y-2">
 <label class="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1" for="email">
                             Correo electrónico
                         </label>
 <div class="relative group">
 <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-xl">mail_outline</span>
-<input class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-slate-400 text-sm" id="email" placeholder="ejemplo@correo.com" type="email"/>
+<input class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-slate-400 text-sm" id="email" name="email" placeholder="ejemplo@correo.com" type="email"/>
 </div>
+<div id="error-email" class="text-red-500 text-sm hidden"></div>
 </div>
 <div class="space-y-2">
 <div class="flex items-center justify-between px-1">
@@ -60,16 +61,21 @@
 </div>
 <div class="relative group">
 <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-xl">lock_outline</span>
-<input class="w-full pl-10 pr-12 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-slate-400 text-sm" id="password" placeholder="••••••••" type="password"/>
+<input class="w-full pl-10 pr-12 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-slate-400 text-sm" id="password" name="password" placeholder="••••••••" type="password"/>
 <button class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" type="button">
 <span class="material-icons text-lg">visibility_off</span>
 </button>
 </div>
+<div id="error-password" class="text-red-500 text-sm hidden"></div>
 </div>
 <div class="flex items-center space-x-2 px-1">
-<input class="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary" id="remember" type="checkbox"/>
+<input class="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary" id="remember" name="remember" type="checkbox"/>
 <label class="text-xs text-slate-600 dark:text-slate-400 font-medium" for="remember">Recordarme en este dispositivo</label>
 </div>
+<!-- General Error Message -->
+<div id="mensaje-error" class="hidden bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg"></div>
+<!-- Success Message -->
+<div id="mensaje-exito" class="hidden bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg"></div>
 <button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg shadow-primary/25 active:scale-[0.98]" type="submit">
                         Iniciar Sesión
                     </button>
@@ -82,4 +88,73 @@
 </p>
 </div>
 </div>
-</body></html>
+</body>
+
+<script>
+// Manejo del formulario de login
+function setupLoginForm() {
+    const form = document.getElementById('form-login-modal');
+    if (!form) return;
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Limpiar mensajes previos
+        const mensajeError = document.getElementById('mensaje-error');
+        const mensajeExito = document.getElementById('mensaje-exito');
+        if (mensajeError) mensajeError.classList.add('hidden');
+        if (mensajeExito) mensajeExito.classList.add('hidden');
+        document.querySelectorAll('[id^="error-"]').forEach(el => el.classList.add('hidden'));
+        
+        // Obtener datos del formulario
+        const formData = new FormData(this);
+        
+        try {
+            const response = await fetch('api/validar_login.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.exito) {
+                // Mostrar mensaje de éxito
+                if (mensajeExito) {
+                    mensajeExito.textContent = data.mensaje;
+                    mensajeExito.classList.remove('hidden');
+                }
+                
+                // Redirigir después de 1.5 segundos
+                setTimeout(() => {
+                    window.location.href = data.redirect;
+                }, 1500);
+            } else {
+                // Mostrar errores
+                if (mensajeError) {
+                    mensajeError.textContent = data.mensaje || 'Error desconocido';
+                    mensajeError.classList.remove('hidden');
+                }
+            }
+        } catch (error) {
+            if (mensajeError) {
+                mensajeError.textContent = 'Error al conectar con el servidor: ' + error.message;
+                mensajeError.classList.remove('hidden');
+            }
+        }
+    });
+}
+
+// Ejecutar cuando el formulario esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupLoginForm);
+} else {
+    setupLoginForm();
+}
+
+function loadRegistrarse() {
+    // Redirigir a la página de registro
+    window.location.href = 'crear_cuenta.php';
+}
+</script>
+
+</html>

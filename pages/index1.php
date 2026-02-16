@@ -1,5 +1,5 @@
 <?php
-require_once 'core/sesiones.php';
+require_once '../core/sesiones.php';
 
 $usuarioAutenticado = usuarioAutenticado();
 $datosUsuario = $usuarioAutenticado ? obtenerDatosUsuario() : null;
@@ -572,7 +572,7 @@ $datosUsuario = $usuarioAutenticado ? obtenerDatosUsuario() : null;
 
 <script>
 function loadContacto() {
-    fetch('pages/contactanos.php')
+    fetch('contactanos.php')
         .then(response => response.text())
         .then(data => {
             document.getElementById('mainContent').innerHTML = data;
@@ -583,7 +583,7 @@ function loadContacto() {
 }
 
 function loadLogin() {
-    fetch('pages/login.php')
+    fetch('login.php')
         .then(response => response.text())
         .then(data => {
             // Crear un contenedor temporal para parsear el HTML
@@ -612,7 +612,7 @@ function loadLogin() {
 }
 
 function loadRegistrarse() {
-    fetch('pages/crear_cuenta.php')
+    fetch('crear_cuenta.php')
         .then(response => response.text())
         .then(data => {
             // Crear un contenedor temporal para parsear el HTML
@@ -646,7 +646,7 @@ function loadFinalizarCompra() {
     document.getElementById('cartSidebar').classList.add('hidden');
     
     // Cargar la página de finalizar compra
-    fetch('client/finalizarcompra.php')
+    fetch('finalizarcompra.php')
         .then(response => response.text())
         .then(data => {
             document.getElementById('mainContent').innerHTML = data;
@@ -657,7 +657,7 @@ function loadFinalizarCompra() {
 }
 
 function loadHistorialPedidos() {
-    fetch('client/historialpedidoC.php')
+    fetch('historialpedidoC.php')
         .then(response => response.text())
         .then(data => {
             document.getElementById('mainContent').innerHTML = data;
@@ -668,7 +668,7 @@ function loadHistorialPedidos() {
 }
 
 function loadListaDeseos() {
-    fetch('client/listadedeseo.php')
+    fetch('listadedeseo.php')
         .then(response => response.text())
         .then(data => {
             document.getElementById('mainContent').innerHTML = data;
@@ -679,7 +679,7 @@ function loadListaDeseos() {
 }
 
 function loadPerfil() {
-    fetch('client/perfil.php')
+    fetch('perfil.php')
         .then(response => response.text())
         .then(data => {
             // Si es un error JSON, redirigir al login

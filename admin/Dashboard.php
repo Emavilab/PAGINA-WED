@@ -319,6 +319,44 @@ $usuario = obtenerDatosUsuario();
 </div>
 </div>
 
+<!-- Modal para cerrar sesión -->
+<div id="modalCerrarSesion" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-8 max-w-sm w-full mx-4 animate-fade-in">
+        <div class="flex items-center justify-center mb-4">
+            <div class="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
+                <span class="material-icons-round text-red-600 dark:text-red-400 text-2xl">logout</span>
+            </div>
+        </div>
+        <h3 class="text-xl font-bold text-center text-slate-900 dark:text-white mb-2">Cerrar Sesión</h3>
+        <p class="text-center text-slate-600 dark:text-slate-400 mb-6">¿Estás seguro que deseas cerrar sesión?</p>
+        <div class="flex gap-3">
+            <button onclick="cerrarModalSesion()" class="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                Cancelar
+            </button>
+            <button onclick="confirmarCerrarSesion()" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors">
+                Cerrar Sesión
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.2s ease-out;
+    }
+</style>
+
 <script>
 function loadPage(page, event) {
     if (event) {
@@ -439,20 +477,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // El dashboard ya tiene contenido por defecto
 });
 
-// Listener global para cerrar modal con Escape
+// Listener global para cerrar modales con Escape
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         closeFormModal();
+        cerrarModalSesion();
     }
 });
 
 // Función para cerrar sesión
 function cerrarSesion() {
-    CustomModal.show('confirm', 'Cerrar Sesión', '¿Estás seguro que deseas cerrar sesión?', (confirmed) => {
-        if (confirmed) {
-            window.location.href = '../core/cerrar_sesion.php';
-        }
-    });
+    document.getElementById('modalCerrarSesion').classList.remove('hidden');
+}
+
+// Función para cerrar el modal sin cerrar sesión
+function cerrarModalSesion() {
+    document.getElementById('modalCerrarSesion').classList.add('hidden');
+}
+
+// Función para confirmar y cerrar sesión
+function confirmarCerrarSesion() {
+    window.location.href = '../core/cerrar_sesion.php';
 }
 </script>
 

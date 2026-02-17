@@ -215,5 +215,3 @@ function registrarIntento($correo, $razon) {
     // Por ahora solo se usa para depuración
     error_log("Intento de login fallido - Email: {$correo} - Razón: {$razon}");
 }
-
-?>

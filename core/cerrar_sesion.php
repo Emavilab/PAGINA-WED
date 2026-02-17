@@ -12,11 +12,5 @@ if (!usuarioAutenticado()) {
     exit();
 }
 
-// Obtener datos antes de destruir sesión (opcional, para logs)
-$usuario_id = obtenerIdUsuario();
-$correo = isset($_SESSION['correo']) ? $_SESSION['correo'] : 'desconocido';
-
-// Cerrar sesión
+// Cerrar sesión del usuario
 cerrarSesion();
-
-?>

@@ -26,5 +26,3 @@ $conexion->query("SET sql_mode='STRICT_TRANS_TABLES'");
 
 // Variable para verificar que la conexión fue exitosa
 $conexion_establecida = true;
-
-?>

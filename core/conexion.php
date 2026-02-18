@@ -18,6 +18,12 @@ $conexion->set_charset("utf8mb4");
 
 // Verificar conexión
 if ($conexion->connect_error) {
+    // Si es una solicitud API, devolver JSON
+    if (strpos($_SERVER['REQUEST_URI'] ?? '', '/api/') !== false) {
+        header('Content-Type: application/json; charset=utf-8', true);
+        http_response_code(500);
+        die(json_encode(['exito' => false, 'mensaje' => 'Error de conexión a la base de datos']));
+    }
     die("Error de conexión: " . $conexion->connect_error);
 }
 

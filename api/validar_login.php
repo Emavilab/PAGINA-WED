@@ -4,6 +4,20 @@
  * Procesa la autenticación de usuarios
  */
 
+// Encabezados de respuesta JSON
+header('Content-Type: application/json; charset=utf-8');
+
+// Configurar manejo de errores
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    http_response_code(500);
+    echo json_encode([
+        'exito' => false,
+        'mensaje' => 'Error en el servidor',
+        'error' => "{$errstr} en {$errfile} línea {$errline}"
+    ]);
+    exit();
+});
+
 require_once '../core/sesiones.php';
 
 // Solo procesar POST
@@ -73,21 +87,27 @@ registrarSesion(
 );
 
 // Determinar página de redirección según rol
-$redirect = '../index1.php'; // Default
+$redirect = 'index1.php'; // Default (desde raíz)
 
 if ($usuario['id_rol'] == 1) {
-    $redirect = '../admin/Dashboard.php'; // Administrador
+    $redirect = 'admin/Dashboard.php'; // Administrador
 } elseif ($usuario['id_rol'] == 2) {
-    $redirect = '../admin/Dashboard.php'; // Vendedor
+    $redirect = 'admin/Dashboard.php'; // Vendedor
 } elseif ($usuario['id_rol'] == 3) {
-    $redirect = '../index1.php'; // Cliente
+    $redirect = 'index1.php'; // Cliente
 }
 
-header('Content-Type: application/json');
+// Limpiar cualquier buffer de salida anterior
+while (ob_get_level()) {
+    ob_end_clean();
+}
+
+// Respuesta JSON final
+http_response_code(200);
 echo json_encode([
     'exito' => true,
     'mensaje' => 'Sesión iniciada correctamente',
     'redirect' => $redirect
 ]);
-
+exit();
 ?>

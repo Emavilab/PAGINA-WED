@@ -1,10 +1,19 @@
 <?php
 require_once '../core/sesiones.php';
+require_once '../core/conexion.php';
 
-if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2)) {
-    header("Location: ../index1.php");
-    exit();
-}
+$sql = "SELECT 
+            clientes.id_usuario,
+            clientes.nombre,
+            clientes.estado,
+            clientes.fecha_registro,
+            usuarios.correo
+        FROM clientes
+        INNER JOIN usuarios 
+            ON clientes.id_usuario = usuarios.id_usuario";
+
+$resultado = mysqli_query($conexion, $sql);
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -46,14 +55,6 @@ if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] !=
                             <i class="fas fa-envelope text-indigo-500"></i> Correo Electrónico
                         </label>
                         <input type="email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" placeholder="juan@example.com">
-                    </div>
-
-                    <!-- Teléfono -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="fas fa-phone text-indigo-500"></i> Teléfono
-                        </label>
-                        <input type="tel" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" placeholder="123-456-7890">
                     </div>
 
                     <!-- Contraseña -->
@@ -102,50 +103,52 @@ if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] !=
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Correo</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Teléfono</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Fecha Registro</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
                                 <th class="px-6 py-3 text-center text-sm font-semibold text-gray-700">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
-                                <td class="px-6 py-4 text-sm text-gray-700">1</td>
-                                <td class="px-6 py-4 text-sm text-gray-700 font-semibold">Juan Pérez</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">juan@example.com</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">123-456-7890</td>
-                                <td class="px-6 py-4 text-sm text-gray-600">13-02-2026</td>
-                                <td class="px-6 py-4 text-sm">
-                                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">Activo</span>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-center">
-                                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2 transition">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
-                                <td class="px-6 py-4 text-sm text-gray-700">2</td>
-                                <td class="px-6 py-4 text-sm text-gray-700 font-semibold">María García</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">maria@example.com</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">987-654-3210</td>
-                                <td class="px-6 py-4 text-sm text-gray-600">12-02-2026</td>
-                                <td class="px-6 py-4 text-sm">
-                                    <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">Bloqueado</span>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-center">
-                                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2 transition">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
+<?php while($fila = mysqli_fetch_assoc($resultado)) { ?>
+<tr class="border-b border-gray-200 hover:bg-gray-50 transition">
+    
+    <td class="px-6 py-4 text-sm text-gray-700">
+        <?php echo $fila['id_usuario']; ?>
+    </td>
+
+    <td class="px-6 py-4 text-sm text-gray-700 font-semibold">
+        <?php echo $fila['nombre']; ?>
+    </td>
+
+    <td class="px-6 py-4 text-sm text-gray-700">
+        <?php echo $fila['correo']; ?>
+    </td>
+
+    <td class="px-6 py-4 text-sm text-gray-600">
+        <?php echo $fila['fecha_registro']; ?>
+    </td>
+
+    <td class="px-6 py-4 text-sm">
+        <?php if($fila['estado'] == 'activo') { ?>
+            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">Activo</span>
+        <?php } else { ?>
+            <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">Inactivo</span>
+        <?php } ?>
+    </td>
+
+    <td class="px-6 py-4 text-sm text-center">
+        <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2 transition">
+            <i class="fas fa-edit"></i>
+        </button>
+        <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition">
+            <i class="fas fa-trash"></i>
+        </button>
+    </td>
+
+</tr>
+<?php } ?>
+</tbody>
+
                     </table>
         </div>
     </div>

@@ -57,14 +57,6 @@ $resultado = mysqli_query($conexion, $sql);
                         <input type="email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" placeholder="juan@example.com">
                     </div>
 
-                    <!-- Teléfono -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="fas fa-phone text-indigo-500"></i> Teléfono
-                        </label>
-                        <input type="tel" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" placeholder="123-456-7890">
-                    </div>
-
                     <!-- Contraseña -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">

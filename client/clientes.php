@@ -85,11 +85,6 @@ $resultado = mysqli_query($conexion, $sql);
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<script>
-document.querySelector("form").addEventListener("submit", function(e) {
-    alert("EL FORM SE ESTA ENVIANDO");
-});
-</script>
 <body class="bg-gray-50">
     <div class="min-h-screen">
 
@@ -162,57 +157,125 @@ document.querySelector("form").addEventListener("submit", function(e) {
                     </h2>
                 </div>
                 
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="bg-gray-100 border-b-2 border-gray-300">
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Correo</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Fecha Registro</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
-                                <th class="px-6 py-3 text-center text-sm font-semibold text-gray-700">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-<?php while($fila = mysqli_fetch_assoc($resultado)) { ?>
-<tr class="border-b border-gray-200 hover:bg-gray-50 transition">
-    
-    <td class="px-6 py-4 text-sm text-gray-700">
-        <?php echo $fila['id_usuario']; ?>
-    </td>
+<div class="overflow-x-auto">
+    <table class="w-full">
+        <thead>
+            <tr class="bg-gray-100 border-b-2 border-gray-300">
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Correo</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Fecha Registro</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
+                <th class="px-6 py-3 text-center text-sm font-semibold text-gray-700">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while($fila = mysqli_fetch_assoc($resultado)) { ?>
+                <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
+                    <td class="px-6 py-4 text-sm text-gray-700">
+                        <?php echo $fila['id_usuario']; ?>
+                    </td>
 
-    <td class="px-6 py-4 text-sm text-gray-700 font-semibold">
-        <?php echo $fila['nombre']; ?>
-    </td>
+                    <td class="px-6 py-4 text-sm text-gray-700 font-semibold">
+                        <?php echo $fila['nombre']; ?>
+                    </td>
 
-    <td class="px-6 py-4 text-sm text-gray-700">
-        <?php echo $fila['correo']; ?>
-    </td>
+                    <td class="px-6 py-4 text-sm text-gray-700">
+                        <?php echo $fila['correo']; ?>
+                    </td>
 
-    <td class="px-6 py-4 text-sm text-gray-600">
-        <?php echo $fila['fecha_registro']; ?>
-    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                        <?php echo $fila['fecha_registro']; ?>
+                    </td>
 
-    <td class="px-6 py-4 text-sm">
-        <?php if($fila['estado'] == 'activo') { ?>
-            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">Activo</span>
-        <?php } else { ?>
-            <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">Inactivo</span>
-        <?php } ?>
-    </td>
+                    <td class="px-6 py-4 text-sm">
+                        <?php if($fila['estado'] == 'activo') { ?>
+                            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">Activo</span>
+                        <?php } else { ?>
+                            <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">Inactivo</span>
+                        <?php } ?>
+                    </td>
 
-    <td class="px-6 py-4 text-sm text-center">
-        <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2 transition">
-            <i class="fas fa-edit"></i>
-        </button>
-        <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition">
-            <i class="fas fa-trash"></i>
-        </button>
-    </td>
+                    <td class="px-6 py-4 text-sm text-center">
+                        <button 
+                            class="btn-editar bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2 transition"
+                            data-id="<?php echo $fila['id_usuario']; ?>">
+                            <i class="fas fa-edit"></i>
+                        </button>
 
-</tr>
-<?php } ?>
+                        <button 
+                            class="btn-eliminar bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition"
+                            data-id="<?php echo $fila['id_usuario']; ?>">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            <?php } ?>
+        </tbody>
+    </table>
+</div>
+<!-- MODAL EDITAR -->
+<div id="modalEditar" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h2 class="text-xl font-bold mb-4">Editar Cliente</h2>
+
+        <form id="formEditar">
+            <input type="hidden" name="id" id="edit_id">
+
+            <div class="mb-3">
+                <input type="text" name="nombre" id="edit_nombre" 
+                class="w-full border px-3 py-2 rounded" required>
+            </div>
+
+            <div class="mb-3">
+                <input type="email" name="correo" id="edit_correo" 
+                class="w-full border px-3 py-2 rounded" required>
+            </div>
+
+            <div class="mb-3">
+                <select name="estado" id="edit_estado"
+                class="w-full border px-3 py-2 rounded">
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                </select>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="submit"
+                 class="flex-1 bg-indigo-600 text-white py-2 rounded">
+                Guardar
+                    </button>
+
+                <button type="button"
+                onclick="cerrarModal()"
+                class="flex-1 bg-gray-400 text-white py-2 rounded">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- MODAL ELIMINAR -->
+<div id="modalEliminar" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-full max-w-sm text-center">
+        <h2 class="text-lg font-bold mb-4">¿Eliminar cliente?</h2>
+
+        <input type="hidden" id="delete_id">
+
+        <div class="flex gap-3">
+            <button onclick="confirmarEliminar()"
+            class="flex-1 bg-red-600 text-white py-2 rounded">
+                Sí, eliminar
+            </button>
+
+            <button onclick="cerrarModal()"
+            class="flex-1 bg-gray-400 text-white py-2 rounded">
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
 document.getElementById("formCliente").addEventListener("submit", function(e) {
 
@@ -235,9 +298,130 @@ document.getElementById("formCliente").addEventListener("submit", function(e) {
 
 });
 </script>
-</tbody>
+<script>
 
-                    </table>
-        </div>
-    </div>
-</div>
+// CLICK GLOBAL (SPA SAFE)
+document.addEventListener("click", function(e){
+
+    // EDITAR
+    const btnEditar = e.target.closest(".btn-editar");
+    if(btnEditar){
+        const id = btnEditar.dataset.id;
+        abrirModalEditar(id);
+    }
+
+    // ELIMINAR
+    const btnEliminar = e.target.closest(".btn-eliminar");
+    if(btnEliminar){
+        const id = btnEliminar.dataset.id;
+        document.getElementById("delete_id").value = id;
+
+        const modal = document.getElementById("modalEliminar");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+    }
+
+});
+
+
+// ABRIR MODAL EDITAR
+function abrirModalEditar(id){
+
+    fetch("/PAGINA-WED/client/clientes_obtener.php?id=" + id)
+    .then(res => res.json())
+    .then(data => {
+
+        if(!data){
+            alert("No se pudo obtener el cliente");
+            return;
+        }
+
+        document.getElementById("edit_id").value = data.id_usuario;
+        document.getElementById("edit_nombre").value = data.nombre;
+        document.getElementById("edit_correo").value = data.correo;
+        document.getElementById("edit_estado").value = data.estado;
+
+        const modal = document.getElementById("modalEditar");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Error al abrir modal");
+    });
+}
+
+
+// CERRAR MODAL
+function cerrarModal(){
+
+    document.getElementById("modalEditar").classList.add("hidden");
+    document.getElementById("modalEditar").classList.remove("flex");
+
+    document.getElementById("modalEliminar").classList.add("hidden");
+    document.getElementById("modalEliminar").classList.remove("flex");
+
+}
+
+// EDITAR
+document.getElementById("formEditar").addEventListener("submit", function(e){
+
+    console.log("SUBMIT DIRECTO");
+
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    fetch("/PAGINA-WED/client/clientes_editar.php", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.success){
+            cerrarModal();
+            loadPage('/PAGINA-WED/client/clientes.php');
+        } else {
+            alert(data.message);
+        }
+
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Error en la petición");
+    });
+
+});
+// ELIMINAR
+function confirmarEliminar(){
+
+    const id = document.getElementById("delete_id").value;
+
+    fetch("/PAGINA-WED/client/clientes_eliminar.php", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({id:id})
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.success){
+            cerrarModal();
+            loadPage('/PAGINA-WED/client/clientes.php');
+        }else{
+            alert(data.message);
+        }
+
+    })
+    .catch(err => {
+        console.error(err);
+    });
+
+}
+
+</script>
+
+</body>
+</html>

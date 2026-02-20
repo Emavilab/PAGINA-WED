@@ -73,7 +73,7 @@ CREATE TABLE `clientes` (
   `id_cliente` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL,
-  `estado` enum('activo','bloqueado') DEFAULT 'activo',
+  `estado` enum('activo','inactivo') DEFAULT 'activo',
   `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

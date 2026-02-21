@@ -5,6 +5,56 @@ if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] !=
     header("Location: ../index1.php");
     exit();
 }
+require_once '../core/conexion.php';
+// INSERTAR
+if(isset($_POST['guardar'])){
+    $nombre = $_POST['nombre'];
+    $icono = $_POST['icono'];
+    $descripcion = $_POST['descripcion'];
+    $estado = $_POST['estado'];
+
+    $conexion->query("INSERT INTO categorias (nombre, icono, descripcion, estado)
+                      VALUES ('$nombre','$icono','$descripcion','$estado')");
+
+    header("Location: categorias.php");
+    exit();
+}
+
+// ELIMINAR
+if(isset($_GET['eliminar'])){
+    $id = $_GET['eliminar'];
+    $conexion->query("DELETE FROM categorias WHERE id=$id");
+
+    header("Location: categorias.php");
+    exit();
+}
+
+// EDITAR (CARGAR DATOS)
+$editar = null;
+if(isset($_GET['editar'])){
+    $id = $_GET['editar'];
+    $resultado = $conexion->query("SELECT * FROM categorias WHERE id=$id");
+    $editar = $resultado->fetch_assoc();
+}
+
+// ACTUALIZAR
+if(isset($_POST['actualizar'])){
+    $id = $_POST['id'];
+    $nombre = $_POST['nombre'];
+    $icono = $_POST['icono'];
+    $descripcion = $_POST['descripcion'];
+    $estado = $_POST['estado'];
+
+    $conexion->query("UPDATE categorias SET
+                      nombre='$nombre',
+                      icono='$icono',
+                      descripcion='$descripcion',
+                      estado='$estado'
+                      WHERE id=$id");
+
+    header("Location: categorias.php");
+    exit();
+} 
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -28,14 +78,19 @@ if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] !=
                 <h2 class="text-2xl font-bold mb-6 text-gray-800">
                     <i class="fas fa-edit text-purple-600"></i> Crear/Editar Categoría
                 </h2>
-                <form class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Nombre -->
-                    <div>
+                    <div> 
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-heading text-purple-500"></i> Nombre de la Categoría
                         </label>
                         <input type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition" placeholder="Ej: Electrónica">
                     </div>
+                    <input type="hidden" name="id" value="<?php echo $editar['id'] ?? ''; ?>">
+
+                    <input type="text" name="nombre" required
+                    value="<?php echo $editar['nombre'] ?? ''; ?>"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg">
 
                     <!-- Ícono -->
                     <div>
@@ -43,14 +98,19 @@ if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] !=
                             <i class="fas fa-icons text-purple-500"></i> Ícono (Font Awesome)
                         </label>
                         <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition" placeholder="Ej: fa-laptop">
+                      <input type="text" name="icono"
+                        value="<?php echo $editar['icono'] ?? ''; ?>"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                     </div>
-
+                    
                     <!-- Descripción -->
                     <div class="md:col-span-2">
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-align-left text-purple-500"></i> Descripción
                         </label>
                         <textarea rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition" placeholder="Descripción de la categoría..."></textarea>
+                        <textarea name="descripcion" rows="4"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg"><?php echo $editar['descripcion'] ?? ''; ?></textarea>
                     </div>
 
                     <!-- Estado -->
@@ -62,15 +122,25 @@ if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] !=
                             <option value="activo">Activo</option>
                             <option value="inactivo">Inactivo</option>
                         </select>
+                        <select name="estado" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <option value="activo" <?php if(($editar['estado'] ?? '')=='activo') echo 'selected'; ?>>Activo</option>
+                        <option value="inactivo" <?php if(($editar['estado'] ?? '')=='inactivo') echo 'selected'; ?>>Inactivo</option>
+                        </select>
                     </div>
 
                     <!-- Botones -->
-                    <div class="md:col-span-2 flex gap-4">
-                        <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md">
-                            <i class="fas fa-save mr-2"></i> Guardar Categoría
-                        </button>
-                        <button type="button" onclick="toggleFormulario('crear')" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md">
-                            <i class="fas fa-times mr-2"></i> Cancelar
+                    <?php if($editar){ ?>
+                    <button type="submit" name="actualizar"
+                     class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg">
+                     <i class="fas fa-edit mr-2"></i> Actualizar Categoría
+                    </button>
+                    <?php } else { ?>
+                     <button type="submit" name="guardar"
+                     class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg">
+                     <i class="fas fa-save mr-2"></i> Guardar Categoría
+                    </button>
+                    <?php } ?>
+       
                         </button>
                     </div>
                 </form>
@@ -85,79 +155,38 @@ if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] !=
                 </div>
                 
                 <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="bg-gray-100 border-b-2 border-gray-300">
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Ícono</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Descripción</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
-                                <th class="px-6 py-3 text-center text-sm font-semibold text-gray-700">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
-                                <td class="px-6 py-4 text-sm text-gray-700">1</td>
-                                <td class="px-6 py-4 text-sm text-gray-700 font-semibold">Electrónica</td>
-                                <td class="px-6 py-4 text-sm">
-                                    <i class="fas fa-laptop text-blue-500 text-lg"></i>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-600">Productos electrónicos y gadgets</td>
-                                <td class="px-6 py-4 text-sm">
-                                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">Activo</span>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-center">
-                                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2 transition">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
-                                <td class="px-6 py-4 text-sm text-gray-700">2</td>
-                                <td class="px-6 py-4 text-sm text-gray-700 font-semibold">Ropa</td>
-                                <td class="px-6 py-4 text-sm">
-                                    <i class="fas fa-shirt text-red-500 text-lg"></i>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-600">Prendas de vestir para todas las edades</td>
-                                <td class="px-6 py-4 text-sm">
-                                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">Activo</span>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-center">
-                                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2 transition">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
-                                <td class="px-6 py-4 text-sm text-gray-700">3</td>
-                                <td class="px-6 py-4 text-sm text-gray-700 font-semibold">Alimentos</td>
-                                <td class="px-6 py-4 text-sm">
-                                    <i class="fas fa-utensils text-yellow-500 text-lg"></i>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-600">Alimentos y bebidas de calidad</td>
-                                <td class="px-6 py-4 text-sm">
-                                    <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-semibold">Inactivo</span>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-center">
-                                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2 transition">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                    <tbody>
+                <?php
+                $resultado = $conexion->query("SELECT * FROM categorias");
+
+                while($fila = $resultado->fetch_assoc()){
+                ?>
+               <tr class="border-b border-gray-200 hover:bg-gray-50">
+                <td class="px-6 py-4"><?php echo $fila['id']; ?></td>
+                <td class="px-6 py-4 font-semibold"><?php echo $fila['nombre']; ?></td>
+                <td class="px-6 py-4">
+                 <i class="fas <?php echo $fila['icono']; ?> text-lg"></i>
+                 </td>
+                 <td class="px-6 py-4"><?php echo $fila['descripcion']; ?></td>
+                 <td class="px-6 py-4">
+                 <?php if($fila['estado']=='activo'){ ?>
+                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs">Activo</span>
+                <?php } else { ?>
+                <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs">Inactivo</span>
+                 <?php } ?>
+                 </td>
+                 <td class="px-6 py-4 text-center">
+                <a href="?editar=<?php echo $fila['id']; ?>"
+                class="bg-blue-500 text-white px-3 py-1 rounded mr-2">
+                <i class="fas fa-edit"></i>
+                 </a>
+
+                <a href="?eliminar=<?php echo $fila['id']; ?>"
+                onclick="return confirm('¿Eliminar esta categoría?')"
+                class="bg-red-500 text-white px-3 py-1 rounded">
+                <i class="fas fa-trash"></i>
+                </a>
+             </td>
+             </tr>
+            <?php } ?>
+            </tbody>      

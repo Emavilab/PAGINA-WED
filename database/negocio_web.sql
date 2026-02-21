@@ -57,6 +57,7 @@ CREATE TABLE `carrito_detalle` (
 
 CREATE TABLE `categorias` (
   `id_categoria` int(11) NOT NULL,
+  `id_padre` int(11) DEFAULT NULL,
   `nombre` varchar(100) NOT NULL,
   `descripcion` varchar(200) DEFAULT NULL,
   `estado` enum('activo','inactivo') DEFAULT 'activo',
@@ -250,6 +251,7 @@ CREATE TABLE `pedidos` (
 
 CREATE TABLE `productos` (
   `id_producto` int(11) NOT NULL,
+  `codigo` varchar(50) DEFAULT NULL,
   `nombre` varchar(100) NOT NULL,
   `descripcion` text DEFAULT NULL,
   `precio` decimal(10,2) NOT NULL,
@@ -348,7 +350,8 @@ ALTER TABLE `carrito_detalle`
 -- Indices de la tabla `categorias`
 --
 ALTER TABLE `categorias`
-  ADD PRIMARY KEY (`id_categoria`);
+  ADD PRIMARY KEY (`id_categoria`),
+  ADD KEY `fk_categoria_padre` (`id_padre`);
 
 --
 -- Indices de la tabla `clientes`
@@ -426,6 +429,7 @@ ALTER TABLE `pedidos`
 --
 ALTER TABLE `productos`
   ADD PRIMARY KEY (`id_producto`),
+  ADD UNIQUE KEY `codigo` (`codigo`),
   ADD KEY `id_categoria` (`id_categoria`),
   ADD KEY `id_marca` (`id_marca`);
 
@@ -612,6 +616,9 @@ ALTER TABLE `pedidos`
 --
 -- Filtros para la tabla `productos`
 --
+ALTER TABLE `categorias`
+  ADD CONSTRAINT `fk_categoria_padre` FOREIGN KEY (`id_padre`) REFERENCES `categorias` (`id_categoria`) ON DELETE CASCADE;
+
 ALTER TABLE `productos`
   ADD CONSTRAINT `productos_ibfk_1` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id_categoria`),
   ADD CONSTRAINT `productos_ibfk_2` FOREIGN KEY (`id_marca`) REFERENCES `marcas` (`id_marca`);

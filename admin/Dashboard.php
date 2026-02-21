@@ -81,7 +81,7 @@ $usuario = obtenerDatosUsuario();
 <span class="font-medium">Dashboard</span>
 </a>
 <?php if ($_SESSION['id_rol'] == 1): // Solo para administrador ?>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../client/productos.php', event)">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../admin/gestion_productos.php', event)">
 <span class="material-icons-round">inventory_2</span>
 <span class="font-medium">Productos</span>
 </a>
@@ -370,7 +370,7 @@ function loadPage(page, event) {
     // Actualizar el título según la página (verificar solo el nombre del archivo)
     if (page.includes('Dashboard.php')) {
         pageTitle.textContent = 'Dashboard';
-    } else if (page.includes('productos.php')) {
+    } else if (page.includes('gestion_productos.php') || page.includes('productos.php')) {
         pageTitle.textContent = 'Productos';
     } else if (page.includes('categoria.php')) {
         pageTitle.textContent = 'Categorías';

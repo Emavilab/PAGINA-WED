@@ -1,61 +1,3 @@
-<?php
-require_once '../core/sesiones.php';
-
-if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2)) {
-    header("Location: ../index1.php");
-    exit();
-}
-require_once '../core/conexion.php';
-// INSERTAR
-if(isset($_POST['guardar'])){
-    $nombre = $_POST['nombre'];
-    $icono = $_POST['icono'];
-    $descripcion = $_POST['descripcion'];
-    $estado = $_POST['estado'];
-
-    $conexion->query("INSERT INTO categorias (nombre, icono, descripcion, estado)
-                      VALUES ('$nombre','$icono','$descripcion','$estado')");
-
-    header("Location: categorias.php");
-    exit();
-}
-
-// ELIMINAR
-if(isset($_GET['eliminar'])){
-    $id = $_GET['eliminar'];
-    $conexion->query("DELETE FROM categorias WHERE id=$id");
-
-    header("Location: categorias.php");
-    exit();
-}
-
-// EDITAR (CARGAR DATOS)
-$editar = null;
-if(isset($_GET['editar'])){
-    $id = $_GET['editar'];
-    $resultado = $conexion->query("SELECT * FROM categorias WHERE id=$id");
-    $editar = $resultado->fetch_assoc();
-}
-
-// ACTUALIZAR
-if(isset($_POST['actualizar'])){
-    $id = $_POST['id'];
-    $nombre = $_POST['nombre'];
-    $icono = $_POST['icono'];
-    $descripcion = $_POST['descripcion'];
-    $estado = $_POST['estado'];
-
-    $conexion->query("UPDATE categorias SET
-                      nombre='$nombre',
-                      icono='$icono',
-                      descripcion='$descripcion',
-                      estado='$estado'
-                      WHERE id=$id");
-
-    header("Location: categorias.php");
-    exit();
-} 
-?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -64,129 +6,409 @@ if(isset($_POST['actualizar'])){
     <title>Gestión de Categorías</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-        <main class="max-w-7xl mx-auto px-4 py-8">
-            <!-- Botón Crear -->
-            <div class="mb-6">
-                <button onclick="toggleFormulario('crear')" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md flex items-center gap-2">
-                    <i class="fas fa-plus"></i> Nueva Categoría
-                </button>
+    <style>
+        .cat-modal-overlay { animation: catFadeIn 0.2s ease; }
+        .cat-modal-content { animation: catSlideUp 0.3s ease; }
+        @keyframes catFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes catSlideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .cat-loading { border: 3px solid #e5e7eb; border-top: 3px solid #7c3aed; border-radius: 50%; width: 36px; height: 36px; animation: catSpin 0.7s linear infinite; margin: 2rem auto; }
+        @keyframes catSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Gestión de Categorías</h1>
+                <p class="text-gray-500 mt-1">Administra las categorías de tus productos</p>
             </div>
+            <button onclick="abrirModalCategoria()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md flex items-center gap-2">
+                <i class="fas fa-plus"></i> Nueva Categoría
+            </button>
+        </div>
 
-            <!-- Formulario Crear/Editar -->
-            <div id="formulario-crear" class="hidden bg-white rounded-lg shadow-lg p-8 mb-8">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">
-                    <i class="fas fa-edit text-purple-600"></i> Crear/Editar Categoría
-                </h2>
-                <form method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Nombre -->
-                    <div> 
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="fas fa-heading text-purple-500"></i> Nombre de la Categoría
-                        </label>
-                        <input type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition" placeholder="Ej: Electrónica">
-                    </div>
-                    <input type="hidden" name="id" value="<?php echo $editar['id'] ?? ''; ?>">
-
-                    <input type="text" name="nombre" required
-                    value="<?php echo $editar['nombre'] ?? ''; ?>"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-
-                    <!-- Ícono -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="fas fa-icons text-purple-500"></i> Ícono (Font Awesome)
-                        </label>
-                        <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition" placeholder="Ej: fa-laptop">
-                      <input type="text" name="icono"
-                        value="<?php echo $editar['icono'] ?? ''; ?>"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                    </div>
-                    
-                    <!-- Descripción -->
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="fas fa-align-left text-purple-500"></i> Descripción
-                        </label>
-                        <textarea rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition" placeholder="Descripción de la categoría..."></textarea>
-                        <textarea name="descripcion" rows="4"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg"><?php echo $editar['descripcion'] ?? ''; ?></textarea>
-                    </div>
-
-                    <!-- Estado -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="fas fa-toggle-on text-green-500"></i> Estado
-                        </label>
-                        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition">
-                            <option value="activo">Activo</option>
-                            <option value="inactivo">Inactivo</option>
-                        </select>
-                        <select name="estado" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                        <option value="activo" <?php if(($editar['estado'] ?? '')=='activo') echo 'selected'; ?>>Activo</option>
-                        <option value="inactivo" <?php if(($editar['estado'] ?? '')=='inactivo') echo 'selected'; ?>>Inactivo</option>
-                        </select>
-                    </div>
-
-                    <!-- Botones -->
-                    <?php if($editar){ ?>
-                    <button type="submit" name="actualizar"
-                     class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg">
-                     <i class="fas fa-edit mr-2"></i> Actualizar Categoría
-                    </button>
-                    <?php } else { ?>
-                     <button type="submit" name="guardar"
-                     class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg">
-                     <i class="fas fa-save mr-2"></i> Guardar Categoría
-                    </button>
-                    <?php } ?>
-       
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Tabla de Categorías -->
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="bg-gradient-to-r from-purple-600 to-purple-800 text-white p-4">
-                    <h2 class="text-xl font-bold flex items-center gap-2">
-                        <i class="fas fa-list"></i> Lista de Categorías
-                    </h2>
+        <!-- Filtros y búsqueda -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 mb-6">
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex-1 relative">
+                    <input type="text" id="cat-busqueda" placeholder="Buscar categorías..."
+                        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                 </div>
-                
-                <div class="overflow-x-auto">
-                    <tbody>
-                <?php
-                $resultado = $conexion->query("SELECT * FROM categorias");
+                <select id="cat-filtro-estado" onchange="cargarCategorias()"
+                    class="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition">
+                    <option value="todos">Todos los estados</option>
+                    <option value="activo">Activos</option>
+                    <option value="inactivo">Inactivos</option>
+                </select>
+            </div>
+        </div>
 
-                while($fila = $resultado->fetch_assoc()){
-                ?>
-               <tr class="border-b border-gray-200 hover:bg-gray-50">
-                <td class="px-6 py-4"><?php echo $fila['id']; ?></td>
-                <td class="px-6 py-4 font-semibold"><?php echo $fila['nombre']; ?></td>
-                <td class="px-6 py-4">
-                 <i class="fas <?php echo $fila['icono']; ?> text-lg"></i>
-                 </td>
-                 <td class="px-6 py-4"><?php echo $fila['descripcion']; ?></td>
-                 <td class="px-6 py-4">
-                 <?php if($fila['estado']=='activo'){ ?>
-                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs">Activo</span>
-                <?php } else { ?>
-                <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs">Inactivo</span>
-                 <?php } ?>
-                 </td>
-                 <td class="px-6 py-4 text-center">
-                <a href="?editar=<?php echo $fila['id']; ?>"
-                class="bg-blue-500 text-white px-3 py-1 rounded mr-2">
-                <i class="fas fa-edit"></i>
-                 </a>
+        <!-- Contadores -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="bg-white rounded-lg border border-gray-200 p-4 text-center shadow-sm">
+                <p class="text-2xl font-bold text-gray-900" id="cat-count-total">0</p>
+                <p class="text-sm text-gray-500">Total</p>
+            </div>
+            <div class="bg-white rounded-lg border border-gray-200 p-4 text-center shadow-sm">
+                <p class="text-2xl font-bold text-green-600" id="cat-count-activo">0</p>
+                <p class="text-sm text-gray-500">Activas</p>
+            </div>
+            <div class="bg-white rounded-lg border border-gray-200 p-4 text-center shadow-sm">
+                <p class="text-2xl font-bold text-gray-400" id="cat-count-inactivo">0</p>
+                <p class="text-sm text-gray-500">Inactivas</p>
+            </div>
+        </div>
 
-                <a href="?eliminar=<?php echo $fila['id']; ?>"
-                onclick="return confirm('¿Eliminar esta categoría?')"
-                class="bg-red-500 text-white px-3 py-1 rounded">
-                <i class="fas fa-trash"></i>
-                </a>
-             </td>
-             </tr>
-            <?php } ?>
-            </tbody>      
+        <!-- Tabla -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-600 to-purple-800 text-white p-4">
+                <h2 class="text-lg font-bold flex items-center gap-2">
+                    <i class="fas fa-list"></i> Lista de Categorías
+                </h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Nombre</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ícono</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Descripción</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Estado</th>
+                            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cat-tabla-body">
+                        <tr><td colspan="6"><div class="cat-loading"></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Crear/Editar Categoría -->
+    <div id="cat-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 cat-modal-overlay">
+        <div class="cat-modal-content bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-900" id="cat-modal-titulo">
+                    <i class="fas fa-folder-plus text-purple-600 mr-2"></i>Nueva Categoría
+                </h2>
+                <button onclick="cerrarModalCategoria()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <form id="cat-formulario" onsubmit="guardarCategoria(event)" class="p-6 space-y-5">
+                <input type="hidden" id="cat-id" value="">
+
+                <!-- Nombre -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-heading text-purple-500 mr-1"></i> Nombre de la Categoría *
+                    </label>
+                    <input type="text" id="cat-nombre" required
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition"
+                        placeholder="Ej: Electrónica">
+                </div>
+
+                <!-- Ícono -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-icons text-purple-500 mr-1"></i> Ícono (clase Font Awesome)
+                    </label>
+                    <input type="text" id="cat-icono"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition"
+                        placeholder="Ej: fa-laptop">
+                    <p class="text-xs text-gray-400 mt-1">Usa clases de Font Awesome como: fa-laptop, fa-shirt, fa-utensils</p>
+                </div>
+
+                <!-- Descripción -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-align-left text-purple-500 mr-1"></i> Descripción
+                    </label>
+                    <textarea id="cat-descripcion" rows="3"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition resize-none"
+                        placeholder="Descripción de la categoría..."></textarea>
+                </div>
+
+                <!-- Estado -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-toggle-on text-green-500 mr-1"></i> Estado
+                    </label>
+                    <select id="cat-estado"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition">
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                    </select>
+                </div>
+
+                <!-- Botones -->
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="cerrarModalCategoria()"
+                        class="flex-1 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="cat-btn-guardar"
+                        class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                        <i class="fas fa-save"></i> <span>Guardar</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+    // ============ CONFIGURACIÓN ============
+    var CAT_API_URL = (function() {
+        var path = window.location.pathname;
+        if (path.includes('/admin/')) {
+            return '../api/api_categorias.php';
+        }
+        return 'api/api_categorias.php';
+    })();
+
+    var catModoEdicion = false;
+
+    // ============ CARGAR CATEGORÍAS ============
+    function cargarCategorias() {
+        var busqueda = document.getElementById('cat-busqueda') ? document.getElementById('cat-busqueda').value : '';
+        var estado = document.getElementById('cat-filtro-estado') ? document.getElementById('cat-filtro-estado').value : 'todos';
+        var tbody = document.getElementById('cat-tabla-body');
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="6"><div class="cat-loading"></div></td></tr>';
+
+        var url = CAT_API_URL + '?accion=listar';
+        if (estado && estado !== 'todos') url += '&estado=' + encodeURIComponent(estado);
+        if (busqueda.trim()) url += '&busqueda=' + encodeURIComponent(busqueda.trim());
+
+        fetch(url)
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.exito) {
+                    renderizarTablaCategorias(data.categorias);
+                    actualizarConteosCat(data.conteos);
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-500">' + (data.error || 'Error al cargar') + '</td></tr>';
+                }
+            })
+            .catch(function(err) {
+                console.error('Error:', err);
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-500">Error de conexión</td></tr>';
+            });
+    }
+
+    // ============ RENDERIZAR TABLA ============
+    function renderizarTablaCategorias(categorias) {
+        var tbody = document.getElementById('cat-tabla-body');
+
+        if (categorias.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-12">' +
+                '<i class="fas fa-folder-open text-4xl text-gray-300 mb-3 block"></i>' +
+                '<p class="text-gray-500 font-semibold">No hay categorías</p>' +
+                '<p class="text-gray-400 text-sm">Crea una nueva categoría para empezar</p>' +
+                '</td></tr>';
+            return;
+        }
+
+        var html = '';
+        categorias.forEach(function(cat) {
+            var estadoBadge = cat.estado === 'activo'
+                ? '<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">Activo</span>'
+                : '<span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-semibold">Inactivo</span>';
+
+            var iconoHtml = cat.icono
+                ? '<i class="fas ' + escapeHtmlCat(cat.icono) + ' text-lg text-purple-600"></i> <span class="text-xs text-gray-400 ml-1">' + escapeHtmlCat(cat.icono) + '</span>'
+                : '<span class="text-gray-400 text-sm">Sin ícono</span>';
+
+            html += '<tr class="border-b border-gray-100 hover:bg-gray-50 transition">' +
+                '<td class="px-6 py-4 text-sm text-gray-500 font-mono">' + cat.id_categoria + '</td>' +
+                '<td class="px-6 py-4 font-semibold text-gray-900">' + escapeHtmlCat(cat.nombre) + '</td>' +
+                '<td class="px-6 py-4">' + iconoHtml + '</td>' +
+                '<td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">' + escapeHtmlCat(cat.descripcion || '') + '</td>' +
+                '<td class="px-6 py-4">' + estadoBadge + '</td>' +
+                '<td class="px-6 py-4 text-center">' +
+                    '<div class="flex items-center justify-center gap-2">' +
+                        '<button onclick="editarCategoria(' + cat.id_categoria + ')" title="Editar" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm transition"><i class="fas fa-edit"></i></button>' +
+                        '<button onclick="eliminarCategoria(' + cat.id_categoria + ', \'' + escapeHtmlCat(cat.nombre).replace(/'/g, "\\'") + '\')" title="Eliminar" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm transition"><i class="fas fa-trash"></i></button>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    // ============ CONTEOS ============
+    function actualizarConteosCat(conteos) {
+        var el;
+        el = document.getElementById('cat-count-total'); if (el) el.textContent = conteos.total || 0;
+        el = document.getElementById('cat-count-activo'); if (el) el.textContent = conteos.activo || 0;
+        el = document.getElementById('cat-count-inactivo'); if (el) el.textContent = conteos.inactivo || 0;
+    }
+
+    // ============ MODAL ============
+    function abrirModalCategoria() {
+        catModoEdicion = false;
+        document.getElementById('cat-id').value = '';
+        document.getElementById('cat-nombre').value = '';
+        document.getElementById('cat-icono').value = '';
+        document.getElementById('cat-descripcion').value = '';
+        document.getElementById('cat-estado').value = 'activo';
+        document.getElementById('cat-modal-titulo').innerHTML = '<i class="fas fa-folder-plus text-purple-600 mr-2"></i>Nueva Categoría';
+        document.getElementById('cat-btn-guardar').querySelector('span').textContent = 'Guardar';
+        document.getElementById('cat-modal').classList.remove('hidden');
+    }
+
+    function editarCategoria(id) {
+        fetch(CAT_API_URL + '?accion=obtener&id=' + id)
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (!data.exito) {
+                    if (typeof CustomModal !== 'undefined') CustomModal.show('error', 'Error', data.error);
+                    return;
+                }
+                var cat = data.categoria;
+                catModoEdicion = true;
+                document.getElementById('cat-id').value = cat.id_categoria;
+                document.getElementById('cat-nombre').value = cat.nombre;
+                document.getElementById('cat-icono').value = cat.icono || '';
+                document.getElementById('cat-descripcion').value = cat.descripcion || '';
+                document.getElementById('cat-estado').value = cat.estado;
+                document.getElementById('cat-modal-titulo').innerHTML = '<i class="fas fa-edit text-blue-600 mr-2"></i>Editar Categoría';
+                document.getElementById('cat-btn-guardar').querySelector('span').textContent = 'Actualizar';
+                document.getElementById('cat-modal').classList.remove('hidden');
+            })
+            .catch(function(err) {
+                console.error(err);
+                if (typeof CustomModal !== 'undefined') CustomModal.show('error', 'Error', 'No se pudo cargar la categoría');
+            });
+    }
+
+    function cerrarModalCategoria() {
+        document.getElementById('cat-modal').classList.add('hidden');
+    }
+
+    // ============ GUARDAR (CREAR/EDITAR) ============
+    function guardarCategoria(e) {
+        e.preventDefault();
+
+        var id = document.getElementById('cat-id').value;
+        var nombre = document.getElementById('cat-nombre').value.trim();
+        var icono = document.getElementById('cat-icono').value.trim();
+        var descripcion = document.getElementById('cat-descripcion').value.trim();
+        var estado = document.getElementById('cat-estado').value;
+
+        if (!nombre) {
+            if (typeof CustomModal !== 'undefined') CustomModal.show('warning', 'Campo requerido', 'El nombre es obligatorio');
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('accion', catModoEdicion ? 'editar' : 'crear');
+        if (catModoEdicion) formData.append('id', id);
+        formData.append('nombre', nombre);
+        formData.append('icono', icono);
+        formData.append('descripcion', descripcion);
+        formData.append('estado', estado);
+
+        fetch(CAT_API_URL, { method: 'POST', body: formData })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.exito) {
+                    cerrarModalCategoria();
+                    if (typeof CustomModal !== 'undefined') {
+                        CustomModal.show('success', 'Éxito', data.mensaje, function() { cargarCategorias(); });
+                    } else {
+                        cargarCategorias();
+                    }
+                } else {
+                    if (typeof CustomModal !== 'undefined') CustomModal.show('error', 'Error', data.error);
+                }
+            })
+            .catch(function(err) {
+                console.error(err);
+                if (typeof CustomModal !== 'undefined') CustomModal.show('error', 'Error', 'Error de conexión');
+            });
+    }
+
+    // ============ ELIMINAR ============
+    function eliminarCategoria(id, nombre) {
+        var confirmar = function() {
+            var formData = new FormData();
+            formData.append('accion', 'eliminar');
+            formData.append('id', id);
+
+            fetch(CAT_API_URL, { method: 'POST', body: formData })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.exito) {
+                        if (typeof CustomModal !== 'undefined') {
+                            CustomModal.show('success', 'Eliminada', data.mensaje, function() { cargarCategorias(); });
+                        } else {
+                            cargarCategorias();
+                        }
+                    } else {
+                        if (typeof CustomModal !== 'undefined') CustomModal.show('error', 'Error', data.error);
+                    }
+                })
+                .catch(function(err) {
+                    console.error(err);
+                    if (typeof CustomModal !== 'undefined') CustomModal.show('error', 'Error', 'Error de conexión');
+                });
+        };
+
+        if (typeof CustomModal !== 'undefined') {
+            CustomModal.show('confirm', 'Eliminar categoría', '¿Estás seguro de eliminar la categoría "' + nombre + '"?', function(confirmed) {
+                if (confirmed) confirmar();
+            });
+        } else {
+            confirmar();
+        }
+    }
+
+    // ============ UTILIDADES ============
+    function escapeHtmlCat(text) {
+        if (!text) return '';
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    // ============ EXPONER FUNCIONES GLOBALES (para onclick en HTML) ============
+    window.cargarCategorias = cargarCategorias;
+    window.abrirModalCategoria = abrirModalCategoria;
+    window.editarCategoria = editarCategoria;
+    window.cerrarModalCategoria = cerrarModalCategoria;
+    window.guardarCategoria = guardarCategoria;
+    window.eliminarCategoria = eliminarCategoria;
+
+    // ============ INICIALIZACIÓN ============
+    // setTimeout asegura que el DOM inyectado por Dashboard esté listo
+    setTimeout(function() {
+        cargarCategorias();
+
+        // Cerrar modal al hacer clic fuera
+        var modal = document.getElementById('cat-modal');
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) cerrarModalCategoria();
+            });
+        }
+
+        // Búsqueda con debounce
+        var catSearchTimeout;
+        var searchInput = document.getElementById('cat-busqueda');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                clearTimeout(catSearchTimeout);
+                catSearchTimeout = setTimeout(function() { cargarCategorias(); }, 400);
+            });
+        }
+    }, 100);
+
+    })(); // Fin IIFE
+    </script>
+</body>
+</html>

@@ -205,18 +205,18 @@
     </div>
 
     <script>
+    (function() {
     // ============ CONFIGURACIÓN ============
-    // Detectar la ruta base relativa para la API
-    const MSG_API_URL = (function() {
-        const path = window.location.pathname;
+    var MSG_API_URL = (function() {
+        var path = window.location.pathname;
         if (path.includes('/admin/')) {
             return '../api/api_mensajeria.php';
         }
         return 'api/api_mensajeria.php';
     })();
 
-    let filtroActualMsg = 'todos';
-    let mensajesCargadosMsg = [];
+    var filtroActualMsg = 'todos';
+    var mensajesCargadosMsg = [];
 
     // ============ CARGAR MENSAJES ============
     function cargarMensajes() {
@@ -567,13 +567,24 @@
         });
     }
 
+    // ============ EXPONER FUNCIONES GLOBALES (para onclick en HTML) ============
+    window.cargarMensajes = cargarMensajes;
+    window.cerrarModalMsg = cerrarModalMsg;
+    window.abrirModalMsg = abrirModalMsg;
+    window.marcarComoLeidoMsg = marcarComoLeidoMsg;
+    window.eliminarMensajeMsg = eliminarMensajeMsg;
+    window.cerrarTicketMsg = cerrarTicketMsg;
+    window.accionMarcarLeidoMsg = accionMarcarLeidoMsg;
+    window.accionGuardarRespuestaMsg = accionGuardarRespuestaMsg;
+    window.accionCerrarTicketMsg = accionCerrarTicketMsg;
+
     // ============ INICIALIZACIÓN ============
-    function initMensajeriaFunctions() {
-        // Cargar mensajes al inicio
+    // setTimeout asegura que el DOM inyectado por Dashboard esté listo
+    setTimeout(function() {
         cargarMensajes();
 
         // Cerrar modal al hacer clic fuera
-        const modal = document.getElementById('messageModalMsg');
+        var modal = document.getElementById('messageModalMsg');
         if (modal) {
             modal.addEventListener('click', function(e) {
                 if (e.target === this) cerrarModalMsg();
@@ -581,9 +592,9 @@
         }
 
         // Filtros (tabs)
-        document.querySelectorAll('#mensajeria-container .tab-msg').forEach(tab => {
+        document.querySelectorAll('#mensajeria-container .tab-msg').forEach(function(tab) {
             tab.addEventListener('click', function() {
-                document.querySelectorAll('#mensajeria-container .tab-msg').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('#mensajeria-container .tab-msg').forEach(function(t) { t.classList.remove('active'); });
                 this.classList.add('active');
                 filtroActualMsg = this.getAttribute('data-filter');
                 cargarMensajes();
@@ -591,24 +602,19 @@
         });
 
         // Búsqueda con debounce
-        let timeoutBusquedaMsg;
-        const searchInput = document.getElementById('search-input-msg');
+        var timeoutBusquedaMsg;
+        var searchInput = document.getElementById('search-input-msg');
         if (searchInput) {
             searchInput.addEventListener('keyup', function() {
                 clearTimeout(timeoutBusquedaMsg);
-                timeoutBusquedaMsg = setTimeout(() => {
+                timeoutBusquedaMsg = setTimeout(function() {
                     cargarMensajes();
                 }, 400);
             });
         }
-    }
+    }, 100);
 
-    // Ejecutar al cargar
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initMensajeriaFunctions);
-    } else {
-        initMensajeriaFunctions();
-    }
+    })(); // Fin IIFE
     </script>
 </body>
 </html>

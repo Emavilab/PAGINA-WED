@@ -434,10 +434,14 @@ function loadPage(page, event) {
                 
                 mainContent.innerHTML = htmlContent;
                 
+                // Limpiar scripts dinámicos anteriores antes de inyectar nuevos
+                document.querySelectorAll('script[data-dynamic-page]').forEach(s => s.remove());
+                
                 // Ejecutar scripts después de insertar el HTML
                 scripts.forEach(scriptContent => {
                     const script = document.createElement('script');
                     script.textContent = scriptContent;
+                    script.setAttribute('data-dynamic-page', 'true');
                     document.body.appendChild(script);
                 });
             })

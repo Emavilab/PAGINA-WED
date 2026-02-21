@@ -113,12 +113,20 @@
                 <!-- Ícono -->
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
-                        <i class="fas fa-icons text-purple-500 mr-1"></i> Ícono (clase Font Awesome)
+                        <i class="fas fa-icons text-purple-500 mr-1"></i> Ícono
                     </label>
-                    <input type="text" id="cat-icono"
-                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition"
-                        placeholder="Ej: fa-laptop">
-                    <p class="text-xs text-gray-400 mt-1">Usa clases de Font Awesome como: fa-laptop, fa-shirt, fa-utensils</p>
+                    <div class="flex items-center gap-3 mb-2">
+                        <div id="cat-icono-preview" class="w-12 h-12 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 text-gray-400 text-xl flex-shrink-0">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <input type="text" id="cat-icono"
+                            class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition"
+                            placeholder="Ej: fa-laptop" oninput="previsualizarIcono(this.value)">
+                    </div>
+                    <p class="text-xs text-gray-400 mb-2">Selecciona un ícono o escribe la clase manualmente</p>
+                    <!-- Grid de íconos populares -->
+                    <div class="grid grid-cols-8 gap-1.5 max-h-40 overflow-y-auto p-2 bg-gray-50 rounded-lg border border-gray-200" id="cat-iconos-grid">
+                    </div>
                 </div>
 
                 <!-- Descripción -->
@@ -258,6 +266,8 @@
         document.getElementById('cat-estado').value = 'activo';
         document.getElementById('cat-modal-titulo').innerHTML = '<i class="fas fa-folder-plus text-purple-600 mr-2"></i>Nueva Categoría';
         document.getElementById('cat-btn-guardar').querySelector('span').textContent = 'Guardar';
+        renderizarGridIconos();
+        previsualizarIcono('');
         document.getElementById('cat-modal').classList.remove('hidden');
     }
 
@@ -278,6 +288,8 @@
                 document.getElementById('cat-estado').value = cat.estado;
                 document.getElementById('cat-modal-titulo').innerHTML = '<i class="fas fa-edit text-blue-600 mr-2"></i>Editar Categoría';
                 document.getElementById('cat-btn-guardar').querySelector('span').textContent = 'Actualizar';
+                renderizarGridIconos();
+                previsualizarIcono(cat.icono || '');
                 document.getElementById('cat-modal').classList.remove('hidden');
             })
             .catch(function(err) {
@@ -376,6 +388,137 @@
         return div.innerHTML;
     }
 
+    // ============ SELECTOR DE ÍCONOS ============
+    var iconosPopulares = [
+        { clase: 'fa-laptop', nombre: 'Laptop' },
+        { clase: 'fa-mobile-screen', nombre: 'Móvil' },
+        { clase: 'fa-tv', nombre: 'TV' },
+        { clase: 'fa-headphones', nombre: 'Audifonos' },
+        { clase: 'fa-camera', nombre: 'Cámara' },
+        { clase: 'fa-gamepad', nombre: 'Juegos' },
+        { clase: 'fa-keyboard', nombre: 'Teclado' },
+        { clase: 'fa-microchip', nombre: 'Chip' },
+        { clase: 'fa-shirt', nombre: 'Ropa' },
+        { clase: 'fa-shoe-prints', nombre: 'Zapatos' },
+        { clase: 'fa-gem', nombre: 'Joyería' },
+        { clase: 'fa-glasses', nombre: 'Gafas' },
+        { clase: 'fa-hat-cowboy', nombre: 'Sombrero' },
+        { clase: 'fa-bag-shopping', nombre: 'Bolsa' },
+        { clase: 'fa-ring', nombre: 'Anillo' },
+        { clase: 'fa-vest', nombre: 'Chaleco' },
+        { clase: 'fa-utensils', nombre: 'Comida' },
+        { clase: 'fa-burger', nombre: 'Burger' },
+        { clase: 'fa-pizza-slice', nombre: 'Pizza' },
+        { clase: 'fa-mug-hot', nombre: 'Café' },
+        { clase: 'fa-ice-cream', nombre: 'Helado' },
+        { clase: 'fa-wine-bottle', nombre: 'Vino' },
+        { clase: 'fa-apple-whole', nombre: 'Fruta' },
+        { clase: 'fa-fish', nombre: 'Pescado' },
+        { clase: 'fa-cheese', nombre: 'Lácteos' },
+        { clase: 'fa-cow', nombre: 'Vaca' },
+        { clase: 'fa-egg', nombre: 'Huevo' },
+        { clase: 'fa-wheat-awn', nombre: 'Granos' },
+        { clase: 'fa-carrot', nombre: 'Verduras' },
+        { clase: 'fa-lemon', nombre: 'Cítricos' },
+        { clase: 'fa-drumstick-bite', nombre: 'Pollo' },
+        { clase: 'fa-bread-slice', nombre: 'Pan' },
+        { clase: 'fa-jar', nombre: 'Conservas' },
+        { clase: 'fa-bottle-water', nombre: 'Agua' },
+        { clase: 'fa-candy-cane', nombre: 'Dulces' },
+        { clase: 'fa-cookie', nombre: 'Galleta' },
+        { clase: 'fa-house', nombre: 'Hogar' },
+        { clase: 'fa-couch', nombre: 'Muebles' },
+        { clase: 'fa-bed', nombre: 'Cama' },
+        { clase: 'fa-bath', nombre: 'Baño' },
+        { clase: 'fa-lightbulb', nombre: 'Luz' },
+        { clase: 'fa-plug', nombre: 'Enchufe' },
+        { clase: 'fa-fan', nombre: 'Ventilador' },
+        { clase: 'fa-blender', nombre: 'Licuadora' },
+        { clase: 'fa-car', nombre: 'Auto' },
+        { clase: 'fa-bicycle', nombre: 'Bicicleta' },
+        { clase: 'fa-motorcycle', nombre: 'Moto' },
+        { clase: 'fa-truck', nombre: 'Camión' },
+        { clase: 'fa-plane', nombre: 'Avión' },
+        { clase: 'fa-gas-pump', nombre: 'Gasolina' },
+        { clase: 'fa-wrench', nombre: 'Herram.' },
+        { clase: 'fa-screwdriver-wrench', nombre: 'Tools' },
+        { clase: 'fa-book', nombre: 'Libro' },
+        { clase: 'fa-graduation-cap', nombre: 'Educación' },
+        { clase: 'fa-pen', nombre: 'Escritura' },
+        { clase: 'fa-palette', nombre: 'Arte' },
+        { clase: 'fa-music', nombre: 'Música' },
+        { clase: 'fa-guitar', nombre: 'Guitarra' },
+        { clase: 'fa-futbol', nombre: 'Fútbol' },
+        { clase: 'fa-basketball', nombre: 'Basket' },
+        { clase: 'fa-dumbbell', nombre: 'Gym' },
+        { clase: 'fa-person-running', nombre: 'Deporte' },
+        { clase: 'fa-heart-pulse', nombre: 'Salud' },
+        { clase: 'fa-pills', nombre: 'Medicina' },
+        { clase: 'fa-baby', nombre: 'Bebé' },
+        { clase: 'fa-paw', nombre: 'Mascotas' },
+        { clase: 'fa-dog', nombre: 'Perro' },
+        { clase: 'fa-cat', nombre: 'Gato' },
+        { clase: 'fa-seedling', nombre: 'Jardín' },
+        { clase: 'fa-tree', nombre: 'Árbol' },
+        { clase: 'fa-spa', nombre: 'Spa' },
+        { clase: 'fa-gift', nombre: 'Regalo' },
+        { clase: 'fa-star', nombre: 'Estrella' },
+        { clase: 'fa-bolt', nombre: 'Eléctrico' },
+        { clase: 'fa-fire', nombre: 'Fuego' },
+        { clase: 'fa-tag', nombre: 'Etiqueta' }
+    ];
+
+    function renderizarGridIconos() {
+        var grid = document.getElementById('cat-iconos-grid');
+        if (!grid) return;
+        var html = '';
+        iconosPopulares.forEach(function(icon) {
+            html += '<button type="button" onclick="seleccionarIcono(\'' + icon.clase + '\')" ' +
+                'class="cat-icono-btn flex flex-col items-center justify-center p-2 rounded-lg hover:bg-purple-100 hover:text-purple-600 transition cursor-pointer border border-transparent hover:border-purple-300" ' +
+                'title="' + icon.nombre + '" data-icono="' + icon.clase + '">' +
+                '<i class="fas ' + icon.clase + ' text-base"></i>' +
+                '<span class="text-[9px] text-gray-400 mt-0.5 truncate w-full text-center">' + icon.nombre + '</span>' +
+                '</button>';
+        });
+        grid.innerHTML = html;
+    }
+
+    function seleccionarIcono(clase) {
+        document.getElementById('cat-icono').value = clase;
+        previsualizarIcono(clase);
+        // Marcar visualmente el seleccionado
+        document.querySelectorAll('.cat-icono-btn').forEach(function(btn) {
+            if (btn.getAttribute('data-icono') === clase) {
+                btn.classList.add('bg-purple-100', 'text-purple-600', 'border-purple-400');
+            } else {
+                btn.classList.remove('bg-purple-100', 'text-purple-600', 'border-purple-400');
+            }
+        });
+    }
+
+    function previsualizarIcono(valor) {
+        var preview = document.getElementById('cat-icono-preview');
+        if (!preview) return;
+        valor = (valor || '').trim();
+        if (valor) {
+            preview.innerHTML = '<i class="fas ' + escapeHtmlCat(valor) + ' text-2xl text-purple-600"></i>';
+            preview.classList.remove('border-dashed', 'border-gray-300', 'text-gray-400');
+            preview.classList.add('border-solid', 'border-purple-400', 'bg-purple-50');
+        } else {
+            preview.innerHTML = '<i class="fas fa-image"></i>';
+            preview.classList.add('border-dashed', 'border-gray-300', 'text-gray-400');
+            preview.classList.remove('border-solid', 'border-purple-400', 'bg-purple-50');
+        }
+        // Resaltar en el grid si coincide
+        document.querySelectorAll('.cat-icono-btn').forEach(function(btn) {
+            if (btn.getAttribute('data-icono') === valor) {
+                btn.classList.add('bg-purple-100', 'text-purple-600', 'border-purple-400');
+            } else {
+                btn.classList.remove('bg-purple-100', 'text-purple-600', 'border-purple-400');
+            }
+        });
+    }
+
     // ============ EXPONER FUNCIONES GLOBALES (para onclick en HTML) ============
     window.cargarCategorias = cargarCategorias;
     window.abrirModalCategoria = abrirModalCategoria;
@@ -383,6 +526,8 @@
     window.cerrarModalCategoria = cerrarModalCategoria;
     window.guardarCategoria = guardarCategoria;
     window.eliminarCategoria = eliminarCategoria;
+    window.seleccionarIcono = seleccionarIcono;
+    window.previsualizarIcono = previsualizarIcono;
 
     // ============ INICIALIZACIÓN ============
     // setTimeout asegura que el DOM inyectado por Dashboard esté listo

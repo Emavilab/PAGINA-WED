@@ -55,14 +55,17 @@
                 data.forEach(p => {
                     const card = document.createElement('div');
                     card.className = 'bg-white dark:bg-slate-800 rounded-lg shadow hover:shadow-lg transition overflow-hidden flex flex-col';
-                    const imgUrl = p.imagen_producto ? `../img/productos/${p.imagen_producto}` : 'https://via.placeholder.com/300x200?text=Sin+imagen';
+                    const imgUrl = p.imagen_principal ? `../${p.imagen_principal}` : 'https://via.placeholder.com/300x200?text=Sin+imagen';
+                    const precioHtml = (p.precio_descuento && parseFloat(p.precio_descuento) > 0)
+                        ? `<p class="text-gray-400 line-through text-sm">$${parseFloat(p.precio).toFixed(2)}</p><p class="text-primary font-bold text-xl">$${parseFloat(p.precio_descuento).toFixed(2)}</p>`
+                        : `<p class="text-primary font-bold text-xl">$${parseFloat(p.precio).toFixed(2)}</p>`;
                     card.innerHTML = `
-                        <img src="${imgUrl}" alt="${p.nombre_producto}" class="w-full h-48 object-cover" />
+                        <img src="${imgUrl}" alt="${p.nombre}" class="w-full h-48 object-cover" />
                         <div class="p-4 flex-1 flex flex-col justify-between">
                             <div>
-                                <h2 class="font-semibold text-lg mb-1">${p.nombre_producto}</h2>
-                                <p class="text-xs text-gray-500 mb-2">SKU: ${p.sku_codigo_referencia}</p>
-                                <p class="text-primary font-bold text-xl">$${parseFloat(p.precio_venta).toFixed(2)}</p>
+                                <h2 class="font-semibold text-lg mb-1">${p.nombre}</h2>
+                                <p class="text-xs text-gray-500 mb-2">${p.categoria_nombre || ''}</p>
+                                ${precioHtml}
                             </div>
                             <button class="mt-4 inline-flex items-center justify-center gap-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition">
                                 <span class="material-symbols-outlined">add_shopping_cart</span> Agregar

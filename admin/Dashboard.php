@@ -8,7 +8,7 @@ require_once '../core/sesiones.php';
 
 // Verificar autenticación
 if (!usuarioAutenticado()) {
-    header("Location: login.php");
+    header("Location: ../pages/login.php");
     exit();
 }
 

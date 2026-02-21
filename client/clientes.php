@@ -1,10 +1,80 @@
 <?php
-require_once '../core/sesiones.php';
 
-if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2)) {
-    header("Location: ../index1.php");
-    exit();
+require_once '../core/sesiones.php';
+require_once '../core/conexion.php';
+
+/* procesar formulario */
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+    // activar reporte de errores
+    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+    $conexion->set_charset("utf8mb4");
+
+    try {
+
+        // obtener datos
+        $nombre   = trim($_POST['nombre']);
+        $correo   = trim($_POST['correo']);
+        $password = $_POST['password'];
+        $estado   = $_POST['estado'];
+
+        // validar campos vacios
+        if (empty($nombre) || empty($correo) || empty($password) || empty($estado)) {
+            echo "<script>alert('datos incompletos');</script>";
+            exit();
+        }
+
+        // verificar si correo existe
+        $stmt = $conexion->prepare("SELECT id_usuario FROM usuarios WHERE correo = ?");
+        $stmt->bind_param("s", $correo);
+        $stmt->execute();
+        $resultadoCorreo = $stmt->get_result();
+
+        if ($resultadoCorreo->num_rows > 0) {
+            echo "<script>alert('el correo ya existe');</script>";
+            exit();
+        }
+
+        // encriptar clave
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+        // insertar usuario
+        $stmt = $conexion->prepare("INSERT INTO usuarios (nombre, correo, contraseña, estado, id_rol) VALUES (?, ?, ?, ?, 3)");
+        $stmt->bind_param("ssss", $nombre, $correo, $passwordHash, $estado);
+        $stmt->execute();
+
+        // obtener id generado
+        $id_usuario = $conexion->insert_id;
+
+        // insertar cliente
+        $stmt2 = $conexion->prepare("INSERT INTO clientes (id_usuario, nombre, estado) VALUES (?, ?, ?)");
+        $stmt2->bind_param("iss", $id_usuario, $nombre, $estado);
+        $stmt2->execute();
+
+        echo "<script>alert('cliente registrado correctamente');</script>";
+
+    } catch (Exception $e) {
+
+        // mostrar error real
+        echo "<script>alert('error al guardar');</script>";
+        exit();
+    }
 }
+/*   CONSULTA PARA TABLA */
+
+$sql = "SELECT 
+            clientes.id_usuario,
+            clientes.nombre,
+            clientes.estado,
+            clientes.fecha_registro,
+            usuarios.correo
+        FROM clientes
+        INNER JOIN usuarios 
+            ON clientes.id_usuario = usuarios.id_usuario";
+
+$resultado = mysqli_query($conexion, $sql);
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -31,13 +101,14 @@ if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] !=
                 <h2 class="text-2xl font-bold mb-6 text-gray-800">
                     <i class="fas fa-edit text-indigo-600"></i> Crear/Editar Cliente
                 </h2>
-                <form class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form id="formCliente">
                     <!-- Nombre -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-user text-indigo-500"></i> Nombre Completo
                         </label>
-                        <input type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" placeholder="Juan Pérez">
+                        <input type="text" name="nombre" required class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Juan Pérez">
+                        <input type="hidden" name="test" value="123">
                     </div>
 
                     <!-- Correo -->
@@ -45,15 +116,7 @@ if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] !=
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-envelope text-indigo-500"></i> Correo Electrónico
                         </label>
-                        <input type="email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" placeholder="juan@example.com">
-                    </div>
-
-                    <!-- Teléfono -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="fas fa-phone text-indigo-500"></i> Teléfono
-                        </label>
-                        <input type="tel" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" placeholder="123-456-7890">
+                        <input type="email" name="correo" required class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="juan@example.com">
                     </div>
 
                     <!-- Contraseña -->
@@ -61,7 +124,7 @@ if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] !=
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-lock text-indigo-500"></i> Contraseña
                         </label>
-                        <input type="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition" placeholder="••••••••">
+                        <input type="password" name="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="••••••••">
                     </div>
 
                     <!-- Estado -->
@@ -69,17 +132,16 @@ if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] !=
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-toggle-on text-green-500"></i> Estado
                         </label>
-                        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition">
+                       <select name="estado" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                             <option value="activo">Activo</option>
-                            <option value="bloqueado">Bloqueado</option>
+                            <option value="inactivo">Inactivo</option>
                         </select>
                     </div>
 
                     <!-- Botones -->
                     <div class="md:col-span-2 flex gap-4">
-                        <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md">
-                            <i class="fas fa-save mr-2"></i> Guardar Cliente
-                        </button>
+                        <input type="submit" value="Guardar Cliente"
+                        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md">
                         <button type="button" onclick="toggleFormulario('crear')" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md">
                             <i class="fas fa-times mr-2"></i> Cancelar
                         </button>
@@ -95,58 +157,271 @@ if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] !=
                     </h2>
                 </div>
                 
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="bg-gray-100 border-b-2 border-gray-300">
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Correo</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Teléfono</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Fecha Registro</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
-                                <th class="px-6 py-3 text-center text-sm font-semibold text-gray-700">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
-                                <td class="px-6 py-4 text-sm text-gray-700">1</td>
-                                <td class="px-6 py-4 text-sm text-gray-700 font-semibold">Juan Pérez</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">juan@example.com</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">123-456-7890</td>
-                                <td class="px-6 py-4 text-sm text-gray-600">13-02-2026</td>
-                                <td class="px-6 py-4 text-sm">
-                                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">Activo</span>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-center">
-                                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2 transition">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
-                                <td class="px-6 py-4 text-sm text-gray-700">2</td>
-                                <td class="px-6 py-4 text-sm text-gray-700 font-semibold">María García</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">maria@example.com</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">987-654-3210</td>
-                                <td class="px-6 py-4 text-sm text-gray-600">12-02-2026</td>
-                                <td class="px-6 py-4 text-sm">
-                                    <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">Bloqueado</span>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-center">
-                                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2 transition">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+<div class="overflow-x-auto">
+    <table class="w-full">
+        <thead>
+            <tr class="bg-gray-100 border-b-2 border-gray-300">
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Correo</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Fecha Registro</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
+                <th class="px-6 py-3 text-center text-sm font-semibold text-gray-700">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while($fila = mysqli_fetch_assoc($resultado)) { ?>
+                <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
+                    <td class="px-6 py-4 text-sm text-gray-700">
+                        <?php echo $fila['id_usuario']; ?>
+                    </td>
+
+                    <td class="px-6 py-4 text-sm text-gray-700 font-semibold">
+                        <?php echo $fila['nombre']; ?>
+                    </td>
+
+                    <td class="px-6 py-4 text-sm text-gray-700">
+                        <?php echo $fila['correo']; ?>
+                    </td>
+
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                        <?php echo $fila['fecha_registro']; ?>
+                    </td>
+
+                    <td class="px-6 py-4 text-sm">
+                        <?php if($fila['estado'] == 'activo') { ?>
+                            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">Activo</span>
+                        <?php } else { ?>
+                            <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">Inactivo</span>
+                        <?php } ?>
+                    </td>
+
+                    <td class="px-6 py-4 text-sm text-center">
+                        <button 
+                            class="btn-editar bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2 transition"
+                            data-id="<?php echo $fila['id_usuario']; ?>">
+                            <i class="fas fa-edit"></i>
+                        </button>
+
+                        <button 
+                            class="btn-eliminar bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition"
+                            data-id="<?php echo $fila['id_usuario']; ?>">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            <?php } ?>
+        </tbody>
+    </table>
+</div>
+<!-- MODAL EDITAR -->
+<div id="modalEditar" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h2 class="text-xl font-bold mb-4">Editar Cliente</h2>
+
+        <form id="formEditar">
+            <input type="hidden" name="id" id="edit_id">
+
+            <div class="mb-3">
+                <input type="text" name="nombre" id="edit_nombre" 
+                class="w-full border px-3 py-2 rounded" required>
+            </div>
+
+            <div class="mb-3">
+                <input type="email" name="correo" id="edit_correo" 
+                class="w-full border px-3 py-2 rounded" required>
+            </div>
+
+            <div class="mb-3">
+                <select name="estado" id="edit_estado"
+                class="w-full border px-3 py-2 rounded">
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                </select>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="submit"
+                 class="flex-1 bg-indigo-600 text-white py-2 rounded">
+                Guardar
+                    </button>
+
+                <button type="button"
+                onclick="cerrarModal()"
+                class="flex-1 bg-gray-400 text-white py-2 rounded">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- MODAL ELIMINAR -->
+<div id="modalEliminar" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-full max-w-sm text-center">
+        <h2 class="text-lg font-bold mb-4">¿Eliminar cliente?</h2>
+
+        <input type="hidden" id="delete_id">
+
+        <div class="flex gap-3">
+            <button onclick="confirmarEliminar()"
+            class="flex-1 bg-red-600 text-white py-2 rounded">
+                Sí, eliminar
+            </button>
+
+            <button onclick="cerrarModal()"
+            class="flex-1 bg-gray-400 text-white py-2 rounded">
+                Cancelar
+            </button>
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById("formCliente").addEventListener("submit", function(e) {
+
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    fetch("../client/clientes.php", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.text())
+    .then(data => {
+        document.getElementById("main-content").innerHTML = data;
+    })
+    .catch(error => {
+        alert("error al enviar datos");
+        console.error(error);
+    });
+
+});
+</script>
+<script>
+
+// CLICK GLOBAL (SPA SAFE)
+document.addEventListener("click", function(e){
+
+    // EDITAR
+    const btnEditar = e.target.closest(".btn-editar");
+    if(btnEditar){
+        const id = btnEditar.dataset.id;
+        abrirModalEditar(id);
+    }
+
+    // ELIMINAR
+    const btnEliminar = e.target.closest(".btn-eliminar");
+    if(btnEliminar){
+        const id = btnEliminar.dataset.id;
+        document.getElementById("delete_id").value = id;
+
+        const modal = document.getElementById("modalEliminar");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+    }
+
+});
+
+
+// ABRIR MODAL EDITAR
+function abrirModalEditar(id){
+
+    fetch("/PAGINA-WED/client/clientes_obtener.php?id=" + id)
+    .then(res => res.json())
+    .then(data => {
+
+        if(!data){
+            alert("No se pudo obtener el cliente");
+            return;
+        }
+
+        document.getElementById("edit_id").value = data.id_usuario;
+        document.getElementById("edit_nombre").value = data.nombre;
+        document.getElementById("edit_correo").value = data.correo;
+        document.getElementById("edit_estado").value = data.estado;
+
+        const modal = document.getElementById("modalEditar");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Error al abrir modal");
+    });
+}
+
+
+// CERRAR MODAL
+function cerrarModal(){
+
+    document.getElementById("modalEditar").classList.add("hidden");
+    document.getElementById("modalEditar").classList.remove("flex");
+
+    document.getElementById("modalEliminar").classList.add("hidden");
+    document.getElementById("modalEliminar").classList.remove("flex");
+
+}
+
+// EDITAR
+document.getElementById("formEditar").addEventListener("submit", function(e){
+
+    console.log("SUBMIT DIRECTO");
+
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    fetch("/PAGINA-WED/client/clientes_editar.php", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.success){
+            cerrarModal();
+            loadPage('/PAGINA-WED/client/clientes.php');
+        } else {
+            alert(data.message);
+        }
+
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Error en la petición");
+    });
+
+});
+// ELIMINAR
+function confirmarEliminar(){
+
+    const id = document.getElementById("delete_id").value;
+
+    fetch("/PAGINA-WED/client/clientes_eliminar.php", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({id:id})
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.success){
+            cerrarModal();
+            loadPage('/PAGINA-WED/client/clientes.php');
+        }else{
+            alert(data.message);
+        }
+
+    })
+    .catch(err => {
+        console.error(err);
+    });
+
+}
+
+</script>
+
+</body>
+</html>

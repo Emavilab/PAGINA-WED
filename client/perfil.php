@@ -26,7 +26,7 @@ Información Personal
 </a>
 </li>
 <li>
-<a class="flex items-center gap-3 px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="#">
+<a class="flex items-center gap-3 px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer nav-tab" data-tab="direcciones" href="javascript:void(0)">
 <span class="material-symbols-outlined text-[20px]">location_on</span>
 Direcciones de Envío
 </a>
@@ -95,13 +95,89 @@ Seguridad
 </div>
 </form>
 </div>
-</div>
 <div class="mt-8 p-6 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-2xl flex items-start gap-4">
-<span class="material-icons text-red-500 mt-0.5">warning</span>
+<span class="material-symbols-outlined text-red-500 mt-0.5">warning</span>
 <div>
 <h4 class="font-bold text-red-800 dark:text-red-400">Eliminar cuenta</h4>
 <p class="text-sm text-red-600 dark:text-red-500/80 mt-1">Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, asegúrate.</p>
 <button class="mt-3 text-sm font-bold text-red-600 hover:text-red-700 underline" type="button" onclick="eliminarCuenta()">Quiero eliminar mi cuenta</button>
+</div>
+</div>
+</div>
+</div>
+<div id="tab-direcciones" class="tab-content hidden">
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h2 class="text-3xl font-extrabold text-slate-900 dark:text-white">Mis Direcciones</h2>
+<p class="text-slate-500 dark:text-slate-400 mt-1">Gestiona tus lugares de entrega para un proceso de compra más rápido.</p>
+</div>
+<button class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-blue-600 text-white font-bold rounded-xl shadow-md transition-all active:scale-95">
+<span class="material-symbols-outlined text-lg">add</span>
+Agregar Nueva Dirección
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+<div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-primary shadow-sm overflow-hidden relative">
+<div class="absolute top-4 right-4 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">Predeterminada</div>
+<div class="p-6">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined">home</span>
+</div>
+<div>
+<h3 class="font-bold text-slate-900 dark:text-white">Casa</h3>
+<p class="text-xs text-slate-500">Juan Pérez</p>
+</div>
+</div>
+<div class="space-y-1 text-sm text-slate-600 dark:text-slate-400 mb-6">
+<p>Calle de Serrano, 45, 3º Izquierda</p>
+<p>28001 Madrid, España</p>
+<p>Tel: +34 600 000 000</p>
+</div>
+<div class="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+<button class="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700">
+<span class="material-symbols-outlined text-base">edit</span>
+Editar
+</button>
+<button class="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors border border-transparent">
+<span class="material-symbols-outlined text-base">delete</span>
+Eliminar
+</button>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="p-6">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined">work</span>
+</div>
+<div>
+<h3 class="font-bold text-slate-900 dark:text-white">Oficina</h3>
+<p class="text-xs text-slate-500">Juan Pérez - RetailCMS HQ</p>
+</div>
+</div>
+<div class="space-y-1 text-sm text-slate-600 dark:text-slate-400 mb-6">
+<p>Paseo de la Castellana, 100</p>
+<p>28046 Madrid, España</p>
+<p>Tel: +34 600 000 001</p>
+</div>
+<div class="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+<button class="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700">
+<span class="material-symbols-outlined text-base">edit</span>
+Editar
+</button>
+<button class="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors border border-transparent">
+<span class="material-symbols-outlined text-base">delete</span>
+Eliminar
+</button>
+</div>
+</div>
+</div>
+<button class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 flex flex-col items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all group">
+<span class="material-symbols-outlined text-4xl mb-2 group-hover:scale-110 transition-transform">add_circle</span>
+<span class="font-bold">Añadir otra dirección</span>
+</button>
 </div>
 </div>
 </div>

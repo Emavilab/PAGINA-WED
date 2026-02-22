@@ -7,36 +7,42 @@ require_once '../core/conexion.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    // activar reporte de errores
+    header('Content-Type: application/json; charset=utf-8');
+
     mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     $conexion->set_charset("utf8mb4");
 
     try {
 
-        // obtener datos
         $nombre   = trim($_POST['nombre']);
         $correo   = trim($_POST['correo']);
         $password = $_POST['password'];
         $estado   = $_POST['estado'];
 
-        // validar campos vacios
         if (empty($nombre) || empty($correo) || empty($password) || empty($estado)) {
-            echo "<script>alert('datos incompletos');</script>";
+            echo json_encode([
+                "success" => false,
+                "message" => "Datos incompletos"
+            ]);
             exit();
         }
 
-        // verificar si correo existe
+        // verificar correo existente
         $stmt = $conexion->prepare("SELECT id_usuario FROM usuarios WHERE correo = ?");
         $stmt->bind_param("s", $correo);
         $stmt->execute();
         $resultadoCorreo = $stmt->get_result();
 
         if ($resultadoCorreo->num_rows > 0) {
-            echo "<script>alert('el correo ya existe');</script>";
+            echo json_encode([
+                "success" => false,
+                "message" => "El correo ya existe"
+            ]);
             exit();
         }
 
-        // encriptar clave
+        $conexion->begin_transaction();
+
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
         // insertar usuario
@@ -44,7 +50,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bind_param("ssss", $nombre, $correo, $passwordHash, $estado);
         $stmt->execute();
 
-        // obtener id generado
         $id_usuario = $conexion->insert_id;
 
         // insertar cliente
@@ -52,12 +57,92 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt2->bind_param("iss", $id_usuario, $nombre, $estado);
         $stmt2->execute();
 
-        echo "<script>alert('cliente registrado correctamente');</script>";
+        $conexion->commit();
+
+        echo json_encode([
+            "success" => true,
+            "message" => "Cliente registrado correctamente"
+        ]);
+        exit();
 
     } catch (Exception $e) {
 
-        // mostrar error real
-        echo "<script>alert('error al guardar');</script>";
+        $conexion->rollback();
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Error al guardar cliente"
+        ]);
+        exit();
+    }
+}if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+    header('Content-Type: application/json; charset=utf-8');
+
+    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+    $conexion->set_charset("utf8mb4");
+
+    try {
+
+        $nombre   = trim($_POST['nombre']);
+        $correo   = trim($_POST['correo']);
+        $password = $_POST['password'];
+        $estado   = $_POST['estado'];
+
+        if (empty($nombre) || empty($correo) || empty($password) || empty($estado)) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Datos incompletos"
+            ]);
+            exit();
+        }
+
+        // verificar correo existente
+        $stmt = $conexion->prepare("SELECT id_usuario FROM usuarios WHERE correo = ?");
+        $stmt->bind_param("s", $correo);
+        $stmt->execute();
+        $resultadoCorreo = $stmt->get_result();
+
+        if ($resultadoCorreo->num_rows > 0) {
+            echo json_encode([
+                "success" => false,
+                "message" => "El correo ya existe"
+            ]);
+            exit();
+        }
+
+        $conexion->begin_transaction();
+
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+        // insertar usuario
+        $stmt = $conexion->prepare("INSERT INTO usuarios (nombre, correo, contraseña, estado, id_rol) VALUES (?, ?, ?, ?, 3)");
+        $stmt->bind_param("ssss", $nombre, $correo, $passwordHash, $estado);
+        $stmt->execute();
+
+        $id_usuario = $conexion->insert_id;
+
+        // insertar cliente
+        $stmt2 = $conexion->prepare("INSERT INTO clientes (id_usuario, nombre, estado) VALUES (?, ?, ?)");
+        $stmt2->bind_param("iss", $id_usuario, $nombre, $estado);
+        $stmt2->execute();
+
+        $conexion->commit();
+
+        echo json_encode([
+            "success" => true,
+            "message" => "Cliente registrado correctamente"
+        ]);
+        exit();
+
+    } catch (Exception $e) {
+
+        $conexion->rollback();
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Error al guardar cliente"
+        ]);
         exit();
     }
 }
@@ -277,24 +362,42 @@ $resultado = mysqli_query($conexion, $sql);
 </div>
 
 <script>
-document.getElementById("formCliente").addEventListener("submit", function(e) {
+// CREAR CLIENTE (SPA SAFE)
+document.addEventListener("submit", function(e){
 
-    e.preventDefault();
+    if(e.target && e.target.id === "formCliente"){
 
-    const formData = new FormData(this);
+        e.preventDefault();
 
-    fetch("../client/clientes.php", {
-        method: "POST",
-        body: formData
-    })
-    .then(response => response.text())
-    .then(data => {
-        document.getElementById("main-content").innerHTML = data;
-    })
-    .catch(error => {
-        alert("error al enviar datos");
-        console.error(error);
-    });
+        const formData = new FormData(e.target);
+
+        fetch("/PAGINA-WED/client/clientes.php", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            if(data.success){
+
+                toggleFormulario('crear');
+                showSuccessModal(data.message);
+
+                setTimeout(() => {
+                    loadPage('/PAGINA-WED/client/clientes.php');
+                }, 1500);
+
+            } else {
+                alert(data.message);
+            }
+
+        })
+        .catch(error => {
+            console.error(error);
+            alert("Error en la petición");
+        });
+
+    }
 
 });
 </script>
@@ -327,7 +430,7 @@ document.addEventListener("click", function(e){
 // ABRIR MODAL EDITAR
 function abrirModalEditar(id){
 
-    fetch("/PAGINA%20WED/client/clientes_obtener.php?id=" + id)
+    fetch("/PAGINA-WED/client/clientes_obtener.php?id=" + id)
     .then(res => res.json())
     .then(data => {
 
@@ -373,7 +476,7 @@ document.getElementById("formEditar").addEventListener("submit", function(e){
 
     const formData = new FormData(this);
 
-    fetch("/PAGINA%20WED/client/clientes_editar.php", {
+    fetch("/PAGINA-WED/client/clientes_editar.php", {
         method: "POST",
         body: formData
     })
@@ -381,11 +484,17 @@ document.getElementById("formEditar").addEventListener("submit", function(e){
     .then(data => {
 
         if(data.success){
-            cerrarModal();
-            loadPage('/PAGINA%20WED/client/clientes.php');
-        } else {
-            alert(data.message);
-        }
+
+    cerrarModal();
+    showSuccessModal("Cliente actualizado correctamente");
+
+    setTimeout(() => {
+        loadPage('/PAGINA-WED/client/clientes.php');
+    }, 1500);
+
+} else {
+    alert(data.message);
+}
 
     })
     .catch(err => {
@@ -399,7 +508,7 @@ function confirmarEliminar(){
 
     const id = document.getElementById("delete_id").value;
 
-    fetch("/PAGINA%20WED/client/clientes_eliminar.php", {
+    fetch("/PAGINA-WED/client/clientes_eliminar.php", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify({id:id})
@@ -408,11 +517,17 @@ function confirmarEliminar(){
     .then(data => {
 
         if(data.success){
-            cerrarModal();
-            loadPage('/PAGINA%20WED/client/clientes.php');
-        }else{
-            alert(data.message);
-        }
+
+    cerrarModal();
+    showSuccessModal("Cliente eliminado correctamente");
+
+    setTimeout(() => {
+        loadPage('/PAGINA-WED/client/clientes.php');
+    }, 1500);
+
+}else{
+    alert(data.message);
+}
 
     })
     .catch(err => {
@@ -420,8 +535,43 @@ function confirmarEliminar(){
     });
 
 }
+// MODAL ÉXITO
+function showSuccessModal(message = "Cliente agregado correctamente") {
 
+    const modal = document.getElementById("modalSuccess");
+    modal.querySelector("p").innerText = message;
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+
+    setTimeout(() => {
+        closeSuccessModal();
+    }, 2000);
+}
+
+function closeSuccessModal() {
+    const modal = document.getElementById("modalSuccess");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+}
 </script>
+</div> <!-- FIN MODAL ELIMINAR -->
+<!-- MODAL ÉXITO -->
+<div id="modalSuccess" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-sm text-center">
+        <h2 class="text-lg font-bold mb-4 text-green-600">
+            Operación Exitosa
+        </h2>
 
+        <p class="text-gray-600 mb-4">
+            Cliente agregado correctamente
+        </p>
+
+        <button onclick="closeSuccessModal()"
+        class="bg-green-600 text-white px-4 py-2 rounded">
+            Aceptar
+        </button>
+    </div>
+</div>
 </body>
 </html>

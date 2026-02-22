@@ -569,5 +569,22 @@ const CustomModal = {
 };
 window.CustomModal = CustomModal;
 </script>
+<!-- Modal Éxito -->
+<div id="modalSuccess" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-lg w-96 p-6 text-center">
+    <h2 class="text-xl font-bold text-green-600 mb-4">
+      ✅ Cliente agregado correctamente
+    </h2>
+
+    <p class="text-gray-600 mb-6">
+      El cliente fue registrado exitosamente en el sistema.
+    </p>
+
+    <button onclick="closeSuccessModal()" 
+      class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+      Aceptar
+    </button>
+  </div>
+</div>
 
 </body></html>

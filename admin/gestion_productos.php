@@ -161,15 +161,16 @@
                     </label>
                     <input type="number" id="prod-precio" step="0.01" min="0" required
                         class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm"
-                        placeholder="0.00">
+                        placeholder="0.00" oninput="window.calcularPrecioDescuento()">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
-                        <i class="fas fa-tag text-amber-500 mr-1"></i> Precio Descuento
+                        <i class="fas fa-percent text-amber-500 mr-1"></i> Descuento (%)
                     </label>
-                    <input type="number" id="prod-precio-descuento" step="0.01" min="0"
+                    <input type="number" id="prod-descuento-pct" step="1" min="0" max="100"
                         class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm"
-                        placeholder="0.00">
+                        placeholder="0" oninput="window.calcularPrecioDescuento()">
+                    <p id="prod-precio-descuento-preview" class="text-xs text-green-600 mt-1 hidden"></p>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
@@ -260,6 +261,48 @@
     </div>
 </div>
 
+<!-- Modal Alerta (error / éxito) -->
+<div id="prod-modal-alerta" class="fixed inset-0 bg-black/50 z-[9999] hidden flex items-center justify-center prod-modal-overlay">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+        <div id="prod-alerta-header" class="px-6 py-4 flex items-center gap-3 bg-red-50">
+            <i id="prod-alerta-icono" class="fas fa-exclamation-circle text-red-500 text-2xl"></i>
+            <h3 id="prod-alerta-titulo" class="text-lg font-bold text-red-700">Atención</h3>
+        </div>
+        <div class="px-6 pb-2 pt-4">
+            <p id="prod-alerta-mensaje" class="text-gray-600 text-sm"></p>
+        </div>
+        <div class="px-6 pb-6 pt-3">
+            <button onclick="window.cerrarModalAlerta()" id="prod-alerta-btn"
+                class="w-full py-2.5 rounded-lg font-semibold transition text-sm text-white bg-red-600 hover:bg-red-700">
+                Aceptar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmación -->
+<div id="prod-modal-confirmar" class="fixed inset-0 bg-black/50 z-[9999] hidden flex items-center justify-center prod-modal-overlay">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+        <div class="bg-red-50 px-6 py-4 flex items-center gap-3">
+            <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+            <h3 class="text-lg font-bold text-red-700">Confirmar acción</h3>
+        </div>
+        <div class="px-6 pb-2 pt-4">
+            <p id="prod-confirmar-mensaje" class="text-gray-600 text-sm"></p>
+        </div>
+        <div class="flex gap-3 px-6 pb-6 pt-3">
+            <button onclick="window.cerrarModalConfirmar()"
+                class="flex-1 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition text-sm">
+                Cancelar
+            </button>
+            <button onclick="window.ejecutarConfirmacion()"
+                class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition text-sm">
+                Confirmar
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
 (function() {
     // ========= CONFIG =========
@@ -326,10 +369,16 @@
                 ? '<img src="' + imgSrc + '" class="w-10 h-10 rounded-lg object-cover border border-gray-200">'
                 : '<div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center"><i class="fas fa-image text-gray-300"></i></div>';
 
-            var precioHtml = '<span class="font-bold text-gray-900">$' + parseFloat(p.precio).toFixed(2) + '</span>';
-            if (p.precio_descuento && parseFloat(p.precio_descuento) > 0) {
-                precioHtml = '<span class="text-gray-400 line-through text-xs">$' + parseFloat(p.precio).toFixed(2) + '</span> ' +
-                    '<span class="font-bold text-green-600">$' + parseFloat(p.precio_descuento).toFixed(2) + '</span>';
+            var precioOriginal = parseFloat(p.precio);
+            var precioDesc = p.precio_descuento ? parseFloat(p.precio_descuento) : 0;
+            var precioHtml = '<span class="font-bold text-gray-900">$' + precioOriginal.toFixed(2) + '</span>';
+            if (precioDesc > 0 && precioDesc < precioOriginal) {
+                var pctDesc = Math.round((1 - precioDesc / precioOriginal) * 100);
+                precioHtml = '<div class="flex flex-col">' +
+                    '<span class="text-gray-400 line-through text-xs">$' + precioOriginal.toFixed(2) + '</span>' +
+                    '<span class="font-bold text-green-600">$' + precioDesc.toFixed(2) + '</span>' +
+                    '<span class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-semibold w-fit">-' + pctDesc + '%</span>' +
+                    '</div>';
             }
 
             var stockVal = parseInt(p.stock);
@@ -427,7 +476,9 @@
         document.getElementById('prod-nombre').value = '';
         document.getElementById('prod-descripcion').value = '';
         document.getElementById('prod-precio').value = '';
-        document.getElementById('prod-precio-descuento').value = '';
+        document.getElementById('prod-descuento-pct').value = '';
+        document.getElementById('prod-precio-descuento-preview').classList.add('hidden');
+        document.getElementById('prod-precio-descuento-preview').textContent = '';
         document.getElementById('prod-stock').value = '0';
         document.getElementById('prod-estado').value = 'disponible';
         document.getElementById('prod-en-oferta').value = '0';
@@ -453,7 +504,7 @@
             .then(function(res) { return res.json(); })
             .then(function(data) {
                 if (!data.exito) {
-                    alert(data.error || 'Error al cargar producto');
+                    mostrarAlerta(data.error || 'Error al cargar producto', 'error');
                     return;
                 }
                 var p = data.producto;
@@ -463,7 +514,14 @@
                 document.getElementById('prod-nombre').value = p.nombre;
                 document.getElementById('prod-descripcion').value = p.descripcion || '';
                 document.getElementById('prod-precio').value = p.precio;
-                document.getElementById('prod-precio-descuento').value = p.precio_descuento || '';
+                // Calcular % de descuento a partir de precio y precio_descuento guardados
+                if (p.precio_descuento && parseFloat(p.precio_descuento) > 0 && parseFloat(p.precio) > 0) {
+                    var pctCalculado = Math.round((1 - parseFloat(p.precio_descuento) / parseFloat(p.precio)) * 100);
+                    document.getElementById('prod-descuento-pct').value = pctCalculado;
+                } else {
+                    document.getElementById('prod-descuento-pct').value = '';
+                }
+                calcularPrecioDescuento();
                 document.getElementById('prod-stock').value = p.stock;
                 document.getElementById('prod-estado').value = p.estado;
                 document.getElementById('prod-en-oferta').value = p.en_oferta || '0';
@@ -502,7 +560,7 @@
             })
             .catch(function(err) {
                 console.error(err);
-                alert('Error al cargar producto');
+                mostrarAlerta('Error al cargar producto', 'error');
             });
     }
 
@@ -513,6 +571,33 @@
     // ========= GUARDAR =========
     function guardarProducto(e) {
         e.preventDefault();
+
+        // --- Validaciones de campos vacíos ---
+        var codigo = document.getElementById('prod-codigo').value.trim();
+        var nombre = document.getElementById('prod-nombre').value.trim();
+        var categoria = document.getElementById('prod-categoria').value;
+        var marca = document.getElementById('prod-marca').value;
+        var precio = document.getElementById('prod-precio').value;
+        var stock = document.getElementById('prod-stock').value;
+
+        if (!codigo) { mostrarAlerta('El código / SKU es obligatorio', 'error', function() { document.getElementById('prod-codigo').focus(); }); return; }
+        if (!nombre) { mostrarAlerta('El nombre del producto es obligatorio', 'error', function() { document.getElementById('prod-nombre').focus(); }); return; }
+        if (!categoria) { mostrarAlerta('Debe seleccionar una categoría', 'error', function() { document.getElementById('prod-categoria').focus(); }); return; }
+        if (!marca) { mostrarAlerta('Debe seleccionar una marca', 'error', function() { document.getElementById('prod-marca').focus(); }); return; }
+        if (!precio || parseFloat(precio) <= 0) { mostrarAlerta('El precio debe ser mayor a 0', 'error', function() { document.getElementById('prod-precio').focus(); }); return; }
+        if (stock === '' || parseInt(stock) < 0) { mostrarAlerta('El stock debe ser un valor válido', 'error', function() { document.getElementById('prod-stock').focus(); }); return; }
+
+        // --- Validar imágenes: al crear debe tener al menos una ---
+        var tieneImagenesExistentes = false;
+        if (prodModoEdicion) {
+            var galeria = document.getElementById('prod-galeria-existente');
+            tieneImagenesExistentes = galeria && galeria.children.length > 0;
+        }
+        if (!tieneImagenesExistentes && prodArchivosNuevos.length === 0) {
+            mostrarAlerta('Debe agregar al menos una imagen del producto', 'error');
+            return;
+        }
+
         var formData = new FormData();
         formData.append('accion', prodModoEdicion ? 'editar' : 'crear');
 
@@ -520,19 +605,22 @@
             formData.append('id', document.getElementById('prod-id').value);
         }
 
-        formData.append('codigo', document.getElementById('prod-codigo').value.trim().toUpperCase());
-        formData.append('nombre', document.getElementById('prod-nombre').value.trim());
+        formData.append('codigo', codigo.toUpperCase());
+        formData.append('nombre', nombre);
         formData.append('descripcion', document.getElementById('prod-descripcion').value.trim());
-        formData.append('id_categoria', document.getElementById('prod-categoria').value);
-        formData.append('id_marca', document.getElementById('prod-marca').value);
-        formData.append('precio', document.getElementById('prod-precio').value);
-        formData.append('precio_descuento', document.getElementById('prod-precio-descuento').value);
+        formData.append('id_categoria', categoria);
+        formData.append('id_marca', marca);
+        formData.append('precio', precio);
+        // Calcular precio_descuento desde el porcentaje
+        var pctVal = parseFloat(document.getElementById('prod-descuento-pct').value) || 0;
+        var precioBase = parseFloat(document.getElementById('prod-precio').value) || 0;
+        var precioConDesc = pctVal > 0 ? (precioBase - (precioBase * pctVal / 100)).toFixed(2) : '';
+        formData.append('precio_descuento', precioConDesc);
         formData.append('stock', document.getElementById('prod-stock').value);
         formData.append('estado', document.getElementById('prod-estado').value);
         var enOfertaVal = document.getElementById('prod-en-oferta').value;
-        var precioDescVal = document.getElementById('prod-precio-descuento').value.trim();
-        if (enOfertaVal === '1' && (!precioDescVal || parseFloat(precioDescVal) <= 0)) {
-            alert('No puede marcar el producto en oferta sin un precio de descuento válido.');
+        if (enOfertaVal === '1' && pctVal <= 0) {
+            mostrarAlerta('No puede marcar el producto en oferta sin un descuento válido.', 'error');
             return;
         }
 
@@ -552,36 +640,36 @@
                     cerrarModalProducto();
                     cargarProductos();
                 } else {
-                    alert(data.error || 'Error al guardar');
+                    mostrarAlerta(data.error || 'Error al guardar', 'error');
                 }
             })
             .catch(function(err) {
                 console.error(err);
-                alert('Error de conexión');
+                mostrarAlerta('Error de conexión', 'error');
             });
     }
 
     // ========= ELIMINAR =========
     function eliminarProducto(id, nombre) {
-        if (!confirm('¿Eliminar "' + nombre + '"? Esta acción no se puede deshacer.')) return;
+        mostrarConfirmacion('¿Eliminar "' + nombre + '"? Esta acción no se puede deshacer.', function() {
+            var formData = new FormData();
+            formData.append('accion', 'eliminar');
+            formData.append('id', id);
 
-        var formData = new FormData();
-        formData.append('accion', 'eliminar');
-        formData.append('id', id);
-
-        fetch(PROD_API, { method: 'POST', body: formData })
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                if (data.exito) {
-                    cargarProductos();
-                } else {
-                    alert(data.error || 'Error al eliminar');
-                }
-            })
-            .catch(function(err) {
-                console.error(err);
-                alert('Error de conexión');
-            });
+            fetch(PROD_API, { method: 'POST', body: formData })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.exito) {
+                        cargarProductos();
+                    } else {
+                        mostrarAlerta(data.error || 'Error al eliminar', 'error');
+                    }
+                })
+                .catch(function(err) {
+                    console.error(err);
+                    mostrarAlerta('Error de conexión', 'error');
+                });
+        });
     }
 
     // ========= TOGGLE FECHAS OFERTA =========
@@ -590,9 +678,9 @@
         var container = document.getElementById('prod-fechas-oferta');
         if (!container) return;
         if (enOferta === '1') {
-            var precioDesc = document.getElementById('prod-precio-descuento').value.trim();
-            if (!precioDesc || parseFloat(precioDesc) <= 0) {
-                alert('Debe ingresar un precio de descuento válido antes de marcar el producto en oferta.');
+            var pctDesc = parseFloat(document.getElementById('prod-descuento-pct').value) || 0;
+            if (pctDesc <= 0) {
+                mostrarAlerta('Debe ingresar un porcentaje de descuento válido antes de marcar el producto en oferta.', 'error');
                 document.getElementById('prod-en-oferta').value = '0';
                 container.classList.add('hidden');
                 return;
@@ -602,6 +690,21 @@
             container.classList.add('hidden');
             document.getElementById('prod-fecha-inicio-oferta').value = '';
             document.getElementById('prod-fecha-fin-oferta').value = '';
+        }
+    }
+
+    // ========= CALCULAR PRECIO DESCUENTO EN TIEMPO REAL =========
+    function calcularPrecioDescuento() {
+        var precio = parseFloat(document.getElementById('prod-precio').value) || 0;
+        var pct = parseFloat(document.getElementById('prod-descuento-pct').value) || 0;
+        var preview = document.getElementById('prod-precio-descuento-preview');
+        if (pct > 0 && precio > 0) {
+            var precioFinal = precio - (precio * pct / 100);
+            preview.textContent = 'Precio final: $' + precioFinal.toFixed(2) + ' (ahorro: $' + (precio - precioFinal).toFixed(2) + ')';
+            preview.classList.remove('hidden');
+        } else {
+            preview.classList.add('hidden');
+            preview.textContent = '';
         }
     }
 
@@ -640,26 +743,27 @@
     }
 
     function eliminarImagenExistente(idImagen) {
-        if (!confirm('¿Eliminar esta imagen?')) return;
-        var formData = new FormData();
-        formData.append('accion', 'eliminar_imagen');
-        formData.append('id_imagen', idImagen);
+        mostrarConfirmacion('¿Eliminar esta imagen?', function() {
+            var formData = new FormData();
+            formData.append('accion', 'eliminar_imagen');
+            formData.append('id_imagen', idImagen);
 
-        fetch(PROD_API, { method: 'POST', body: formData })
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                if (data.exito) {
-                    var el = document.getElementById('prod-img-exist-' + idImagen);
-                    if (el) el.remove();
-                    // Si no quedan imágenes, ocultar sección
-                    var galeria = document.getElementById('prod-galeria-existente');
-                    if (galeria && galeria.children.length === 0) {
-                        document.getElementById('prod-imagenes-existentes').classList.add('hidden');
+            fetch(PROD_API, { method: 'POST', body: formData })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.exito) {
+                        var el = document.getElementById('prod-img-exist-' + idImagen);
+                        if (el) el.remove();
+                        // Si no quedan imágenes, ocultar sección
+                        var galeria = document.getElementById('prod-galeria-existente');
+                        if (galeria && galeria.children.length === 0) {
+                            document.getElementById('prod-imagenes-existentes').classList.add('hidden');
+                        }
+                    } else {
+                        mostrarAlerta(data.error || 'Error al eliminar imagen', 'error');
                     }
-                } else {
-                    alert(data.error || 'Error al eliminar imagen');
-                }
-            });
+                });
+        });
     }
 
     // ========= UTILIDADES =========
@@ -668,6 +772,66 @@
         var div = document.createElement('div');
         div.appendChild(document.createTextNode(text));
         return div.innerHTML;
+    }
+
+    // ========= MODALES DE ALERTA Y CONFIRMACIÓN =========
+    var _callbackConfirmacion = null;
+    var _callbackAlertaCerrar = null;
+
+    function mostrarAlerta(mensaje, tipo, callbackCerrar) {
+        var modal = document.getElementById('prod-modal-alerta');
+        var header = document.getElementById('prod-alerta-header');
+        var icono = document.getElementById('prod-alerta-icono');
+        var titulo = document.getElementById('prod-alerta-titulo');
+        var msg = document.getElementById('prod-alerta-mensaje');
+        var btn = document.getElementById('prod-alerta-btn');
+        _callbackAlertaCerrar = callbackCerrar || null;
+
+        if (tipo === 'exito') {
+            header.className = 'px-6 py-4 flex items-center gap-3 bg-green-50';
+            icono.className = 'fas fa-check-circle text-green-500 text-2xl';
+            titulo.textContent = 'Éxito';
+            titulo.className = 'text-lg font-bold text-green-700';
+            btn.className = 'w-full py-2.5 rounded-lg font-semibold transition text-sm text-white bg-green-600 hover:bg-green-700';
+        } else {
+            header.className = 'px-6 py-4 flex items-center gap-3 bg-red-50';
+            icono.className = 'fas fa-exclamation-circle text-red-500 text-2xl';
+            titulo.textContent = 'Atención';
+            titulo.className = 'text-lg font-bold text-red-700';
+            btn.className = 'w-full py-2.5 rounded-lg font-semibold transition text-sm text-white bg-red-600 hover:bg-red-700';
+        }
+
+        msg.textContent = mensaje;
+        modal.classList.remove('hidden');
+    }
+
+    function cerrarModalAlerta() {
+        document.getElementById('prod-modal-alerta').classList.add('hidden');
+        if (_callbackAlertaCerrar) {
+            var cb = _callbackAlertaCerrar;
+            _callbackAlertaCerrar = null;
+            cb();
+        }
+    }
+
+    function mostrarConfirmacion(mensaje, callback) {
+        _callbackConfirmacion = callback;
+        document.getElementById('prod-confirmar-mensaje').textContent = mensaje;
+        document.getElementById('prod-modal-confirmar').classList.remove('hidden');
+    }
+
+    function cerrarModalConfirmar() {
+        _callbackConfirmacion = null;
+        document.getElementById('prod-modal-confirmar').classList.add('hidden');
+    }
+
+    function ejecutarConfirmacion() {
+        document.getElementById('prod-modal-confirmar').classList.add('hidden');
+        if (_callbackConfirmacion) {
+            var cb = _callbackConfirmacion;
+            _callbackConfirmacion = null;
+            cb();
+        }
     }
 
     // ========= EXPONER AL GLOBAL =========
@@ -681,6 +845,12 @@
     window.quitarImagenNueva = quitarImagenNueva;
     window.eliminarImagenExistente = eliminarImagenExistente;
     window.toggleFechasOferta = toggleFechasOferta;
+    window.calcularPrecioDescuento = calcularPrecioDescuento;
+    window.mostrarAlerta = mostrarAlerta;
+    window.cerrarModalAlerta = cerrarModalAlerta;
+    window.mostrarConfirmacion = mostrarConfirmacion;
+    window.cerrarModalConfirmar = cerrarModalConfirmar;
+    window.ejecutarConfirmacion = ejecutarConfirmacion;
 
     // ========= INIT =========
     setTimeout(function() {
@@ -689,6 +859,18 @@
         if (modal) {
             modal.addEventListener('click', function(e) {
                 if (e.target === this) cerrarModalProducto();
+            });
+        }
+        var modalAlerta = document.getElementById('prod-modal-alerta');
+        if (modalAlerta) {
+            modalAlerta.addEventListener('click', function(e) {
+                if (e.target === this) cerrarModalAlerta();
+            });
+        }
+        var modalConfirmar = document.getElementById('prod-modal-confirmar');
+        if (modalConfirmar) {
+            modalConfirmar.addEventListener('click', function(e) {
+                if (e.target === this) cerrarModalConfirmar();
             });
         }
         var searchTimeout;

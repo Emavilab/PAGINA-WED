@@ -157,25 +157,6 @@ if ($metodo === 'GET') {
     echo json_encode(['exito' => false, 'error' => 'Acción GET no válida']);
     exit();
 }
-// --- Eliminar marca ---
-    if (isset($_GET['eliminar']) && !empty($_GET['eliminar'])) {
-        $id = intval($_GET['eliminar']);
-        if ($id > 0) {
-            if (mysqli_query($conexion, "DELETE FROM marcas WHERE id_marca = $id")) {
-                echo json_encode(['exito' => true, 'mensaje' => 'Marca eliminada correctamente']);
-            } else {
-                echo json_encode(['exito' => false, 'error' => mysqli_error($conexion)]);
-            }
-        } else {
-            echo json_encode(['exito' => false, 'error' => 'ID inválido']);
-        }
-        exit();
-    }
-
-    echo json_encode(['exito' => false, 'error' => 'Acción GET no válida']);
-    exit();
-
-
 
 // ===================== POST =====================
 if ($metodo === 'POST') {
@@ -403,32 +384,9 @@ if ($metodo === 'POST') {
     echo json_encode(['exito' => false, 'error' => 'Acción POST no válida']);
     exit();
 }
- // --- Guardar marca ---
-    if (isset($_POST['accion']) && $_POST['accion'] === 'guardar_marca') {
-        $nombre = mysqli_real_escape_string($conexion, $_POST['nombre'] ?? '');
-        $estado = mysqli_real_escape_string($conexion, $_POST['estado'] ?? '');
-
-        $logo = "";
-        if (isset($_FILES['logo']) && $_FILES['logo']['name'] != "") {
-            $logo = $_FILES['logo']['name'];
-            move_uploaded_file($_FILES['logo']['tmp_name'], __DIR__ . '/../uploads/' . $logo);
-        }
-
-        $sql = "INSERT INTO marcas (nombre, estado, logo) VALUES ('$nombre', '$estado', '$logo')";
-        if (mysqli_query($conexion, $sql)) {
-            echo json_encode(['exito' => true, 'mensaje' => 'Marca guardada correctamente', 'id' => mysqli_insert_id($conexion)]);
-        } else {
-            echo json_encode(['exito' => false, 'error' => mysqli_error($conexion)]);
-        }
-        exit();
-    }
-
-    echo json_encode(['exito' => false, 'error' => 'Acción POST no válida']);
-    exit();
 
 echo json_encode(['exito' => false, 'error' => 'Método no permitido']);
-
-echo json_encode(['exito' => false, 'error' => 'Método no permitido']);
+exit();
 
 // ===================== FUNCIONES =====================
 function subirMultiplesImagenes($conexion, $id_producto, $archivos) {

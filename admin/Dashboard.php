@@ -108,7 +108,7 @@ $usuario = obtenerDatosUsuario();
 <span class="material-icons-round">mail</span>
 <span class="font-medium">Mensajería</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../core/configuracion.php', event)">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('configuracion.php', event)">
 <span class="material-icons-round">settings</span>
 <span class="font-medium">Configuraciones</span>
 </a>

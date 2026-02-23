@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 require_once '../core/sesiones.php';
 require_once '../core/conexion.php';

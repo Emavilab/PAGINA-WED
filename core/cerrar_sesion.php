@@ -8,7 +8,7 @@ require_once 'sesiones.php';
 
 // Verificar si el usuario está autenticado
 if (!usuarioAutenticado()) {
-    header("Location: ../index1.php");
+    header("Location: ../index.php");
     exit();
 }
 

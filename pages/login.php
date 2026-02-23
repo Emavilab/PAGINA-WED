@@ -63,8 +63,8 @@
 <div class="relative group">
 <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-xl">lock_outline</span>
 <input class="w-full pl-10 pr-12 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-slate-400 text-sm" id="password" name="password" placeholder="••••••••" type="password"/>
-<button class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" type="button">
-<span class="material-icons text-lg">visibility_off</span>
+<button onclick="togglePasswordLogin()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" type="button">
+<span id="icon-toggle-password" class="material-icons text-lg">visibility_off</span>
 </button>
 </div>
 <div id="error-password" class="text-red-500 text-sm hidden"></div>
@@ -94,6 +94,28 @@
 </body>
 
 <script>
+// Toggle mostrar/ocultar contraseña en login
+function togglePasswordLogin() {
+    const input = document.getElementById('password');
+    const icon = document.getElementById('icon-toggle-password');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = 'visibility';
+    } else {
+        input.type = 'password';
+        icon.textContent = 'visibility_off';
+    }
+}
+
+// Mostrar error en campo específico
+function mostrarErrorLogin(campo, mensaje) {
+    const errorEl = document.getElementById('error-' + campo);
+    if (errorEl) {
+        errorEl.textContent = mensaje;
+        errorEl.classList.remove('hidden');
+    }
+}
+
 // Manejo del formulario de login
 function setupLoginForm() {
     const form = document.getElementById('form-login-modal');
@@ -108,6 +130,26 @@ function setupLoginForm() {
         if (mensajeError) mensajeError.classList.add('hidden');
         if (mensajeExito) mensajeExito.classList.add('hidden');
         document.querySelectorAll('[id^="error-"]').forEach(el => el.classList.add('hidden'));
+        
+        // Validaciones frontend
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        let valido = true;
+
+        if (!email) {
+            mostrarErrorLogin('email', 'El correo es requerido');
+            valido = false;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            mostrarErrorLogin('email', 'Ingresa un correo válido');
+            valido = false;
+        }
+
+        if (!password) {
+            mostrarErrorLogin('password', 'La contraseña es requerida');
+            valido = false;
+        }
+
+        if (!valido) return;
         
         // Obtener datos del formulario
         const formData = new FormData(this);

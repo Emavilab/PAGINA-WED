@@ -15,7 +15,7 @@ if (!usuarioAutenticado()) {
 // Verificar permisos: solo rol 1 (admin) y rol 2 (vendedor)
 if ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2) {
     // Usuario sin permisos, redirigir a index
-    header("Location: ../index1.php");
+    header("Location: ../index.php");
     exit();
 }
 

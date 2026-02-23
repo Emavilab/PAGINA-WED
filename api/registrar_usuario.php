@@ -39,13 +39,28 @@ if (empty($correo)) {
     $errores[] = 'El correo no es válido';
 }
 
-// Validar contraseña
+// Validar contraseña segura
 if (empty($contraseña)) {
     $errores[] = 'La contraseña es requerida';
-} elseif (strlen($contraseña) < 6) {
-    $errores[] = 'La contraseña debe tener al menos 6 caracteres';
-} elseif (strlen($contraseña) > 50) {
-    $errores[] = 'La contraseña es demasiado larga';
+} else {
+    if (strlen($contraseña) < 8) {
+        $errores[] = 'La contraseña debe tener al menos 8 caracteres';
+    }
+    if (strlen($contraseña) > 50) {
+        $errores[] = 'La contraseña es demasiado larga';
+    }
+    if (!preg_match('/[A-Z]/', $contraseña)) {
+        $errores[] = 'La contraseña debe incluir al menos una letra mayúscula';
+    }
+    if (!preg_match('/[a-z]/', $contraseña)) {
+        $errores[] = 'La contraseña debe incluir al menos una letra minúscula';
+    }
+    if (!preg_match('/[0-9]/', $contraseña)) {
+        $errores[] = 'La contraseña debe incluir al menos un número';
+    }
+    if (!preg_match('/[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?`~]/', $contraseña)) {
+        $errores[] = 'La contraseña debe incluir al menos un carácter especial (!@#$%^&*)';
+    }
 }
 
 // Validar confirmación de contraseña
@@ -84,7 +99,7 @@ header('Content-Type: application/json');
 echo json_encode([
     'exito' => true,
     'mensaje' => 'Cuenta creada exitosamente',
-    'redirect' => '../index1.php'
+    'redirect' => 'index.php'
 ]);
 
 ?>

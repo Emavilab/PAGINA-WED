@@ -79,10 +79,21 @@
 <span class="material-icons-outlined text-slate-400 text-xl">lock_open</span>
 </span>
 <input class="block w-full pl-10 pr-10 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200" id="password" name="password" placeholder="••••••••" required="" type="password"/>
-<button class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" type="button">
-<span class="material-icons-outlined text-xl">visibility</span>
+<button onclick="togglePasswordRegistro('password','icon-pass')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" type="button">
+<span id="icon-pass" class="material-icons-outlined text-xl">visibility</span>
 </button>
 </div>
+<!-- Indicador de fortaleza -->
+<div id="password-strength-container" class="hidden mt-2">
+<div class="flex gap-1 mb-1">
+<div id="str-bar-1" class="h-1.5 flex-1 rounded-full bg-slate-200 transition-all duration-300"></div>
+<div id="str-bar-2" class="h-1.5 flex-1 rounded-full bg-slate-200 transition-all duration-300"></div>
+<div id="str-bar-3" class="h-1.5 flex-1 rounded-full bg-slate-200 transition-all duration-300"></div>
+<div id="str-bar-4" class="h-1.5 flex-1 rounded-full bg-slate-200 transition-all duration-300"></div>
+</div>
+<p id="password-strength-text" class="text-xs font-semibold text-slate-400"></p>
+</div>
+<p class="text-xs text-slate-400 mt-2">Mínimo 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial (!@#$%^&*)</p>
 <div id="error-password" class="text-red-500 text-sm hidden"></div>
 </div>
 <!-- Confirm Password -->
@@ -93,6 +104,9 @@
 <span class="material-icons-outlined text-slate-400 text-xl">lock</span>
 </span>
 <input class="block w-full pl-10 pr-10 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200" id="confirm-password" name="confirm-password" placeholder="••••••••" required="" type="password"/>
+<button onclick="togglePasswordRegistro('confirm-password','icon-confirm')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" type="button">
+<span id="icon-confirm" class="material-icons-outlined text-xl">visibility</span>
+</button>
 </div>
 <div id="error-confirm-password" class="text-red-500 text-sm hidden"></div>
 </div>
@@ -146,10 +160,96 @@
 </body>
 
 <script>
+// Toggle mostrar/ocultar contraseña
+function togglePasswordRegistro(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = 'visibility_off';
+    } else {
+        input.type = 'password';
+        icon.textContent = 'visibility';
+    }
+}
+
+// Evaluar fortaleza de contraseña
+function evaluarFortaleza(password) {
+    let score = 0;
+    const checks = {
+        length: password.length >= 8,
+        upper: /[A-Z]/.test(password),
+        lower: /[a-z]/.test(password),
+        number: /[0-9]/.test(password),
+        special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password)
+    };
+
+    Object.values(checks).forEach(v => { if (v) score++; });
+
+    // Bonus por longitud extra
+    if (password.length >= 12) score++;
+
+    return { score, checks };
+}
+
+function actualizarBarraFortaleza(password) {
+    const container = document.getElementById('password-strength-container');
+    const textEl = document.getElementById('password-strength-text');
+    
+    if (!password) {
+        container.classList.add('hidden');
+        return;
+    }
+    container.classList.remove('hidden');
+
+    const { score } = evaluarFortaleza(password);
+
+    const niveles = [
+        { max: 2, label: 'Muy débil', color: 'bg-red-500', textColor: 'text-red-500' },
+        { max: 3, label: 'Débil', color: 'bg-orange-500', textColor: 'text-orange-500' },
+        { max: 4, label: 'Media', color: 'bg-yellow-500', textColor: 'text-yellow-500' },
+        { max: 5, label: 'Fuerte', color: 'bg-green-500', textColor: 'text-green-500' },
+        { max: 7, label: 'Muy fuerte', color: 'bg-emerald-500', textColor: 'text-emerald-500' }
+    ];
+
+    let nivel = niveles[0];
+    let barrasActivas = 1;
+    if (score >= 5) { nivel = niveles[4]; barrasActivas = 4; }
+    else if (score >= 4) { nivel = niveles[3]; barrasActivas = 3; }
+    else if (score >= 3) { nivel = niveles[2]; barrasActivas = 2; }
+    else if (score >= 2) { nivel = niveles[1]; barrasActivas = 2; }
+
+    for (let i = 1; i <= 4; i++) {
+        const bar = document.getElementById('str-bar-' + i);
+        bar.className = 'h-1.5 flex-1 rounded-full transition-all duration-300 ' + 
+            (i <= barrasActivas ? nivel.color : 'bg-slate-200');
+    }
+
+    textEl.textContent = nivel.label;
+    textEl.className = 'text-xs font-semibold ' + nivel.textColor;
+}
+
+// Mostrar error en campo específico
+function mostrarErrorRegistro(campo, mensaje) {
+    const errorEl = document.getElementById('error-' + campo);
+    if (errorEl) {
+        errorEl.textContent = mensaje;
+        errorEl.classList.remove('hidden');
+    }
+}
+
 // Manejo del formulario de registro
 function setupRegistroForm() {
     const form = document.getElementById('form-registro-modal');
     if (!form) return;
+
+    // Listener para evaluar fortaleza en tiempo real
+    const passInput = document.getElementById('password');
+    if (passInput) {
+        passInput.addEventListener('input', function() {
+            actualizarBarraFortaleza(this.value);
+        });
+    }
     
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -160,6 +260,70 @@ function setupRegistroForm() {
         if (mensajeError) mensajeError.classList.add('hidden');
         if (mensajeExito) mensajeExito.classList.add('hidden');
         document.querySelectorAll('[id^="error-"]').forEach(el => el.classList.add('hidden'));
+        
+        // Validaciones frontend
+        const nombre = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+        const terms = document.getElementById('terms').checked;
+        let valido = true;
+
+        // Validar nombre
+        if (!nombre) {
+            mostrarErrorRegistro('name', 'El nombre es requerido');
+            valido = false;
+        } else if (nombre.length < 3) {
+            mostrarErrorRegistro('name', 'El nombre debe tener al menos 3 caracteres');
+            valido = false;
+        }
+
+        // Validar email
+        if (!email) {
+            mostrarErrorRegistro('email', 'El correo es requerido');
+            valido = false;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            mostrarErrorRegistro('email', 'Ingresa un correo válido');
+            valido = false;
+        }
+
+        // Validar contraseña segura
+        if (!password) {
+            mostrarErrorRegistro('password', 'La contraseña es requerida');
+            valido = false;
+        } else {
+            const { checks } = evaluarFortaleza(password);
+            if (!checks.length) {
+                mostrarErrorRegistro('password', 'Mínimo 8 caracteres');
+                valido = false;
+            } else if (!checks.upper) {
+                mostrarErrorRegistro('password', 'Debe incluir al menos una mayúscula');
+                valido = false;
+            } else if (!checks.lower) {
+                mostrarErrorRegistro('password', 'Debe incluir al menos una minúscula');
+                valido = false;
+            } else if (!checks.number) {
+                mostrarErrorRegistro('password', 'Debe incluir al menos un número');
+                valido = false;
+            } else if (!checks.special) {
+                mostrarErrorRegistro('password', 'Debe incluir al menos un carácter especial (!@#$%^&*)');
+                valido = false;
+            }
+        }
+
+        // Validar confirmación
+        if (password !== confirmPassword) {
+            mostrarErrorRegistro('confirm-password', 'Las contraseñas no coinciden');
+            valido = false;
+        }
+
+        // Validar términos
+        if (!terms) {
+            mostrarErrorRegistro('terms', 'Debes aceptar los términos y condiciones');
+            valido = false;
+        }
+
+        if (!valido) return;
         
         // Obtener datos del formulario
         const formData = new FormData(this);
@@ -181,6 +345,7 @@ function setupRegistroForm() {
                 
                 // Limpiar formulario
                 form.reset();
+                actualizarBarraFortaleza('');
                 
                 // Redirigir después de 2 segundos
                 setTimeout(() => {
@@ -238,7 +403,7 @@ function loadLogin() {
             })
             .catch(error => console.error('Error al cargar login:', error));
     } else {
-        window.location.href = 'login.php';
+        window.location.href = 'pages/login.php';
     }
 }
 </script>

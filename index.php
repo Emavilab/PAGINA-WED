@@ -687,7 +687,7 @@ function loadPerfil() {
         .then(data => {
             // Si es un error JSON, redirigir al login
             if (data.includes('"exito"')) {
-                window.location.href = 'index1.php';
+                window.location.href = 'index.php';
                 return;
             }
             

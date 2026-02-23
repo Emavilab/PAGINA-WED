@@ -3,8 +3,16 @@ require_once '../core/conexion.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-// obtener todos los productos activos
-$query = "SELECT id_producto, nombre_producto, sku_codigo_referencia, id_categoria, descripcion, precio_venta, precio_costo, stock_inicial, alerta_stock_minimo, imagen_producto, estado, fecha_creacion FROM productos WHERE estado='activo' ORDER BY fecha_creacion DESC";
+// obtener todos los productos disponibles
+$query = "SELECT p.id_producto, p.nombre, p.descripcion, p.precio, p.stock, p.estado, p.fecha_creacion,
+          p.id_categoria, p.id_marca, p.precio_descuento, p.en_oferta,
+          c.nombre AS categoria_nombre, m.nombre AS marca_nombre,
+          (SELECT ri.ruta_imagen FROM producto_imagenes ri WHERE ri.id_producto = p.id_producto ORDER BY ri.orden ASC LIMIT 1) AS imagen_principal
+          FROM productos p
+          LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
+          LEFT JOIN marcas m ON p.id_marca = m.id_marca
+          WHERE p.estado='disponible'
+          ORDER BY p.fecha_creacion DESC";
 
 $result = $conexion->query($query);
 $productos = [];

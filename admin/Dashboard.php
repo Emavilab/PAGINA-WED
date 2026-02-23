@@ -15,7 +15,7 @@ if (!usuarioAutenticado()) {
 // Verificar permisos: solo rol 1 (admin) y rol 2 (vendedor)
 if ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2) {
     // Usuario sin permisos, redirigir a index
-    header("Location: ../index1.php");
+    header("Location: ../index.php");
     exit();
 }
 
@@ -30,6 +30,7 @@ $usuario = obtenerDatosUsuario();
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
 <script>
       tailwind.config = {
         darkMode: "class",
@@ -107,7 +108,7 @@ $usuario = obtenerDatosUsuario();
 <span class="material-icons-round">mail</span>
 <span class="font-medium">Mensajería</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../core/configuracion.php', event)">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('configuracion.php', event)">
 <span class="material-icons-round">settings</span>
 <span class="font-medium">Configuraciones</span>
 </a>
@@ -434,10 +435,14 @@ function loadPage(page, event) {
                 
                 mainContent.innerHTML = htmlContent;
                 
+                // Limpiar scripts dinámicos anteriores antes de inyectar nuevos
+                document.querySelectorAll('script[data-dynamic-page]').forEach(s => s.remove());
+                
                 // Ejecutar scripts después de insertar el HTML
                 scripts.forEach(scriptContent => {
                     const script = document.createElement('script');
                     script.textContent = scriptContent;
+                    script.setAttribute('data-dynamic-page', 'true');
                     document.body.appendChild(script);
                 });
             })
@@ -499,6 +504,87 @@ function cerrarModalSesion() {
 function confirmarCerrarSesion() {
     window.location.href = '../core/cerrar_sesion.php';
 }
+
+// ========= CustomModal - Modal personalizado para alertas/confirmaciones =========
+const CustomModal = {
+    show: function(type, title, message, callback) {
+        let modal = document.getElementById('customModal');
+        if (modal) modal.remove();
+        modal = document.createElement('div');
+        modal.id = 'customModal';
+        modal.innerHTML = `
+            <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+                <div class="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-sm w-full mx-4">
+                    <div class="p-6">
+                        <div class="flex items-start gap-4">
+                            <div id="modalIcon" class="flex-shrink-0"></div>
+                            <div class="flex-1">
+                                <h3 id="modalTitle" class="text-lg font-bold text-slate-900 dark:text-white mb-2"></h3>
+                                <p id="modalMessage" class="text-sm text-slate-600 dark:text-slate-400"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="modalButtons" class="flex gap-3 p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 rounded-b-xl"></div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const iconMap = {
+            'success': '<i class="fas fa-check-circle text-3xl text-green-500"></i>',
+            'error': '<i class="fas fa-times-circle text-3xl text-red-500"></i>',
+            'warning': '<i class="fas fa-exclamation-triangle text-3xl text-yellow-500"></i>',
+            'info': '<i class="fas fa-info-circle text-3xl text-blue-500"></i>',
+            'confirm': '<i class="fas fa-question-circle text-3xl text-blue-500"></i>'
+        };
+
+        document.getElementById('modalIcon').innerHTML = iconMap[type] || iconMap['info'];
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalMessage').textContent = message;
+
+        const buttonsDiv = document.getElementById('modalButtons');
+        buttonsDiv.innerHTML = '';
+
+        if (type === 'confirm') {
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'flex-1 bg-slate-200 hover:bg-slate-300 text-slate-900 font-semibold py-2 px-4 rounded-lg transition-colors';
+            cancelBtn.textContent = 'Cancelar';
+            cancelBtn.onclick = () => { modal.remove(); if (callback) callback(false); };
+
+            const confirmBtn = document.createElement('button');
+            confirmBtn.className = 'flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors';
+            confirmBtn.textContent = 'Aceptar';
+            confirmBtn.onclick = () => { modal.remove(); if (callback) callback(true); };
+
+            buttonsDiv.appendChild(cancelBtn);
+            buttonsDiv.appendChild(confirmBtn);
+        } else {
+            const okBtn = document.createElement('button');
+            okBtn.className = 'w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors';
+            okBtn.textContent = 'Aceptar';
+            okBtn.onclick = () => { modal.remove(); if (callback) callback(); };
+            buttonsDiv.appendChild(okBtn);
+        }
+    }
+};
+window.CustomModal = CustomModal;
 </script>
+<!-- Modal Éxito -->
+<div id="modalSuccess" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-lg w-96 p-6 text-center">
+    <h2 class="text-xl font-bold text-green-600 mb-4">
+      ✅ Cliente agregado correctamente
+    </h2>
+
+    <p class="text-gray-600 mb-6">
+      El cliente fue registrado exitosamente en el sistema.
+    </p>
+
+    <button onclick="closeSuccessModal()" 
+      class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+      Aceptar
+    </button>
+  </div>
+</div>
 
 </body></html>

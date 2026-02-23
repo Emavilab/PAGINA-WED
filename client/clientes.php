@@ -7,57 +7,104 @@ require_once '../core/conexion.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    // activar reporte de errores
+    header('Content-Type: application/json; charset=utf-8');
+
     mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     $conexion->set_charset("utf8mb4");
 
     try {
 
-        // obtener datos
         $nombre   = trim($_POST['nombre']);
         $correo   = trim($_POST['correo']);
         $password = $_POST['password'];
         $estado   = $_POST['estado'];
 
-        // validar campos vacios
-        if (empty($nombre) || empty($correo) || empty($password) || empty($estado)) {
-            echo "<script>alert('datos incompletos');</script>";
+        // validar nombre
+        if(strlen($nombre) < 3){
+            echo json_encode([
+                "success" => false,
+                "field"   => "nombre",
+                "message" => "El nombre debe tener al menos 3 caracteres"
+            ]);
             exit();
         }
 
-        // verificar si correo existe
+        // validar correo formato
+        if(!filter_var($correo, FILTER_VALIDATE_EMAIL)){
+            echo json_encode([
+                "success" => false,
+                "field"   => "correo",
+                "message" => "Correo no válido"
+            ]);
+            exit();
+        }
+
+        // validar contraseña fuerte
+        if(strlen($password) < 8 ||
+           !preg_match('/[A-Z]/', $password) ||
+           !preg_match('/[0-9]/', $password)){
+
+            echo json_encode([
+                "success" => false,
+                "field"   => "password",
+                "message" => "La contraseña debe tener 8 caracteres, una mayúscula y un número"
+            ]);
+            exit();
+        }
+
+        if (empty($nombre) || empty($correo) || empty($password) || empty($estado)) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Datos incompletos"
+            ]);
+            exit();
+        }
+
+        // verificar correo existente
         $stmt = $conexion->prepare("SELECT id_usuario FROM usuarios WHERE correo = ?");
         $stmt->bind_param("s", $correo);
         $stmt->execute();
         $resultadoCorreo = $stmt->get_result();
 
         if ($resultadoCorreo->num_rows > 0) {
-            echo "<script>alert('el correo ya existe');</script>";
+            echo json_encode([
+                "success" => false,
+                "field"   => "correo",
+                "message" => "El correo ya existe"
+            ]);
             exit();
         }
 
-        // encriptar clave
+        $conexion->begin_transaction();
+
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
-        // insertar usuario
         $stmt = $conexion->prepare("INSERT INTO usuarios (nombre, correo, contraseña, estado, id_rol) VALUES (?, ?, ?, ?, 3)");
         $stmt->bind_param("ssss", $nombre, $correo, $passwordHash, $estado);
         $stmt->execute();
 
-        // obtener id generado
         $id_usuario = $conexion->insert_id;
 
-        // insertar cliente
         $stmt2 = $conexion->prepare("INSERT INTO clientes (id_usuario, nombre, estado) VALUES (?, ?, ?)");
         $stmt2->bind_param("iss", $id_usuario, $nombre, $estado);
         $stmt2->execute();
 
-        echo "<script>alert('cliente registrado correctamente');</script>";
+        $conexion->commit();
+
+        echo json_encode([
+            "success" => true,
+            "message" => "Cliente registrado correctamente"
+        ]);
+        exit();
 
     } catch (Exception $e) {
 
-        // mostrar error real
-        echo "<script>alert('error al guardar');</script>";
+        $conexion->rollback();
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Error al guardar cliente"
+        ]);
         exit();
     }
 }
@@ -107,16 +154,19 @@ $resultado = mysqli_query($conexion, $sql);
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-user text-indigo-500"></i> Nombre Completo
                         </label>
-                        <input type="text" name="nombre" required class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Juan Pérez">
-                        <input type="hidden" name="test" value="123">
+                        <input type="text" name="nombre" id="nombre"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Juan Pérez">
+                        <p id="error-nombre" class="text-red-500 text-sm mt-1 hidden"></p>
                     </div>
-
+ 
                     <!-- Correo -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-envelope text-indigo-500"></i> Correo Electrónico
                         </label>
-                        <input type="email" name="correo" required class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="juan@example.com">
+                       <input type="email" name="correo" id="correo"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="juan@example.com">
+                        <p id="error-correo" class="text-red-500 text-sm mt-1 hidden"></p>  
                     </div>
 
                     <!-- Contraseña -->
@@ -124,7 +174,9 @@ $resultado = mysqli_query($conexion, $sql);
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-lock text-indigo-500"></i> Contraseña
                         </label>
-                        <input type="password" name="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="••••••••">
+                       <input type="password" name="password" id="password"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="••••••••">
+                            <p id="error-password" class="text-red-500 text-sm mt-1 hidden"></p>
                     </div>
 
                     <!-- Estado -->
@@ -165,7 +217,6 @@ $resultado = mysqli_query($conexion, $sql);
                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Correo</th>
                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Fecha Registro</th>
-                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
                 <th class="px-6 py-3 text-center text-sm font-semibold text-gray-700">Acciones</th>
             </tr>
         </thead>
@@ -186,14 +237,6 @@ $resultado = mysqli_query($conexion, $sql);
 
                     <td class="px-6 py-4 text-sm text-gray-600">
                         <?php echo $fila['fecha_registro']; ?>
-                    </td>
-
-                    <td class="px-6 py-4 text-sm">
-                        <?php if($fila['estado'] == 'activo') { ?>
-                            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">Activo</span>
-                        <?php } else { ?>
-                            <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">Inactivo</span>
-                        <?php } ?>
                     </td>
 
                     <td class="px-6 py-4 text-sm text-center">
@@ -277,24 +320,137 @@ $resultado = mysqli_query($conexion, $sql);
 </div>
 
 <script>
-document.getElementById("formCliente").addEventListener("submit", function(e) {
+// TOGGLE FORMULARIO
+function toggleFormulario(type) {
+    const formulario = document.getElementById('formulario-' + type);
+    if (formulario) {
+        formulario.classList.toggle('hidden');
+    }
+}
 
-    e.preventDefault();
+// CREAR CLIENTE (SPA SAFE)
+document.addEventListener("submit", function(e){
 
-    const formData = new FormData(this);
+    if(e.target && e.target.id === "formCliente"){
 
-    fetch("../client/clientes.php", {
-        method: "POST",
-        body: formData
-    })
-    .then(response => response.text())
-    .then(data => {
-        document.getElementById("main-content").innerHTML = data;
-    })
-    .catch(error => {
-        alert("error al enviar datos");
-        console.error(error);
-    });
+        if(e.target.dataset.enviando === "true"){
+            return;
+        }
+
+        e.target.dataset.enviando = "true";
+
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const nombre   = formData.get("nombre").trim();
+        const correo   = formData.get("correo").trim();
+        const password = formData.get("password");
+
+        limpiarTodosErrores();
+
+        let valido = true;
+
+        if(nombre.length < 3){
+            mostrarError("nombre", "Debe tener al menos 3 caracteres");
+            valido = false;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if(!emailRegex.test(correo)){
+            mostrarError("correo", "Correo electrónico no válido");
+            valido = false;
+        }
+
+        if(password.length < 8){
+            mostrarError("password", "Debe tener mínimo 8 caracteres");
+            valido = false;
+        }
+
+        if(!valido){
+            e.target.dataset.enviando = "false";
+            return;
+        }
+
+        fetch("/PAGINA%20WED/client/clientes.php", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            e.target.dataset.enviando = "false";
+
+            if(data.success){
+
+                toggleFormulario('crear');
+                showSuccessModal(data.message);
+
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+                
+
+            }else {
+
+            if(data.field){
+                mostrarError(data.field, data.message);
+            } else {
+                alert(data.message);
+            }
+
+        }
+        })
+        .catch(error => {
+            e.target.dataset.enviando = "false";
+            console.error(error);
+        });
+
+    }
+
+});
+
+function mostrarError(inputId, mensaje){
+
+    const input = document.getElementById(inputId);
+    const error = document.getElementById("error-" + inputId);
+
+    input.classList.remove("border-gray-300");
+    input.classList.add("border-red-500");
+
+    error.textContent = mensaje;
+    error.classList.remove("hidden");
+}
+
+function limpiarError(inputId){
+
+    const input = document.getElementById(inputId);
+    const error = document.getElementById("error-" + inputId);
+
+    input.classList.remove("border-red-500");
+    input.classList.add("border-gray-300");
+
+    error.textContent = "";
+    error.classList.add("hidden");
+}
+
+function limpiarTodosErrores(){
+    limpiarError("nombre");
+    limpiarError("correo");
+    limpiarError("password");
+}
+document.addEventListener("input", function(e){
+
+    if(e.target.id === "nombre"){
+        limpiarError("nombre");
+    }
+
+    if(e.target.id === "correo"){
+        limpiarError("correo");
+    }
+
+    if(e.target.id === "password"){
+        limpiarError("password");
+    }
 
 });
 </script>
@@ -381,11 +537,17 @@ document.getElementById("formEditar").addEventListener("submit", function(e){
     .then(data => {
 
         if(data.success){
-            cerrarModal();
-            loadPage('/PAGINA%20WED/client/clientes.php');
-        } else {
-            alert(data.message);
-        }
+
+    cerrarModal();
+    showSuccessModal("Cliente actualizado correctamente");
+
+    setTimeout(() => {
+        window.location.reload();
+    }, 1500);
+
+} else {
+    alert(data.message);
+}
 
     })
     .catch(err => {
@@ -408,11 +570,17 @@ function confirmarEliminar(){
     .then(data => {
 
         if(data.success){
-            cerrarModal();
-            loadPage('/PAGINA%20WED/client/clientes.php');
-        }else{
-            alert(data.message);
-        }
+
+    cerrarModal();
+    showSuccessModal("Cliente eliminado correctamente");
+
+    setTimeout(() => {
+        window.location.reload();
+    }, 1500);
+
+}else{
+    alert(data.message);
+}
 
     })
     .catch(err => {
@@ -420,8 +588,43 @@ function confirmarEliminar(){
     });
 
 }
+// MODAL ÉXITO
+function showSuccessModal(message = "Cliente agregado correctamente") {
 
+    const modal = document.getElementById("modalSuccess");
+    modal.querySelector("p").innerText = message;
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+
+    setTimeout(() => {
+        closeSuccessModal();
+    }, 2000);
+}
+
+function closeSuccessModal() {
+    const modal = document.getElementById("modalSuccess");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+}
 </script>
+</div> <!-- FIN MODAL ELIMINAR -->
+<!-- MODAL ÉXITO -->
+<div id="modalSuccess" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-sm text-center">
+        <h2 class="text-lg font-bold mb-4 text-green-600">
+            Operación Exitosa
+        </h2>
 
+        <p class="text-gray-600 mb-4">
+            Cliente agregado correctamente
+        </p>
+
+        <button onclick="closeSuccessModal()"
+        class="bg-green-600 text-white px-4 py-2 rounded">
+            Aceptar
+        </button>
+    </div>
+</div>
 </body>
 </html>

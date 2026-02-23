@@ -60,7 +60,51 @@ $stmt->close();
 $conexion->begin_transaction();
 
 try {
-    // Eliminar usuario (cascade elimina clientes y pedidos automáticamente)
+    // Obtener id_cliente asociado
+    $stmtCli = $conexion->prepare("SELECT id_cliente FROM clientes WHERE id_usuario = ?");
+    $stmtCli->bind_param("i", $id_usuario);
+    $stmtCli->execute();
+    $resCli = $stmtCli->get_result();
+    $id_cliente = null;
+    if ($filaCli = $resCli->fetch_assoc()) {
+        $id_cliente = (int)$filaCli['id_cliente'];
+    }
+    $stmtCli->close();
+
+    // Si el usuario tiene un registro de cliente, eliminar dependencias del cliente
+    if ($id_cliente) {
+        // Eliminar detalles de los carritos del cliente
+        $conexion->query("DELETE cd FROM carrito_detalle cd 
+                          INNER JOIN carritos c ON cd.id_carrito = c.id_carrito 
+                          WHERE c.id_cliente = $id_cliente");
+
+        // Eliminar carritos del cliente
+        $conexion->query("DELETE FROM carritos WHERE id_cliente = $id_cliente");
+
+        // Eliminar detalles de pedidos del cliente
+        $conexion->query("DELETE dp FROM detalle_pedido dp 
+                          INNER JOIN pedidos p ON dp.id_pedido = p.id_pedido 
+                          WHERE p.id_cliente = $id_cliente");
+
+        // Eliminar pedidos del cliente
+        $conexion->query("DELETE FROM pedidos WHERE id_cliente = $id_cliente");
+
+        // Eliminar direcciones del cliente
+        $conexion->query("DELETE FROM direcciones_cliente WHERE id_cliente = $id_cliente");
+    }
+
+    // Eliminar historial de pedidos del usuario
+    $stmtHist = $conexion->prepare("DELETE FROM historial_pedido WHERE id_usuario = ?");
+    $stmtHist->bind_param("i", $id_usuario);
+    $stmtHist->execute();
+    $stmtHist->close();
+
+    // Eliminar cliente (por si CASCADE no lo cubre) 
+    if ($id_cliente) {
+        $conexion->query("DELETE FROM clientes WHERE id_cliente = $id_cliente");
+    }
+
+    // Eliminar usuario
     $query_delete = "DELETE FROM usuarios WHERE id_usuario = ?";
     $stmt = $conexion->prepare($query_delete);
     $stmt->bind_param("i", $id_usuario);

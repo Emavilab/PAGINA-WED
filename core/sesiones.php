@@ -80,7 +80,7 @@ function registrarSesion($id_usuario, $correo, $nombre, $id_rol) {
  */
 function cerrarSesion() {
     session_destroy();
-    header("Location: ../index1.php");
+    header("Location: ../index.php");
     exit();
 }
 

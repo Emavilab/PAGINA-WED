@@ -75,76 +75,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         ]);
         exit();
     }
-}if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
-    header('Content-Type: application/json; charset=utf-8');
-
-    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-    $conexion->set_charset("utf8mb4");
-
-    try {
-
-        $nombre   = trim($_POST['nombre']);
-        $correo   = trim($_POST['correo']);
-        $password = $_POST['password'];
-        $estado   = $_POST['estado'];
-
-        if (empty($nombre) || empty($correo) || empty($password) || empty($estado)) {
-            echo json_encode([
-                "success" => false,
-                "message" => "Datos incompletos"
-            ]);
-            exit();
-        }
-
-        // verificar correo existente
-        $stmt = $conexion->prepare("SELECT id_usuario FROM usuarios WHERE correo = ?");
-        $stmt->bind_param("s", $correo);
-        $stmt->execute();
-        $resultadoCorreo = $stmt->get_result();
-
-        if ($resultadoCorreo->num_rows > 0) {
-            echo json_encode([
-                "success" => false,
-                "message" => "El correo ya existe"
-            ]);
-            exit();
-        }
-
-        $conexion->begin_transaction();
-
-        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-
-        // insertar usuario
-        $stmt = $conexion->prepare("INSERT INTO usuarios (nombre, correo, contraseña, estado, id_rol) VALUES (?, ?, ?, ?, 3)");
-        $stmt->bind_param("ssss", $nombre, $correo, $passwordHash, $estado);
-        $stmt->execute();
-
-        $id_usuario = $conexion->insert_id;
-
-        // insertar cliente
-        $stmt2 = $conexion->prepare("INSERT INTO clientes (id_usuario, nombre, estado) VALUES (?, ?, ?)");
-        $stmt2->bind_param("iss", $id_usuario, $nombre, $estado);
-        $stmt2->execute();
-
-        $conexion->commit();
-
-        echo json_encode([
-            "success" => true,
-            "message" => "Cliente registrado correctamente"
-        ]);
-        exit();
-
-    } catch (Exception $e) {
-
-        $conexion->rollback();
-
-        echo json_encode([
-            "success" => false,
-            "message" => "Error al guardar cliente"
-        ]);
-        exit();
-    }
 }
 /*   CONSULTA PARA TABLA */
 
@@ -362,6 +292,14 @@ $resultado = mysqli_query($conexion, $sql);
 </div>
 
 <script>
+// TOGGLE FORMULARIO
+function toggleFormulario(type) {
+    const formulario = document.getElementById('formulario-' + type);
+    if (formulario) {
+        formulario.classList.toggle('hidden');
+    }
+}
+
 // CREAR CLIENTE (SPA SAFE)
 document.addEventListener("submit", function(e){
 
@@ -371,7 +309,7 @@ document.addEventListener("submit", function(e){
 
         const formData = new FormData(e.target);
 
-        fetch("/PAGINA-WED/client/clientes.php", {
+        fetch("/PAGINA%20WED/client/clientes.php", {
             method: "POST",
             body: formData
         })
@@ -384,7 +322,7 @@ document.addEventListener("submit", function(e){
                 showSuccessModal(data.message);
 
                 setTimeout(() => {
-                    loadPage('/PAGINA-WED/client/clientes.php');
+                    window.location.reload();
                 }, 1500);
 
             } else {
@@ -430,7 +368,7 @@ document.addEventListener("click", function(e){
 // ABRIR MODAL EDITAR
 function abrirModalEditar(id){
 
-    fetch("/PAGINA-WED/client/clientes_obtener.php?id=" + id)
+    fetch("/PAGINA%20WED/client/clientes_obtener.php?id=" + id)
     .then(res => res.json())
     .then(data => {
 
@@ -476,7 +414,7 @@ document.getElementById("formEditar").addEventListener("submit", function(e){
 
     const formData = new FormData(this);
 
-    fetch("/PAGINA-WED/client/clientes_editar.php", {
+    fetch("/PAGINA%20WED/client/clientes_editar.php", {
         method: "POST",
         body: formData
     })
@@ -489,7 +427,7 @@ document.getElementById("formEditar").addEventListener("submit", function(e){
     showSuccessModal("Cliente actualizado correctamente");
 
     setTimeout(() => {
-        loadPage('/PAGINA-WED/client/clientes.php');
+        window.location.reload();
     }, 1500);
 
 } else {
@@ -508,7 +446,7 @@ function confirmarEliminar(){
 
     const id = document.getElementById("delete_id").value;
 
-    fetch("/PAGINA-WED/client/clientes_eliminar.php", {
+    fetch("/PAGINA%20WED/client/clientes_eliminar.php", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify({id:id})
@@ -522,7 +460,7 @@ function confirmarEliminar(){
     showSuccessModal("Cliente eliminado correctamente");
 
     setTimeout(() => {
-        loadPage('/PAGINA-WED/client/clientes.php');
+        window.location.reload();
     }, 1500);
 
 }else{

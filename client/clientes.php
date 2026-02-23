@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 require_once '../core/sesiones.php';
 require_once '../core/conexion.php';
@@ -44,11 +44,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
            !preg_match('/[A-Z]/', $password) ||
            !preg_match('/[0-9]/', $password)){
 
-<<<<<<< HEAD
-        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-
-        // insertar usuario
-=======
             echo json_encode([
                 "success" => false,
                 "field"   => "password",
@@ -84,17 +79,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
->>>>>>> b1e6c9f209d2f9af7e15e4753fc201565ed1547f
         $stmt = $conexion->prepare("INSERT INTO usuarios (nombre, correo, contraseña, estado, id_rol) VALUES (?, ?, ?, ?, 3)");
         $stmt->bind_param("ssss", $nombre, $correo, $passwordHash, $estado);
         $stmt->execute();
 
         $id_usuario = $conexion->insert_id;
 
-<<<<<<< HEAD
-        // insertar cliente
-=======
->>>>>>> b1e6c9f209d2f9af7e15e4753fc201565ed1547f
         $stmt2 = $conexion->prepare("INSERT INTO clientes (id_usuario, nombre, estado) VALUES (?, ?, ?)");
         $stmt2->bind_param("iss", $id_usuario, $nombre, $estado);
         $stmt2->execute();

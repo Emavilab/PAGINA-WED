@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 18-02-2026 a las 05:32:24
+-- Tiempo de generación: 22-02-2026 a las 09:15:26
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -64,6 +64,17 @@ CREATE TABLE `categorias` (
   `icono` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `categorias`
+--
+
+INSERT INTO `categorias` (`id_categoria`, `id_padre`, `nombre`, `descripcion`, `estado`, `icono`) VALUES
+(4, NULL, 'electronica', 'electrica', 'activo', 'fa-bolt'),
+(9, 4, 'lacteos', '', 'activo', ''),
+(10, NULL, 'lacteos', '', 'activo', 'fa-cheese'),
+(11, 10, 'queso', '', 'activo', ''),
+(12, NULL, 'muebles', '', 'activo', 'fa-couch');
+
 -- --------------------------------------------------------
 
 --
@@ -74,7 +85,7 @@ CREATE TABLE `clientes` (
   `id_cliente` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL,
-  `estado` enum('activo','inactivo') DEFAULT 'activo',
+  `estado` enum('activo','bloqueado') DEFAULT 'activo',
   `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -83,8 +94,7 @@ CREATE TABLE `clientes` (
 --
 
 INSERT INTO `clientes` (`id_cliente`, `id_usuario`, `nombre`, `estado`, `fecha_registro`) VALUES
-(7, 16, 'vale', 'activo', '2026-02-16 07:00:38'),
-(8, 17, 'eduardo12', 'activo', '2026-02-17 00:13:12');
+(11, 21, 'javier a', 'activo', '2026-02-21 08:29:22');
 
 -- --------------------------------------------------------
 
@@ -170,6 +180,13 @@ CREATE TABLE `marcas` (
   `logo` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `marcas`
+--
+
+INSERT INTO `marcas` (`id_marca`, `nombre`, `estado`, `logo`) VALUES
+(1, 'sula', 'activo', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -194,8 +211,7 @@ CREATE TABLE `mensajes_contacto` (
 --
 
 INSERT INTO `mensajes_contacto` (`id_mensaje`, `nombre`, `correo`, `telefono`, `asunto`, `mensaje`, `estado`, `fecha_mensaje`, `fecha_respuesta`, `respuesta`) VALUES
-(2, 'eduardo avila', 'vatoavila5@gmail.com', '98048195', 'hola', 'hola', 'nuevo', '2026-02-16 08:04:03', NULL, NULL),
-(3, 'eduardo avila', 'vatoavila5@gmail.com', '98048195', 'hola', 'aaaaaaa', 'nuevo', '2026-02-16 19:15:44', NULL, NULL);
+(5, 'gustavo', 'ea3192571@gmail.com', '123456', 'envio', 'cuanto cuesta el envio', 'cerrado', '2026-02-22 00:38:40', '2026-02-22 00:39:45', '120 lempiras mi estimado');
 
 -- --------------------------------------------------------
 
@@ -266,6 +282,14 @@ CREATE TABLE `productos` (
   `fecha_fin_oferta` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `productos`
+--
+
+INSERT INTO `productos` (`id_producto`, `codigo`, `nombre`, `descripcion`, `precio`, `stock`, `estado`, `fecha_creacion`, `id_categoria`, `id_marca`, `precio_descuento`, `en_oferta`, `fecha_inicio_oferta`, `fecha_fin_oferta`) VALUES
+(1, '2020', 'queso', 'aads', 100.00, 100, 'disponible', '2026-02-21 07:36:29', 9, 1, 0.10, 1, '2026-02-21', '2026-02-28'),
+(2, '2525', 'queso parmesano', 'queso de buena calidad', 100.00, 100, 'disponible', '2026-02-22 00:54:11', 11, 1, 0.50, 1, '2026-02-21', '2026-02-28');
+
 -- --------------------------------------------------------
 
 --
@@ -279,6 +303,16 @@ CREATE TABLE `producto_imagenes` (
   `orden` int(11) DEFAULT 1,
   `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `producto_imagenes`
+--
+
+INSERT INTO `producto_imagenes` (`id_imagen`, `id_producto`, `ruta_imagen`, `orden`, `fecha_registro`) VALUES
+(1, 1, 'img/productos/prod_1_1771659389_0.jpg', 1, '2026-02-21 07:36:29'),
+(2, 1, 'img/productos/prod_1_1771659389_1.jpg', 2, '2026-02-21 07:36:29'),
+(3, 2, 'img/productos/prod_2_1771721651_0.jpg', 1, '2026-02-22 00:54:11'),
+(4, 2, 'img/productos/prod_2_1771721651_1.jpg', 2, '2026-02-22 00:54:11');
 
 -- --------------------------------------------------------
 
@@ -324,8 +358,7 @@ CREATE TABLE `usuarios` (
 INSERT INTO `usuarios` (`id_usuario`, `nombre`, `correo`, `contraseña`, `estado`, `fecha_creacion`, `id_rol`) VALUES
 (7, 'eduardo avila12', 'ea31925712@gmail.com', '$2y$10$zp9Olr3n1B4wzEAx/x/KPuA4X/w57ofm51gLbg78ZMHfdwRmIoPSO', 'activo', '2026-02-16 02:10:19', 1),
 (13, 'Eduardo1201', 'ea319257166@gmail.com', '$2y$10$36vlWeiRgGcwbL8NBX6mIObuA9T9DAn3nnSSoMfaX4nwTTZUn..PO', 'activo', '2026-02-16 04:17:30', 2),
-(16, 'vale', 'vatoavila5@gmail.com', '$2y$10$VZUJ28WGACytVePAkSfvZuvXzWOUM8dikNKJfy1UqqB.oorP.NA8.', 'activo', '2026-02-16 07:00:38', 3),
-(17, 'eduardo12', 'ea3192571@gmail.com', '$2y$10$NVJW1oGrhG8Fr2XzcOTgUe3KTR106oRNKZDlNTyrPBB5iXgW/yPnm', 'activo', '2026-02-17 00:13:12', 3);
+(21, 'javier a', 'vatoavila5@gmail.com', '$2y$10$/MzQouWiL3H6cBN.SSlqHONFftXh.PMxPr8VUzcRuoRw8XOYwSPRW', 'inactivo', '2026-02-21 08:29:22', 3);
 
 --
 -- Índices para tablas volcadas
@@ -351,7 +384,7 @@ ALTER TABLE `carrito_detalle`
 --
 ALTER TABLE `categorias`
   ADD PRIMARY KEY (`id_categoria`),
-  ADD KEY `fk_categoria_padre` (`id_padre`);
+  ADD KEY `idx_id_padre` (`id_padre`);
 
 --
 -- Indices de la tabla `clientes`
@@ -475,13 +508,13 @@ ALTER TABLE `carrito_detalle`
 -- AUTO_INCREMENT de la tabla `categorias`
 --
 ALTER TABLE `categorias`
-  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT de la tabla `clientes`
 --
 ALTER TABLE `clientes`
-  MODIFY `id_cliente` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id_cliente` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT de la tabla `configuracion`
@@ -511,13 +544,13 @@ ALTER TABLE `historial_pedido`
 -- AUTO_INCREMENT de la tabla `marcas`
 --
 ALTER TABLE `marcas`
-  MODIFY `id_marca` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_marca` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `mensajes_contacto`
 --
 ALTER TABLE `mensajes_contacto`
-  MODIFY `id_mensaje` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_mensaje` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `metodos_envio`
@@ -541,13 +574,13 @@ ALTER TABLE `pedidos`
 -- AUTO_INCREMENT de la tabla `productos`
 --
 ALTER TABLE `productos`
-  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `producto_imagenes`
 --
 ALTER TABLE `producto_imagenes`
-  MODIFY `id_imagen` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_imagen` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `roles`
@@ -559,7 +592,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- Restricciones para tablas volcadas
@@ -577,6 +610,12 @@ ALTER TABLE `carritos`
 ALTER TABLE `carrito_detalle`
   ADD CONSTRAINT `carrito_detalle_ibfk_1` FOREIGN KEY (`id_carrito`) REFERENCES `carritos` (`id_carrito`),
   ADD CONSTRAINT `carrito_detalle_ibfk_2` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`);
+
+--
+-- Filtros para la tabla `categorias`
+--
+ALTER TABLE `categorias`
+  ADD CONSTRAINT `fk_categoria_padre` FOREIGN KEY (`id_padre`) REFERENCES `categorias` (`id_categoria`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `clientes`
@@ -616,9 +655,6 @@ ALTER TABLE `pedidos`
 --
 -- Filtros para la tabla `productos`
 --
-ALTER TABLE `categorias`
-  ADD CONSTRAINT `fk_categoria_padre` FOREIGN KEY (`id_padre`) REFERENCES `categorias` (`id_categoria`) ON DELETE CASCADE;
-
 ALTER TABLE `productos`
   ADD CONSTRAINT `productos_ibfk_1` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id_categoria`),
   ADD CONSTRAINT `productos_ibfk_2` FOREIGN KEY (`id_marca`) REFERENCES `marcas` (`id_marca`);

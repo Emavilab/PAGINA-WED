@@ -19,6 +19,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $password = $_POST['password'];
         $estado   = $_POST['estado'];
 
+        // validar nombre
+        if(strlen($nombre) < 3){
+            echo json_encode([
+                "success" => false,
+                "field"   => "nombre",
+                "message" => "El nombre debe tener al menos 3 caracteres"
+            ]);
+            exit();
+        }
+
+        // validar correo formato
+        if(!filter_var($correo, FILTER_VALIDATE_EMAIL)){
+            echo json_encode([
+                "success" => false,
+                "field"   => "correo",
+                "message" => "Correo no válido"
+            ]);
+            exit();
+        }
+
+        // validar contraseña fuerte
+        if(strlen($password) < 8 ||
+           !preg_match('/[A-Z]/', $password) ||
+           !preg_match('/[0-9]/', $password)){
+
+<<<<<<< HEAD
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+        // insertar usuario
+=======
+            echo json_encode([
+                "success" => false,
+                "field"   => "password",
+                "message" => "La contraseña debe tener 8 caracteres, una mayúscula y un número"
+            ]);
+            exit();
+        }
+
         if (empty($nombre) || empty($correo) || empty($password) || empty($estado)) {
             echo json_encode([
                 "success" => false,
@@ -36,6 +74,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($resultadoCorreo->num_rows > 0) {
             echo json_encode([
                 "success" => false,
+                "field"   => "correo",
                 "message" => "El correo ya existe"
             ]);
             exit();
@@ -45,14 +84,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
-        // insertar usuario
+>>>>>>> b1e6c9f209d2f9af7e15e4753fc201565ed1547f
         $stmt = $conexion->prepare("INSERT INTO usuarios (nombre, correo, contraseña, estado, id_rol) VALUES (?, ?, ?, ?, 3)");
         $stmt->bind_param("ssss", $nombre, $correo, $passwordHash, $estado);
         $stmt->execute();
 
         $id_usuario = $conexion->insert_id;
 
+<<<<<<< HEAD
         // insertar cliente
+=======
+>>>>>>> b1e6c9f209d2f9af7e15e4753fc201565ed1547f
         $stmt2 = $conexion->prepare("INSERT INTO clientes (id_usuario, nombre, estado) VALUES (?, ?, ?)");
         $stmt2->bind_param("iss", $id_usuario, $nombre, $estado);
         $stmt2->execute();
@@ -122,16 +164,19 @@ $resultado = mysqli_query($conexion, $sql);
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-user text-indigo-500"></i> Nombre Completo
                         </label>
-                        <input type="text" name="nombre" required class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Juan Pérez">
-                        <input type="hidden" name="test" value="123">
+                        <input type="text" name="nombre" id="nombre"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Juan Pérez">
+                        <p id="error-nombre" class="text-red-500 text-sm mt-1 hidden"></p>
                     </div>
-
+ 
                     <!-- Correo -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-envelope text-indigo-500"></i> Correo Electrónico
                         </label>
-                        <input type="email" name="correo" required class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="juan@example.com">
+                       <input type="email" name="correo" id="correo"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="juan@example.com">
+                        <p id="error-correo" class="text-red-500 text-sm mt-1 hidden"></p>  
                     </div>
 
                     <!-- Contraseña -->
@@ -139,7 +184,9 @@ $resultado = mysqli_query($conexion, $sql);
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-lock text-indigo-500"></i> Contraseña
                         </label>
-                        <input type="password" name="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="••••••••">
+                       <input type="password" name="password" id="password"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="••••••••">
+                            <p id="error-password" class="text-red-500 text-sm mt-1 hidden"></p>
                     </div>
 
                     <!-- Estado -->
@@ -180,7 +227,6 @@ $resultado = mysqli_query($conexion, $sql);
                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Correo</th>
                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Fecha Registro</th>
-                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
                 <th class="px-6 py-3 text-center text-sm font-semibold text-gray-700">Acciones</th>
             </tr>
         </thead>
@@ -201,14 +247,6 @@ $resultado = mysqli_query($conexion, $sql);
 
                     <td class="px-6 py-4 text-sm text-gray-600">
                         <?php echo $fila['fecha_registro']; ?>
-                    </td>
-
-                    <td class="px-6 py-4 text-sm">
-                        <?php if($fila['estado'] == 'activo') { ?>
-                            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">Activo</span>
-                        <?php } else { ?>
-                            <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">Inactivo</span>
-                        <?php } ?>
                     </td>
 
                     <td class="px-6 py-4 text-sm text-center">
@@ -305,9 +343,43 @@ document.addEventListener("submit", function(e){
 
     if(e.target && e.target.id === "formCliente"){
 
+        if(e.target.dataset.enviando === "true"){
+            return;
+        }
+
+        e.target.dataset.enviando = "true";
+
         e.preventDefault();
 
         const formData = new FormData(e.target);
+        const nombre   = formData.get("nombre").trim();
+        const correo   = formData.get("correo").trim();
+        const password = formData.get("password");
+
+        limpiarTodosErrores();
+
+        let valido = true;
+
+        if(nombre.length < 3){
+            mostrarError("nombre", "Debe tener al menos 3 caracteres");
+            valido = false;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if(!emailRegex.test(correo)){
+            mostrarError("correo", "Correo electrónico no válido");
+            valido = false;
+        }
+
+        if(password.length < 8){
+            mostrarError("password", "Debe tener mínimo 8 caracteres");
+            valido = false;
+        }
+
+        if(!valido){
+            e.target.dataset.enviando = "false";
+            return;
+        }
 
         fetch("/PAGINA%20WED/client/clientes.php", {
             method: "POST",
@@ -315,6 +387,8 @@ document.addEventListener("submit", function(e){
         })
         .then(res => res.json())
         .then(data => {
+
+            e.target.dataset.enviando = "false";
 
             if(data.success){
 
@@ -324,17 +398,68 @@ document.addEventListener("submit", function(e){
                 setTimeout(() => {
                     window.location.reload();
                 }, 1500);
+                
 
+            }else {
+
+            if(data.field){
+                mostrarError(data.field, data.message);
             } else {
                 alert(data.message);
             }
 
+        }
         })
         .catch(error => {
+            e.target.dataset.enviando = "false";
             console.error(error);
-            alert("Error en la petición");
         });
 
+    }
+
+});
+
+function mostrarError(inputId, mensaje){
+
+    const input = document.getElementById(inputId);
+    const error = document.getElementById("error-" + inputId);
+
+    input.classList.remove("border-gray-300");
+    input.classList.add("border-red-500");
+
+    error.textContent = mensaje;
+    error.classList.remove("hidden");
+}
+
+function limpiarError(inputId){
+
+    const input = document.getElementById(inputId);
+    const error = document.getElementById("error-" + inputId);
+
+    input.classList.remove("border-red-500");
+    input.classList.add("border-gray-300");
+
+    error.textContent = "";
+    error.classList.add("hidden");
+}
+
+function limpiarTodosErrores(){
+    limpiarError("nombre");
+    limpiarError("correo");
+    limpiarError("password");
+}
+document.addEventListener("input", function(e){
+
+    if(e.target.id === "nombre"){
+        limpiarError("nombre");
+    }
+
+    if(e.target.id === "correo"){
+        limpiarError("correo");
+    }
+
+    if(e.target.id === "password"){
+        limpiarError("password");
     }
 
 });

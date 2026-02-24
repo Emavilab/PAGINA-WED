@@ -94,7 +94,11 @@ if ($usuario['id_rol'] == 1) {
 } elseif ($usuario['id_rol'] == 2) {
     $redirect = 'admin/Dashboard.php'; // Vendedor
 } elseif ($usuario['id_rol'] == 3) {
+<<<<<<< HEAD
+    $redirect = 'client/dashboard.php'; // Panel cliente (nueva página)
+=======
     $redirect = 'index.php'; // Cliente
+>>>>>>> 3d54e70a1e68ff50d0f6fcb834e1ec1c9cca0267
 }
 
 // Limpiar cualquier buffer de salida anterior

@@ -10,6 +10,11 @@ require_once '../core/conexion.php';
 $resultado_marcas = mysqli_query($conexion, "SELECT * FROM marcas ORDER BY id_marca DESC");
 $res_envio = mysqli_query($conexion, "SELECT * FROM metodos_envio ORDER BY id_envio DESC");
 $res_pagos = mysqli_query($conexion, "SELECT * FROM metodos_pago ORDER BY id_metodo_pago DESC");
+
+// Cargar configuración general
+$res_config = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
+$config = ($res_config && mysqli_num_rows($res_config) > 0) ? mysqli_fetch_assoc($res_config) : [];
+$redes = !empty($config['redes_sociales']) ? json_decode($config['redes_sociales'], true) : [];
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -37,6 +42,12 @@ $res_pagos = mysqli_query($conexion, "SELECT * FROM metodos_pago ORDER BY id_met
                 </button>
                 <button onclick="mostrarTab('general')" class="tab-btn bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold transition">
                     <i class="fas fa-sliders-h mr-2"></i> Configuración General
+                </button>
+                <button onclick="mostrarTab('banners')" class="tab-btn bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold transition">
+                    <i class="fas fa-images mr-2"></i> Banners Promocionales
+                </button>
+                <button onclick="mostrarTab('hero-slides')" class="tab-btn bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold transition">
+                    <i class="fas fa-play-circle mr-2"></i> Hero Carrusel
                 </button>
             </div>
 
@@ -327,41 +338,532 @@ $res_pagos = mysqli_query($conexion, "SELECT * FROM metodos_pago ORDER BY id_met
 
             <!-- ==================== CONFIGURACIÓN GENERAL ==================== -->
             <div id="tab-general" class="tab-content hidden">
-                <div class="bg-white rounded-lg shadow-lg p-8">
-                    <h2 class="text-2xl font-bold mb-6 text-gray-800">
-                        <i class="fas fa-cogs text-cyan-600"></i> Configuración General
-                    </h2>
-                    <form class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                <i class="fas fa-store text-cyan-500"></i> Nombre del Negocio
-                            </label>
-                            <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Mi Negocio">
+                <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                    <div class="bg-gradient-to-r from-cyan-600 to-cyan-800 p-5 flex items-center gap-3">
+                        <i class="fas fa-cogs text-white text-xl"></i>
+                        <h2 class="text-xl font-bold text-white">Configuración General del Negocio</h2>
+                    </div>
+
+                    <form id="formConfigGeneral" class="p-8" onsubmit="return submitConfigGeneral(event)" enctype="multipart/form-data">
+                        <input type="hidden" name="accion" value="guardar_config_general">
+
+                        <!-- Sección: Información Básica -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-bold text-slate-700 mb-4 pb-2 border-b border-slate-200">
+                                <i class="fas fa-store text-cyan-500 mr-2"></i>Información del Negocio
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-building text-cyan-500 mr-1"></i> Nombre del Negocio
+                                    </label>
+                                    <input type="text" name="nombre_negocio" id="cfg_nombre_negocio" value="<?php echo htmlspecialchars($config['nombre_negocio'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Mi Negocio">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-quote-left text-cyan-500 mr-1"></i> Slogan
+                                    </label>
+                                    <input type="text" name="slogan" id="cfg_slogan" value="<?php echo htmlspecialchars($config['slogan'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Tu mejor tienda online">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-envelope text-cyan-500 mr-1"></i> Correo Electrónico
+                                    </label>
+                                    <input type="email" name="correo" id="cfg_correo" value="<?php echo htmlspecialchars($config['correo'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="contacto@minegocio.com">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-phone text-cyan-500 mr-1"></i> Teléfono
+                                    </label>
+                                    <input type="tel" name="telefono" id="cfg_telefono" value="<?php echo htmlspecialchars($config['telefono'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="9999-9999">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-map-marker-alt text-cyan-500 mr-1"></i> Dirección
+                                    </label>
+                                    <input type="text" name="direccion" id="cfg_direccion" value="<?php echo htmlspecialchars($config['direccion'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Dirección del negocio">
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                <i class="fas fa-envelope text-cyan-500"></i> Correo
-                            </label>
-                            <input type="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="contacto@minegocio.com">
+
+                        <!-- Sección: Imágenes -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-bold text-slate-700 mb-4 pb-2 border-b border-slate-200">
+                                <i class="fas fa-image text-cyan-500 mr-2"></i>Imágenes
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-image text-cyan-500 mr-1"></i> Logo del Negocio
+                                    </label>
+                                    <?php if(!empty($config['logo'])): ?>
+                                        <div class="mb-2 flex items-center gap-3">
+                                            <img src="../img/<?php echo htmlspecialchars($config['logo']); ?>" class="w-16 h-16 object-contain border rounded-lg p-1">
+                                            <span class="text-xs text-gray-500"><?php echo $config['logo']; ?></span>
+                                        </div>
+                                    <?php endif; ?>
+                                    <input type="file" name="logo" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-icons text-cyan-500 mr-1"></i> Favicon
+                                    </label>
+                                    <?php if(!empty($config['favicon'])): ?>
+                                        <div class="mb-2 flex items-center gap-3">
+                                            <img src="../img/<?php echo htmlspecialchars($config['favicon']); ?>" class="w-8 h-8 object-contain border rounded-lg p-1">
+                                            <span class="text-xs text-gray-500"><?php echo $config['favicon']; ?></span>
+                                        </div>
+                                    <?php endif; ?>
+                                    <input type="file" name="favicon" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100">
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                <i class="fas fa-phone text-cyan-500"></i> Teléfono
-                            </label>
-                            <input type="tel" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="123-456-7890">
+
+                        <!-- Sección: Comercio -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-bold text-slate-700 mb-4 pb-2 border-b border-slate-200">
+                                <i class="fas fa-coins text-cyan-500 mr-2"></i>Configuración Comercial
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-dollar-sign text-cyan-500 mr-1"></i> Moneda
+                                    </label>
+                                    <select name="moneda" id="cfg_moneda" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition">
+                                        <?php
+                                        $monedas = ['USD' => 'USD - Dólar', 'EUR' => 'EUR - Euro', 'MXN' => 'MXN - Peso Mexicano', 'COP' => 'COP - Peso Colombiano', 'ARS' => 'ARS - Peso Argentino', 'GTQ' => 'GTQ - Quetzal', 'HNL' => 'HNL - Lempira', 'CRC' => 'CRC - Colón'];
+                                        $monedaActual = $config['moneda'] ?? 'USD';
+                                        foreach($monedas as $cod => $nom):
+                                        ?>
+                                        <option value="<?php echo $cod; ?>" <?php echo ($monedaActual == $cod) ? 'selected' : ''; ?>><?php echo $nom; ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-percent text-cyan-500 mr-1"></i> Impuesto (%)
+                                    </label>
+                                    <input type="number" name="impuesto" id="cfg_impuesto" step="0.01" min="0" max="100" value="<?php echo htmlspecialchars($config['impuesto'] ?? '0'); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="0.00">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-clock text-cyan-500 mr-1"></i> Horario de Atención
+                                    </label>
+                                    <input type="text" name="horario_atencion" id="cfg_horario" value="<?php echo htmlspecialchars($config['horario_atencion'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Lun-Vie 8:00am - 5:00pm">
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                <i class="fas fa-map-marker-alt text-cyan-500"></i> Dirección
-                            </label>
-                            <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Dirección del negocio">
+
+                        <!-- Sección: Textos -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-bold text-slate-700 mb-4 pb-2 border-b border-slate-200">
+                                <i class="fas fa-align-left text-cyan-500 mr-2"></i>Textos de la Página
+                            </h3>
+                            <div class="grid grid-cols-1 gap-6">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-bullhorn text-cyan-500 mr-1"></i> Texto del Banner Superior
+                                    </label>
+                                    <input type="text" name="texto_banner_superior" id="cfg_banner_superior" value="<?php echo htmlspecialchars($config['texto_banner_superior'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="🚚 ¡Envío gratis en pedidos mayores a $50!">
+                                    <p class="text-xs text-gray-400 mt-1">Se muestra en la barra azul superior. Déjalo vacío para ocultarlo.</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-home text-cyan-500 mr-1"></i> Texto de Inicio / Bienvenida
+                                    </label>
+                                    <textarea name="texto_inicio" id="cfg_texto_inicio" rows="3" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Bienvenido a nuestro negocio..."><?php echo htmlspecialchars($config['texto_inicio'] ?? ''); ?></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-shoe-prints text-cyan-500 mr-1"></i> Texto del Pie de Página (Footer)
+                                    </label>
+                                    <textarea name="pie_pagina" id="cfg_pie_pagina" rows="3" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="© 2024 Mi Negocio. Todos los derechos reservados."><?php echo htmlspecialchars($config['pie_pagina'] ?? ''); ?></textarea>
+                                </div>
+                            </div>
                         </div>
-                        <div class="md:col-span-2">
-                            <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-3 rounded-lg font-semibold transition shadow-md">
-                                <i class="fas fa-save mr-2"></i> Guardar Configuración
+
+                        <!-- Sección: Hero Principal -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-bold text-slate-700 mb-4 pb-2 border-b border-slate-200">
+                                <i class="fas fa-desktop text-cyan-500 mr-2"></i>Sección Hero (Página de Inicio)
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-tag text-cyan-500 mr-1"></i> Etiqueta
+                                    </label>
+                                    <input type="text" name="hero_etiqueta" id="cfg_hero_etiqueta" value="<?php echo htmlspecialchars($config['hero_etiqueta'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Ofertas Exclusivas Online">
+                                    <p class="text-xs text-gray-400 mt-1">Texto pequeño encima del título.</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-image text-cyan-500 mr-1"></i> Imagen Hero
+                                    </label>
+                                    <?php if(!empty($config['hero_imagen'])): ?>
+                                        <div class="mb-2 flex items-center gap-3">
+                                            <img src="../img/<?php echo htmlspecialchars($config['hero_imagen']); ?>" class="w-20 h-12 object-cover border rounded-lg">
+                                            <span class="text-xs text-gray-500"><?php echo $config['hero_imagen']; ?></span>
+                                        </div>
+                                    <?php endif; ?>
+                                    <input type="file" name="hero_imagen" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-heading text-cyan-500 mr-1"></i> Título Principal
+                                    </label>
+                                    <input type="text" name="hero_titulo" id="cfg_hero_titulo" value="<?php echo htmlspecialchars($config['hero_titulo'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Bienvenido a Nuestra Tienda">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-font text-cyan-500 mr-1"></i> Subtítulo (color primario)
+                                    </label>
+                                    <input type="text" name="hero_subtitulo" id="cfg_hero_subtitulo" value="<?php echo htmlspecialchars($config['hero_subtitulo'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Los Mejores Productos">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-paragraph text-cyan-500 mr-1"></i> Descripción
+                                    </label>
+                                    <textarea name="hero_descripcion" id="cfg_hero_descripcion" rows="2" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Descripción breve de tu negocio..."><?php echo htmlspecialchars($config['hero_descripcion'] ?? ''); ?></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-mouse-pointer text-cyan-500 mr-1"></i> Botón Primario
+                                    </label>
+                                    <input type="text" name="hero_btn_primario" id="cfg_hero_btn1" value="<?php echo htmlspecialchars($config['hero_btn_primario'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Comprar Ahora">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-mouse-pointer text-cyan-500 mr-1"></i> Botón Secundario
+                                    </label>
+                                    <input type="text" name="hero_btn_secundario" id="cfg_hero_btn2" value="<?php echo htmlspecialchars($config['hero_btn_secundario'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Ver Catálogo">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sección: Redes Sociales -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-bold text-slate-700 mb-4 pb-2 border-b border-slate-200">
+                                <i class="fas fa-share-alt text-cyan-500 mr-2"></i>Redes Sociales
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fab fa-facebook text-blue-600 mr-1"></i> Facebook
+                                    </label>
+                                    <input type="url" name="red_facebook" id="cfg_facebook" value="<?php echo htmlspecialchars($redes['facebook'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="https://facebook.com/tu-pagina">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fab fa-instagram text-pink-500 mr-1"></i> Instagram
+                                    </label>
+                                    <input type="url" name="red_instagram" id="cfg_instagram" value="<?php echo htmlspecialchars($redes['instagram'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="https://instagram.com/tu-pagina">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fab fa-whatsapp text-green-500 mr-1"></i> WhatsApp
+                                    </label>
+                                    <input type="text" name="red_whatsapp" id="cfg_whatsapp" value="<?php echo htmlspecialchars($redes['whatsapp'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="+504 9999-9999">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fab fa-tiktok text-gray-800 mr-1"></i> TikTok
+                                    </label>
+                                    <input type="url" name="red_tiktok" id="cfg_tiktok" value="<?php echo htmlspecialchars($redes['tiktok'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="https://tiktok.com/@tu-pagina">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fab fa-twitter text-sky-500 mr-1"></i> Twitter / X
+                                    </label>
+                                    <input type="url" name="red_twitter" id="cfg_twitter" value="<?php echo htmlspecialchars($redes['twitter'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="https://x.com/tu-pagina">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fab fa-youtube text-red-600 mr-1"></i> YouTube
+                                    </label>
+                                    <input type="url" name="red_youtube" id="cfg_youtube" value="<?php echo htmlspecialchars($redes['youtube'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="https://youtube.com/c/tu-canal">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="flex gap-4 pt-4 border-t border-slate-200">
+                            <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg transition-all flex items-center gap-2">
+                                <i class="fas fa-save"></i> Guardar Configuración
+                            </button>
+                            <button type="button" onclick="resetConfigGeneral()" class="bg-gray-400 hover:bg-gray-500 text-white px-8 py-3 rounded-lg font-bold transition-all flex items-center gap-2">
+                                <i class="fas fa-undo"></i> Restaurar Valores
                             </button>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <!-- ==================== BANNERS PROMOCIONALES ==================== -->
+            <div id="tab-banners" class="tab-content hidden">
+                <div class="mb-6">
+                    <button onclick="prepararNuevoBanner()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-bold shadow-md transition-all flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Nuevo Banner
+                    </button>
+                </div>
+
+                <div id="formulario-banner" class="hidden bg-white p-8 mb-8 rounded-xl shadow-lg border border-slate-200">
+                    <h3 id="titulo-form-banner" class="text-xl font-bold mb-6 text-slate-800">Crear Nuevo Banner</h3>
+                    <form id="formBanner" class="grid grid-cols-1 md:grid-cols-2 gap-6" onsubmit="return submitBanner(event)" enctype="multipart/form-data">
+                        <input type="hidden" name="accion" value="guardar_banner">
+                        <input type="hidden" name="id_banner" id="id_banner">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-heading text-cyan-500 mr-1"></i> Título *
+                            </label>
+                            <input type="text" name="titulo" id="banner_titulo" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Ej: Productos Nuevos">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-mouse-pointer text-cyan-500 mr-1"></i> Texto del Botón
+                            </label>
+                            <input type="text" name="texto_boton" id="banner_texto_boton" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Ej: Ver Ahora">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-align-left text-cyan-500 mr-1"></i> Descripción
+                            </label>
+                            <input type="text" name="descripcion" id="banner_descripcion" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Ej: Hasta 30% de descuento">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-link text-cyan-500 mr-1"></i> Enlace (URL)
+                            </label>
+                            <input type="text" name="enlace" id="banner_enlace" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Ej: #productos o URL externa">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-sort-numeric-up text-cyan-500 mr-1"></i> Orden
+                            </label>
+                            <input type="number" name="orden" id="banner_orden" min="0" value="0" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-image text-cyan-500 mr-1"></i> Imagen del Banner *
+                            </label>
+                            <div id="banner_img_preview" class="hidden mb-2 flex items-center gap-3">
+                                <img id="banner_img_thumb" src="" class="w-20 h-12 object-cover border rounded-lg">
+                                <span id="banner_img_name" class="text-xs text-gray-500"></span>
+                            </div>
+                            <input type="file" name="imagen_banner" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-toggle-on text-cyan-500 mr-1"></i> Estado
+                            </label>
+                            <select name="estado" id="banner_estado" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition">
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2 flex gap-3 pt-4 border-t border-gray-200">
+                            <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-2.5 rounded-lg font-bold transition-all flex items-center gap-2">
+                                <i class="fas fa-save"></i> Guardar Banner
+                            </button>
+                            <button type="button" onclick="document.getElementById('formulario-banner').classList.add('hidden')" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2.5 rounded-lg font-bold transition-all">
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                    <div class="bg-gradient-to-r from-cyan-600 to-cyan-800 p-5 flex items-center gap-3">
+                        <i class="fas fa-images text-white text-xl"></i>
+                        <h2 class="text-xl font-bold text-white">Banners Registrados</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Imagen</th>
+                                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Título</th>
+                                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Descripción</th>
+                                    <th class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase">Orden</th>
+                                    <th class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase">Estado</th>
+                                    <th class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-banners" class="divide-y divide-gray-200">
+                                <?php
+                                $res_banners = mysqli_query($conexion, "SELECT * FROM banners ORDER BY orden ASC, id_banner DESC");
+                                if ($res_banners && mysqli_num_rows($res_banners) > 0):
+                                    while ($ban = mysqli_fetch_assoc($res_banners)):
+                                ?>
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="px-6 py-4">
+                                        <?php if(!empty($ban['imagen'])): ?>
+                                            <img src="../img/banners/<?php echo htmlspecialchars($ban['imagen']); ?>" class="w-24 h-14 object-cover rounded-lg border">
+                                        <?php else: ?>
+                                            <div class="w-24 h-14 bg-gray-200 rounded-lg flex items-center justify-center"><i class="fas fa-image text-gray-400"></i></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="px-6 py-4 font-semibold text-gray-800"><?php echo htmlspecialchars($ban['titulo']); ?></td>
+                                    <td class="px-6 py-4 text-gray-600 text-sm"><?php echo htmlspecialchars($ban['descripcion'] ?? ''); ?></td>
+                                    <td class="px-6 py-4 text-center font-bold"><?php echo $ban['orden']; ?></td>
+                                    <td class="px-6 py-4 text-center">
+                                        <?php if($ban['estado'] == 1): ?>
+                                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Activo</span>
+                                        <?php else: ?>
+                                            <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">Inactivo</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <div class="flex gap-2 justify-center">
+                                            <button onclick='editarBanner(<?php echo json_encode($ban); ?>)' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="confirmarEliminacion('banner', <?php echo $ban['id_banner']; ?>)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endwhile; else: ?>
+                                <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400"><i class="fas fa-images text-4xl mb-2 block"></i>No hay banners registrados</td></tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== HERO CARRUSEL ==================== -->
+            <div id="tab-hero-slides" class="tab-content hidden">
+                <div class="mb-6">
+                    <button onclick="prepararNuevoSlide()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-bold shadow-md transition-all flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Nuevo Slide
+                    </button>
+                </div>
+
+                <div id="formulario-slide" class="hidden bg-white p-8 mb-8 rounded-xl shadow-lg border border-slate-200">
+                    <h3 id="titulo-form-slide" class="text-xl font-bold mb-6 text-slate-800">Crear Nuevo Slide</h3>
+                    <form id="formSlide" class="grid grid-cols-1 md:grid-cols-2 gap-6" onsubmit="return submitSlide(event)" enctype="multipart/form-data">
+                        <input type="hidden" name="accion" value="guardar_hero_slide">
+                        <input type="hidden" name="id_slide" id="slide_id">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-heading text-cyan-500 mr-1"></i> Título *
+                            </label>
+                            <input type="text" name="titulo" id="slide_titulo" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Ej: Temporada de Verano">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-font text-cyan-500 mr-1"></i> Subtítulo
+                            </label>
+                            <input type="text" name="subtitulo" id="slide_subtitulo" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Ej: Hasta 50% de descuento">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-mouse-pointer text-cyan-500 mr-1"></i> Texto del Botón
+                            </label>
+                            <input type="text" name="texto_boton" id="slide_texto_boton" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Ej: Comprar Ahora">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-link text-cyan-500 mr-1"></i> Enlace
+                            </label>
+                            <input type="text" name="enlace" id="slide_enlace" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Ej: #productos">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-image text-cyan-500 mr-1"></i> Imagen del Slide *
+                            </label>
+                            <div id="slide_img_preview" class="hidden mb-2 flex items-center gap-3">
+                                <img id="slide_img_thumb" src="" class="w-20 h-12 object-cover border rounded-lg">
+                                <span id="slide_img_name" class="text-xs text-gray-500"></span>
+                            </div>
+                            <input type="file" name="imagen_slide" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-sort-numeric-up text-cyan-500 mr-1"></i> Orden
+                            </label>
+                            <input type="number" name="orden" id="slide_orden" min="0" value="0" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-toggle-on text-cyan-500 mr-1"></i> Estado
+                            </label>
+                            <select name="estado" id="slide_estado" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition">
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2 flex gap-3 pt-4 border-t border-gray-200">
+                            <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-2.5 rounded-lg font-bold transition-all flex items-center gap-2">
+                                <i class="fas fa-save"></i> Guardar Slide
+                            </button>
+                            <button type="button" onclick="document.getElementById('formulario-slide').classList.add('hidden')" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2.5 rounded-lg font-bold transition-all">
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                    <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 p-5 flex items-center gap-3">
+                        <i class="fas fa-play-circle text-white text-xl"></i>
+                        <h2 class="text-xl font-bold text-white">Slides del Hero Carrusel</h2>
+                    </div>
+                    <p class="px-6 pt-4 text-sm text-gray-500"><i class="fas fa-info-circle mr-1"></i> Estos slides rotan automáticamente en la sección principal (hero) de la página de inicio. El primer slide siempre es el configurado en "Configuración General".</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Imagen</th>
+                                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Título</th>
+                                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Subtítulo</th>
+                                    <th class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase">Orden</th>
+                                    <th class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase">Estado</th>
+                                    <th class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <?php
+                                $res_slides = mysqli_query($conexion, "SELECT * FROM hero_slides ORDER BY orden ASC, id_slide DESC");
+                                if ($res_slides && mysqli_num_rows($res_slides) > 0):
+                                    while ($sl = mysqli_fetch_assoc($res_slides)):
+                                ?>
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="px-6 py-4">
+                                        <?php if(!empty($sl['imagen'])): ?>
+                                            <img src="../img/slides/<?php echo htmlspecialchars($sl['imagen']); ?>" class="w-24 h-14 object-cover rounded-lg border">
+                                        <?php else: ?>
+                                            <div class="w-24 h-14 bg-gray-200 rounded-lg flex items-center justify-center"><i class="fas fa-image text-gray-400"></i></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="px-6 py-4 font-semibold text-gray-800"><?php echo htmlspecialchars($sl['titulo']); ?></td>
+                                    <td class="px-6 py-4 text-gray-600 text-sm"><?php echo htmlspecialchars($sl['subtitulo'] ?? ''); ?></td>
+                                    <td class="px-6 py-4 text-center font-bold"><?php echo $sl['orden']; ?></td>
+                                    <td class="px-6 py-4 text-center">
+                                        <?php if($sl['estado'] == 'activo'): ?>
+                                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Activo</span>
+                                        <?php else: ?>
+                                            <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">Inactivo</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <div class="flex gap-2 justify-center">
+                                            <button onclick='editarSlide(<?php echo json_encode($sl); ?>)' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="confirmarEliminacion('hero_slide', <?php echo $sl['id_slide']; ?>)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endwhile; else: ?>
+                                <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400"><i class="fas fa-play-circle text-4xl mb-2 block"></i>No hay slides registrados</td></tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </main>
@@ -433,6 +935,8 @@ window.mostrarTab = function(tabId) {
         else if (btn.textContent.includes('Envío')) btnTabId = 'metodos-envio';
         else if (btn.textContent.includes('Pago')) btnTabId = 'metodos-pago';
         else if (btn.textContent.includes('General')) btnTabId = 'general';
+        else if (btn.textContent.includes('Banners')) btnTabId = 'banners';
+        else if (btn.textContent.includes('Hero')) btnTabId = 'hero-slides';
         if (btnTabId === tabId) {
             btn.classList.remove('bg-gray-400', 'hover:bg-gray-500');
             btn.classList.add('bg-cyan-600', 'hover:bg-cyan-700');
@@ -644,6 +1148,129 @@ function submitPago(e) {
     const nombre = document.getElementById('nombre_pago').value.trim();
     if (!nombre) { mostrarModalError('El nombre del método de pago es requerido'); return false; }
     enviarFormulario('formPago');
+    return false;
+}
+
+// ==================== CONFIGURACIÓN GENERAL ====================
+function submitConfigGeneral(e) {
+    e.preventDefault();
+    if (_enviando) return false;
+    _enviando = true;
+
+    const form = document.getElementById('formConfigGeneral');
+    const formData = new FormData(form);
+
+    fetch('../core/procesar_configuracion.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        _enviando = false;
+        if (data.success) {
+            mostrarModalExito(data.message);
+            setTimeout(() => recargarModulo(), 1500);
+        } else {
+            mostrarModalError(data.message || 'Error al guardar la configuración');
+        }
+    })
+    .catch(() => { _enviando = false; mostrarModalError('Error de conexión con el servidor'); });
+    return false;
+}
+
+function resetConfigGeneral() {
+    if (confirm('¿Restaurar los valores guardados? Se perderán los cambios no guardados.')) {
+        recargarModulo();
+    }
+}
+
+// ==================== BANNERS PROMOCIONALES ====================
+function prepararNuevoBanner() {
+    document.getElementById('formulario-banner').classList.remove('hidden');
+    document.getElementById('id_banner').value = '';
+    document.getElementById('banner_titulo').value = '';
+    document.getElementById('banner_descripcion').value = '';
+    document.getElementById('banner_texto_boton').value = '';
+    document.getElementById('banner_enlace').value = '';
+    document.getElementById('banner_orden').value = '0';
+    document.getElementById('banner_estado').value = '1';
+    document.getElementById('banner_img_preview').classList.add('hidden');
+    document.getElementById('titulo-form-banner').innerText = 'Crear Nuevo Banner';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function editarBanner(datos) {
+    document.getElementById('formulario-banner').classList.remove('hidden');
+    document.getElementById('id_banner').value = datos.id_banner;
+    document.getElementById('banner_titulo').value = datos.titulo || '';
+    document.getElementById('banner_descripcion').value = datos.descripcion || '';
+    document.getElementById('banner_texto_boton').value = datos.texto_boton || '';
+    document.getElementById('banner_enlace').value = datos.enlace || '';
+    document.getElementById('banner_orden').value = datos.orden || 0;
+    document.getElementById('banner_estado').value = datos.estado;
+    if (datos.imagen) {
+        document.getElementById('banner_img_preview').classList.remove('hidden');
+        document.getElementById('banner_img_thumb').src = '../img/banners/' + datos.imagen;
+        document.getElementById('banner_img_name').textContent = datos.imagen;
+    } else {
+        document.getElementById('banner_img_preview').classList.add('hidden');
+    }
+    document.getElementById('titulo-form-banner').innerText = 'Editando Banner: ' + datos.titulo;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function confirmarEliminacion(tipo, id) {
+    confirmarEliminar(tipo, id, tipo + ' #' + id);
+}
+
+function submitBanner(e) {
+    e.preventDefault();
+    const titulo = document.getElementById('banner_titulo').value.trim();
+    if (!titulo) { mostrarModalError('El título del banner es requerido'); return false; }
+    enviarFormulario('formBanner');
+    return false;
+}
+
+// ==================== HERO SLIDES ====================
+function prepararNuevoSlide() {
+    document.getElementById('formulario-slide').classList.remove('hidden');
+    document.getElementById('slide_id').value = '';
+    document.getElementById('slide_titulo').value = '';
+    document.getElementById('slide_subtitulo').value = '';
+    document.getElementById('slide_texto_boton').value = '';
+    document.getElementById('slide_enlace').value = '';
+    document.getElementById('slide_orden').value = '0';
+    document.getElementById('slide_estado').value = 'activo';
+    document.getElementById('slide_img_preview').classList.add('hidden');
+    document.getElementById('titulo-form-slide').innerText = 'Crear Nuevo Slide';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function editarSlide(datos) {
+    document.getElementById('formulario-slide').classList.remove('hidden');
+    document.getElementById('slide_id').value = datos.id_slide;
+    document.getElementById('slide_titulo').value = datos.titulo || '';
+    document.getElementById('slide_subtitulo').value = datos.subtitulo || '';
+    document.getElementById('slide_texto_boton').value = datos.texto_boton || '';
+    document.getElementById('slide_enlace').value = datos.enlace || '';
+    document.getElementById('slide_orden').value = datos.orden || 0;
+    document.getElementById('slide_estado').value = datos.estado;
+    if (datos.imagen) {
+        document.getElementById('slide_img_preview').classList.remove('hidden');
+        document.getElementById('slide_img_thumb').src = '../img/slides/' + datos.imagen;
+        document.getElementById('slide_img_name').textContent = datos.imagen;
+    } else {
+        document.getElementById('slide_img_preview').classList.add('hidden');
+    }
+    document.getElementById('titulo-form-slide').innerText = 'Editando Slide: ' + datos.titulo;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function submitSlide(e) {
+    e.preventDefault();
+    const titulo = document.getElementById('slide_titulo').value.trim();
+    if (!titulo) { mostrarModalError('El título del slide es requerido'); return false; }
+    enviarFormulario('formSlide');
     return false;
 }
 </script>

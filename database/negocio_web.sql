@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 22-02-2026 a las 09:15:26
+-- Tiempo de generación: 25-02-2026 a las 00:30:13
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -20,6 +20,32 @@ SET time_zone = "+00:00";
 --
 -- Base de datos: `negocio_web`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `banners`
+--
+
+CREATE TABLE `banners` (
+  `id_banner` int(11) NOT NULL,
+  `titulo` varchar(200) NOT NULL,
+  `descripcion` varchar(255) DEFAULT NULL,
+  `imagen` varchar(255) DEFAULT NULL,
+  `texto_boton` varchar(100) DEFAULT 'Ver más',
+  `enlace` varchar(255) DEFAULT '#',
+  `orden` int(11) DEFAULT 0,
+  `estado` enum('activo','inactivo') DEFAULT 'activo',
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `banners`
+--
+
+INSERT INTO `banners` (`id_banner`, `titulo`, `descripcion`, `imagen`, `texto_boton`, `enlace`, `orden`, `estado`, `fecha_creacion`) VALUES
+(1, 'Productos nuevos', 'Hasta el 30% en descuento', 'banner_1771973947_699e2d3b8c038.png', 'ver ahora', '', 1, 'activo', '2026-02-24 22:59:07'),
+(2, 'Las mejores ofertas ', 'fgfd', 'banner_1771974572_699e2facc7cfe.jpg', 'ver ahora ', '#productos', 2, 'activo', '2026-02-24 23:09:32');
 
 -- --------------------------------------------------------
 
@@ -73,7 +99,8 @@ INSERT INTO `categorias` (`id_categoria`, `id_padre`, `nombre`, `descripcion`, `
 (9, 4, 'lacteos', '', 'activo', ''),
 (10, NULL, 'lacteos', '', 'activo', 'fa-cheese'),
 (11, 10, 'queso', '', 'activo', ''),
-(12, NULL, 'muebles', '', 'activo', 'fa-couch');
+(14, NULL, 'muebles', '', 'activo', 'fa-couch'),
+(15, 14, 'estante', '', 'activo', 'fa-house');
 
 -- --------------------------------------------------------
 
@@ -94,7 +121,9 @@ CREATE TABLE `clientes` (
 --
 
 INSERT INTO `clientes` (`id_cliente`, `id_usuario`, `nombre`, `estado`, `fecha_registro`) VALUES
-(11, 21, 'javier a', 'activo', '2026-02-21 08:29:22');
+(15, 26, 'edurado1201', 'activo', '2026-02-23 17:35:28'),
+(16, 27, 'hfhhfhf', 'activo', '2026-02-23 17:47:14'),
+(17, 28, 'edurado1201', 'activo', '2026-02-23 23:56:47');
 
 -- --------------------------------------------------------
 
@@ -110,15 +139,29 @@ CREATE TABLE `configuracion` (
   `correo` varchar(100) DEFAULT NULL,
   `direccion` varchar(200) DEFAULT NULL,
   `texto_inicio` text DEFAULT NULL,
-  `redes_sociales` text DEFAULT NULL
+  `redes_sociales` text DEFAULT NULL,
+  `moneda` varchar(10) DEFAULT 'USD',
+  `impuesto` decimal(5,2) DEFAULT 0.00,
+  `slogan` varchar(255) DEFAULT NULL,
+  `horario_atencion` varchar(255) DEFAULT NULL,
+  `pie_pagina` text DEFAULT NULL,
+  `favicon` varchar(255) DEFAULT NULL,
+  `texto_banner_superior` varchar(255) DEFAULT NULL,
+  `hero_etiqueta` varchar(100) DEFAULT NULL,
+  `hero_titulo` varchar(200) DEFAULT NULL,
+  `hero_subtitulo` varchar(200) DEFAULT NULL,
+  `hero_descripcion` text DEFAULT NULL,
+  `hero_imagen` varchar(255) DEFAULT NULL,
+  `hero_btn_primario` varchar(100) DEFAULT 'Comprar Ahora',
+  `hero_btn_secundario` varchar(100) DEFAULT 'Ver Catálogo'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `configuracion`
 --
 
-INSERT INTO `configuracion` (`id_config`, `nombre_negocio`, `logo`, `telefono`, `correo`, `direccion`, `texto_inicio`, `redes_sociales`) VALUES
-(1, 'Mi Negocio', NULL, '9999-9999', 'contacto@minegocio.com', 'Dirección del negocio', 'Bienvenido a nuestro negocio', NULL);
+INSERT INTO `configuracion` (`id_config`, `nombre_negocio`, `logo`, `telefono`, `correo`, `direccion`, `texto_inicio`, `redes_sociales`, `moneda`, `impuesto`, `slogan`, `horario_atencion`, `pie_pagina`, `favicon`, `texto_banner_superior`, `hero_etiqueta`, `hero_titulo`, `hero_subtitulo`, `hero_descripcion`, `hero_imagen`, `hero_btn_primario`, `hero_btn_secundario`) VALUES
+(1, 'Mi Negocio', 'logo_1771970057.png', '9999-9999', 'contacto@minegocio.com', 'Dirección del negocio', 'Bienvenido a nuestro negocio', '{\"facebook\":\"https://www.facebook.com/?locale=es_LA\",\"instagram\":\"https://www.instagram.com/\",\"whatsapp\":\"\",\"tiktok\":\"\",\"twitter\":\"https://x.com/?lang=es\",\"youtube\":\"\"}', 'HNL', 0.00, 'Tu mejor tienda online', 'Lun-Vier 7 am - 5 pm', '2026 Mi Negocio Derecho Reservados', NULL, '', 'Ofertas exclusivas online', 'bienvenido a nuestra tienda online', 'Los mejores productos', 'lo mejor', 'hero_1771974058.jpg', 'Comprar Ahora', 'Ver Catálogo');
 
 -- --------------------------------------------------------
 
@@ -155,6 +198,31 @@ CREATE TABLE `direcciones_cliente` (
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `hero_slides`
+--
+
+CREATE TABLE `hero_slides` (
+  `id_slide` int(11) NOT NULL,
+  `titulo` varchar(200) NOT NULL,
+  `subtitulo` varchar(255) DEFAULT NULL,
+  `imagen` varchar(255) DEFAULT NULL,
+  `texto_boton` varchar(100) DEFAULT NULL,
+  `enlace` varchar(255) DEFAULT '#',
+  `orden` int(11) DEFAULT 0,
+  `estado` enum('activo','inactivo') DEFAULT 'activo',
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `hero_slides`
+--
+
+INSERT INTO `hero_slides` (`id_slide`, `titulo`, `subtitulo`, `imagen`, `texto_boton`, `enlace`, `orden`, `estado`, `fecha_creacion`) VALUES
+(1, 'verano', 'ofertas de verano', 'slide_1771975599_699e33af9eb72.png', 'comprar ahora', '#productos', 0, 'activo', '2026-02-24 23:26:39');
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `historial_pedido`
 --
 
@@ -185,7 +253,7 @@ CREATE TABLE `marcas` (
 --
 
 INSERT INTO `marcas` (`id_marca`, `nombre`, `estado`, `logo`) VALUES
-(1, 'sula', 'activo', NULL);
+(1, 'sula', 'activo', 'marca_1771872387_699ca083e47a5.png');
 
 -- --------------------------------------------------------
 
@@ -206,13 +274,6 @@ CREATE TABLE `mensajes_contacto` (
   `respuesta` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `mensajes_contacto`
---
-
-INSERT INTO `mensajes_contacto` (`id_mensaje`, `nombre`, `correo`, `telefono`, `asunto`, `mensaje`, `estado`, `fecha_mensaje`, `fecha_respuesta`, `respuesta`) VALUES
-(5, 'gustavo', 'ea3192571@gmail.com', '123456', 'envio', 'cuanto cuesta el envio', 'cerrado', '2026-02-22 00:38:40', '2026-02-22 00:39:45', '120 lempiras mi estimado');
-
 -- --------------------------------------------------------
 
 --
@@ -228,6 +289,14 @@ CREATE TABLE `metodos_envio` (
   `estado` enum('activo','inactivo') DEFAULT 'activo'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `metodos_envio`
+--
+
+INSERT INTO `metodos_envio` (`id_envio`, `nombre`, `descripcion`, `costo`, `tiempo_estimado`, `estado`) VALUES
+(3, 'avila', 'll', 100.00, '2 horas', 'activo'),
+(41, 'gustavo', 'll', 200.00, '12 hora', 'activo');
+
 -- --------------------------------------------------------
 
 --
@@ -240,6 +309,14 @@ CREATE TABLE `metodos_pago` (
   `descripcion` varchar(150) DEFAULT NULL,
   `estado` enum('activo','inactivo') DEFAULT 'activo'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `metodos_pago`
+--
+
+INSERT INTO `metodos_pago` (`id_metodo_pago`, `nombre`, `descripcion`, `estado`) VALUES
+(3, 'avila', 'hgfrd', 'activo'),
+(18, 'javier a', 'hg', 'activo');
 
 -- --------------------------------------------------------
 
@@ -287,8 +364,9 @@ CREATE TABLE `productos` (
 --
 
 INSERT INTO `productos` (`id_producto`, `codigo`, `nombre`, `descripcion`, `precio`, `stock`, `estado`, `fecha_creacion`, `id_categoria`, `id_marca`, `precio_descuento`, `en_oferta`, `fecha_inicio_oferta`, `fecha_fin_oferta`) VALUES
-(1, '2020', 'queso', 'aads', 100.00, 100, 'disponible', '2026-02-21 07:36:29', 9, 1, 0.10, 1, '2026-02-21', '2026-02-28'),
-(2, '2525', 'queso parmesano', 'queso de buena calidad', 100.00, 100, 'disponible', '2026-02-22 00:54:11', 11, 1, 0.50, 1, '2026-02-21', '2026-02-28');
+(1, '2020', 'queso', 'aads', 100.00, 100, 'disponible', '2026-02-21 07:36:29', 9, 1, 50.00, 1, '2026-02-21', '2026-02-28'),
+(4, '3030', 'computadora', 'muy buena', 10000.00, 5, 'disponible', '2026-02-24 00:04:40', 15, 1, NULL, 0, NULL, NULL),
+(5, '3031', 'queso chedar', 'fsdffs', 100.00, 100, 'disponible', '2026-02-24 20:29:35', 11, 1, 80.00, 1, '2026-02-24', '2026-02-26');
 
 -- --------------------------------------------------------
 
@@ -311,8 +389,8 @@ CREATE TABLE `producto_imagenes` (
 INSERT INTO `producto_imagenes` (`id_imagen`, `id_producto`, `ruta_imagen`, `orden`, `fecha_registro`) VALUES
 (1, 1, 'img/productos/prod_1_1771659389_0.jpg', 1, '2026-02-21 07:36:29'),
 (2, 1, 'img/productos/prod_1_1771659389_1.jpg', 2, '2026-02-21 07:36:29'),
-(3, 2, 'img/productos/prod_2_1771721651_0.jpg', 1, '2026-02-22 00:54:11'),
-(4, 2, 'img/productos/prod_2_1771721651_1.jpg', 2, '2026-02-22 00:54:11');
+(5, 4, 'img/productos/prod_4_1771891480_0.jpeg', 1, '2026-02-24 00:04:40'),
+(6, 5, 'img/productos/prod_5_1771964975_0.png', 1, '2026-02-24 20:29:35');
 
 -- --------------------------------------------------------
 
@@ -358,11 +436,20 @@ CREATE TABLE `usuarios` (
 INSERT INTO `usuarios` (`id_usuario`, `nombre`, `correo`, `contraseña`, `estado`, `fecha_creacion`, `id_rol`) VALUES
 (7, 'eduardo avila12', 'ea31925712@gmail.com', '$2y$10$zp9Olr3n1B4wzEAx/x/KPuA4X/w57ofm51gLbg78ZMHfdwRmIoPSO', 'activo', '2026-02-16 02:10:19', 1),
 (13, 'Eduardo1201', 'ea319257166@gmail.com', '$2y$10$36vlWeiRgGcwbL8NBX6mIObuA9T9DAn3nnSSoMfaX4nwTTZUn..PO', 'activo', '2026-02-16 04:17:30', 2),
-(21, 'javier a', 'vatoavila5@gmail.com', '$2y$10$/MzQouWiL3H6cBN.SSlqHONFftXh.PMxPr8VUzcRuoRw8XOYwSPRW', 'inactivo', '2026-02-21 08:29:22', 3);
+(25, 'avila', 'avila@gmial.com', '$2y$10$YXz3tyVcNs4X7Uqm9uRqL.ft5Ctqv6Vfroi.UHisvr7fVuX7RoSCW', 'activo', '2026-02-23 17:31:20', 1),
+(26, 'edurado1201', 'ea3192571@gmail.com', '$2y$10$dTYqXm4kKFmA8W.pt6PdPu0GoopXGRREphwUzNG/ti7wmNfAAlPHa', 'activo', '2026-02-23 17:35:28', 3),
+(27, 'hfhhfhf', 'aa@gmail.com', '$2y$10$omoWw8PFsHdZ5oMPwEoIaOsUZKeCADa.qkdNfLPTkF4THya4SCkXa', 'activo', '2026-02-23 17:47:14', 3),
+(28, 'edurado1201', 'aa25@gmail.com', '$2y$10$OA6SHQTSxlky2zj/kwPqLOSI8H0hgQiNfJyPMl6sg1ATzgArrEX0W', 'inactivo', '2026-02-23 23:56:47', 3);
 
 --
 -- Índices para tablas volcadas
 --
+
+--
+-- Indices de la tabla `banners`
+--
+ALTER TABLE `banners`
+  ADD PRIMARY KEY (`id_banner`);
 
 --
 -- Indices de la tabla `carritos`
@@ -413,6 +500,12 @@ ALTER TABLE `detalle_pedido`
 ALTER TABLE `direcciones_cliente`
   ADD PRIMARY KEY (`id_direccion`),
   ADD KEY `id_cliente` (`id_cliente`);
+
+--
+-- Indices de la tabla `hero_slides`
+--
+ALTER TABLE `hero_slides`
+  ADD PRIMARY KEY (`id_slide`);
 
 --
 -- Indices de la tabla `historial_pedido`
@@ -493,6 +586,12 @@ ALTER TABLE `usuarios`
 --
 
 --
+-- AUTO_INCREMENT de la tabla `banners`
+--
+ALTER TABLE `banners`
+  MODIFY `id_banner` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT de la tabla `carritos`
 --
 ALTER TABLE `carritos`
@@ -508,13 +607,13 @@ ALTER TABLE `carrito_detalle`
 -- AUTO_INCREMENT de la tabla `categorias`
 --
 ALTER TABLE `categorias`
-  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT de la tabla `clientes`
 --
 ALTER TABLE `clientes`
-  MODIFY `id_cliente` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id_cliente` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT de la tabla `configuracion`
@@ -535,6 +634,12 @@ ALTER TABLE `direcciones_cliente`
   MODIFY `id_direccion` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de la tabla `hero_slides`
+--
+ALTER TABLE `hero_slides`
+  MODIFY `id_slide` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT de la tabla `historial_pedido`
 --
 ALTER TABLE `historial_pedido`
@@ -544,7 +649,7 @@ ALTER TABLE `historial_pedido`
 -- AUTO_INCREMENT de la tabla `marcas`
 --
 ALTER TABLE `marcas`
-  MODIFY `id_marca` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_marca` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de la tabla `mensajes_contacto`
@@ -556,13 +661,13 @@ ALTER TABLE `mensajes_contacto`
 -- AUTO_INCREMENT de la tabla `metodos_envio`
 --
 ALTER TABLE `metodos_envio`
-  MODIFY `id_envio` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_envio` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT de la tabla `metodos_pago`
 --
 ALTER TABLE `metodos_pago`
-  MODIFY `id_metodo_pago` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_metodo_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de la tabla `pedidos`
@@ -574,13 +679,13 @@ ALTER TABLE `pedidos`
 -- AUTO_INCREMENT de la tabla `productos`
 --
 ALTER TABLE `productos`
-  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `producto_imagenes`
 --
 ALTER TABLE `producto_imagenes`
-  MODIFY `id_imagen` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_imagen` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `roles`
@@ -592,7 +697,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- Restricciones para tablas volcadas

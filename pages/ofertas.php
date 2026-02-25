@@ -239,7 +239,7 @@ function ofRenderProductos() {
                 '<img alt="' + prod.nombre + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="' + imgSrc + '" onerror="this.src=\'https://via.placeholder.com/300x300?text=Sin+Imagen\'"/>' +
                 '<span class="absolute top-3 left-3 bg-accent text-white px-2 py-1 rounded-lg text-xs font-bold">-' + pctDesc + '%</span>' +
                 '<div class="product-actions absolute inset-0 bg-black/5 flex items-center justify-center gap-3 opacity-0 translate-y-4 transition-all duration-300">' +
-                    '<button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-accent shadow-lg transition-colors" title="Lista de deseos"><span class="material-symbols-outlined">favorite</span></button>' +
+                    '<button onclick="toggleWishlist(this,' + prod.id_producto + ')" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-accent shadow-lg transition-colors" title="Lista de deseos"><span class="material-symbols-outlined">favorite</span></button>' +
                     '<button onclick="ofVistaPrevia(' + idx + ')" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-primary shadow-lg transition-colors" title="Vista previa"><span class="material-symbols-outlined">visibility</span></button>' +
                 '</div>' +
             '</div>' +

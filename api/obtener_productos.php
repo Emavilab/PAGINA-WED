@@ -10,6 +10,7 @@ $query = "SELECT p.id_producto, p.nombre, p.descripcion, p.precio, p.stock, p.es
           COALESCE(cp.nombre, c.nombre) AS categoria_padre_nombre,
           COALESCE(cp.id_categoria, c.id_categoria) AS categoria_padre_id,
           m.nombre AS marca_nombre,
+          COALESCE(c.tasa_impuesto, cp.tasa_impuesto, 0) AS tasa_impuesto,
           (SELECT ri.ruta_imagen FROM producto_imagenes ri WHERE ri.id_producto = p.id_producto ORDER BY ri.orden ASC LIMIT 1) AS imagen_principal
           FROM productos p
           LEFT JOIN categorias c ON p.id_categoria = c.id_categoria

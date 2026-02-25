@@ -135,10 +135,10 @@ $cfg_pie = htmlspecialchars($cfg['pie_pagina'] ?? '');
 <span class="material-symbols-outlined">package_2</span>
 <span class="text-[11px] font-semibold uppercase mt-0.5 whitespace-nowrap">Mis Pedidos</span>
 </button>
-<button onclick="document.getElementById('cartOverlay').classList.remove('hidden'); document.getElementById('cartSidebar').classList.remove('hidden');" class="flex flex-col items-center text-slate-600 dark:text-slate-300 hover:text-primary transition-colors relative group">
+<button onclick="abrirCarrito()" class="flex flex-col items-center text-slate-600 dark:text-slate-300 hover:text-primary transition-colors relative group">
 <span class="material-symbols-outlined text-2xl">shopping_cart</span>
 <span class="text-[11px] font-semibold uppercase mt-0.5">Carrito</span>
-<span class="absolute -top-1 -right-1 bg-primary text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">0</span>
+<span id="cartBadge" class="absolute -top-1 -right-1 bg-primary text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">0</span>
 </button>
 </div>
 </div>
@@ -353,120 +353,45 @@ $cfg_pie = htmlspecialchars($cfg['pie_pagina'] ?? '');
 </div>
 </div>
 <!-- Overlay y Carrito Modal -->
-<div id="cartOverlay" class="cart-overlay hidden fixed inset-0 bg-slate-900/60 modal-blur z-[110]" onclick="document.getElementById('cartOverlay').classList.add('hidden'); document.getElementById('cartSidebar').classList.add('hidden');"></div>
+<div id="cartOverlay" class="cart-overlay hidden fixed inset-0 bg-slate-900/60 modal-blur z-[110]" onclick="cerrarCarrito()"></div>
 <aside id="cartSidebar" class="cart-sidebar hidden fixed top-0 right-0 h-full w-full max-w-md bg-white dark:bg-slate-900 z-[120] shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 transition-transform">
 <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
 <div class="flex items-center gap-3">
 <span class="material-symbols-outlined text-primary text-2xl">shopping_cart</span>
 <h2 class="text-xl font-bold text-slate-900 dark:text-white">Tu Carrito</h2>
-<span class="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full">3 ítems</span>
+<span id="cartSidebarBadge" class="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full">0 ítems</span>
 </div>
-<button onclick="document.getElementById('cartOverlay').classList.add('hidden'); document.getElementById('cartSidebar').classList.add('hidden');" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<button onclick="cerrarCarrito()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
 <span class="material-symbols-outlined block">close</span>
 </button>
 </div>
-<div class="flex-1 overflow-y-auto p-6 space-y-6">
-<div class="flex gap-4 group">
-<div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden flex-shrink-0">
-<img alt="Reloj Minimalista" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyMui6hcPTjNBKyHfNzFAYeygXtkWmyHWn_C4wfn7rFaCjoq0M9SOHWEGdEm3vJS9fCaRyrLFWl8rJPlNYpJo0mMFbNQvNwvC2G_1L-8yDyBNd0hxhpxq8_qejsD0xdiz06FkU-STszocNHnaZYyupjQEbkKeQMKkKYzo6PzT8vcaUNYB2Dm-ZN5SOkaRnBc2hkkASEtDayluznVaXBeb9S_iHpz--Wa-OPMFapelO1RAPkyovvh282UPQfDEP-BAKPx3gJlapjOU"/>
+<div id="cartItemsContainer" class="flex-1 overflow-y-auto p-6 space-y-4">
+<div class="text-center py-12"><span class="material-symbols-outlined text-5xl text-slate-200">shopping_cart</span><p class="text-slate-400 mt-3">Tu carrito está vacío</p></div>
 </div>
-<div class="flex-1 flex flex-col justify-between">
-<div class="flex justify-between items-start">
-<h3 class="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">Reloj Minimalista</h3>
-<button class="text-slate-400 hover:text-red-500 transition-colors">
-<span class="material-symbols-outlined text-lg">delete</span>
-</button>
-</div>
-<div class="flex items-center justify-between mt-2">
-<div class="flex items-center border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden">
-<button class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-<span class="material-symbols-outlined text-xs block">remove</span>
-</button>
-<span class="px-3 py-1 text-xs font-bold">1</span>
-<button class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-<span class="material-symbols-outlined text-xs block">add</span>
-</button>
-</div>
-<span class="font-bold text-slate-900 dark:text-white">$120.00</span>
-</div>
-</div>
-</div>
-<div class="flex gap-4 group">
-<div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden flex-shrink-0">
-<img alt="Auriculares Premium" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCT7e4-xYKK9BEORzJsQInY6ov1KHRukfrtqYr8Bp805kbglQeSiGjGQ2eT3nWfKzLTSloP9zwOezy9bAUAIS_4SXGvj-13II1E3PrOFYNu1pODtrSm50StPhQoN2msoexJckY7D95lSQMJaPDHrc_8kXJtj5hjPNRTL3F356QfhcTHLI2cExTAfCGKsbBYzKqbD2Z1CBES4lQH_t9JIfGL09fhaFy8j5dvGNcDOuNIpe1lx938j2EUP1KMOihctbCZm8qemH1jPbc"/>
-</div>
-<div class="flex-1 flex flex-col justify-between">
-<div class="flex justify-between items-start">
-<h3 class="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">Auriculares Premium</h3>
-<button class="text-slate-400 hover:text-red-500 transition-colors">
-<span class="material-symbols-outlined text-lg">delete</span>
-</button>
-</div>
-<div class="flex items-center justify-between mt-2">
-<div class="flex items-center border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden">
-<button class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-<span class="material-symbols-outlined text-xs block">remove</span>
-</button>
-<span class="px-3 py-1 text-xs font-bold">1</span>
-<button class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-<span class="material-symbols-outlined text-xs block">add</span>
-</button>
-</div>
-<span class="font-bold text-slate-900 dark:text-white">$299.99</span>
-</div>
-</div>
-</div>
-<div class="flex gap-4 group">
-<div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden flex-shrink-0">
-<img alt="Zapatillas Deportivas" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLd2pqhfzNagD1xOa8CIB4G1pzg9eyxfH2W3Sxrg88_p1clkkq40CX3SusjDeKqho2ZD1fOlz4wpnKYSyhlNPq68GJIAcgR53qKXnuGBJhJEKVKKk-Ijq8I7OfT7AcxNbxet_se8LhCCptkSyhdHvbfhujVtMk0yUn7QpqSN0CqY2q0o9QeUDX3oxV9Hs1xtMjiPXGggXMmd0ajay0NHlW2ty3ZAMUKiSLToSEbdR1DuXiao4GA2qf93IkNY4Lqa5ulQY44iARKqE"/>
-</div>
-<div class="flex-1 flex flex-col justify-between">
-<div class="flex justify-between items-start">
-<h3 class="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">Zapatillas Deportivas</h3>
-<button class="text-slate-400 hover:text-red-500 transition-colors">
-<span class="material-symbols-outlined text-lg">delete</span>
-</button>
-</div>
-<div class="flex items-center justify-between mt-2">
-<div class="flex items-center border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden">
-<button class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-<span class="material-symbols-outlined text-xs block">remove</span>
-</button>
-<span class="px-3 py-1 text-xs font-bold">1</span>
-<button class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-<span class="material-symbols-outlined text-xs block">add</span>
-</button>
-</div>
-<span class="font-bold text-slate-900 dark:text-white">$110.00</span>
-</div>
-</div>
-</div>
-</div>
-<div class="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800">
+<div id="cartFooter" class="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800">
 <div class="space-y-3 mb-6">
 <div class="flex justify-between text-sm text-slate-600 dark:text-slate-400">
 <span>Subtotal</span>
-<span>$529.99</span>
+<span id="cartSubtotal">0.00</span>
 </div>
 <div class="flex justify-between text-sm text-slate-600 dark:text-slate-400">
-<span>Impuestos (15%)</span>
-<span>$79.50</span>
+<span id="cartImpuestoLabel">Impuestos</span>
+<span id="cartImpuesto">0.00</span>
 </div>
 <div class="flex justify-between text-lg font-bold text-slate-900 dark:text-white pt-3 border-t border-slate-200 dark:border-slate-700">
 <span>Total</span>
-<span>$609.49</span>
+<span id="cartTotal">0.00</span>
 </div>
 </div>
 <div class="space-y-3">
-<button onclick="loadFinalizarCompra()" class="w-full bg-primary hover:bg-primary-dark text-white py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+<button onclick="loadFinalizarCompra()" id="cartBtnFinalizar" class="w-full bg-primary hover:bg-primary-dark text-white py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
 <span class="material-symbols-outlined">payments</span>
                 Finalizar Compra
             </button>
-<button class="w-full border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 py-3 rounded-xl font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
-                Ver Carrito
+<button onclick="vaciarCarrito()" id="cartBtnVaciar" class="w-full border-2 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 py-3 rounded-xl font-bold hover:bg-red-50 dark:hover:bg-red-900/20 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-lg">delete_sweep</span> Vaciar Carrito
             </button>
 </div>
-<p class="text-center text-xs text-slate-500 mt-4">Envío gratis aplicado para este pedido 🚚</p>
 </div>
 </aside>
 
@@ -704,7 +629,7 @@ function loadProductosPorCategoria(idCategoria, nombreCategoria) {
                                         '<button onclick="prevCantidad(1)" class="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-lg font-bold">+</button>' +
                                     '</div>' +
                                 '</div>' +
-                                '<button class="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-lg flex items-center justify-center gap-2 font-bold transition-colors"><span class="material-symbols-outlined">shopping_cart</span> Agregar al Carrito</button>' +
+                                '<button onclick="agregarAlCarritoDesdePreview()" class="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-lg flex items-center justify-center gap-2 font-bold transition-colors"><span class="material-symbols-outlined">shopping_cart</span> Agregar al Carrito</button>' +
                             '</div>' +
                         '</div>' +
                     '</div>' +
@@ -747,7 +672,7 @@ function loadProductosPorCategoria(idCategoria, nombreCategoria) {
                                     '<span class="text-xl font-bold text-slate-900 dark:text-white">' + window._cfgMoneda + ' ' + precioFinal + '</span>' +
                                     (enOferta ? '<span class="text-xs text-slate-400 line-through">' + window._cfgMoneda + ' ' + precioOriginal + '</span>' : '') +
                                 '</div>' +
-                                '<button class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
+                                '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
                                     '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar</button>' +
                             '</div>' +
                         '</div>' +
@@ -824,7 +749,7 @@ function cargarProductosDestacados() {
                                 '<span class="text-xl font-bold text-slate-900 dark:text-white">' + mon + ' ' + precioFinal + '</span>' +
                                 (enOferta ? '<span class="text-xs text-slate-400 line-through">' + mon + ' ' + precioOriginal + '</span>' : '') +
                             '</div>' +
-                            '<button class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
+                            '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
                                 '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar</button>' +
                         '</div>' +
                     '</div>' +
@@ -1044,8 +969,7 @@ function loadRegistrarse() {
 
 function loadFinalizarCompra() {
     // Cerrar el carrito
-    document.getElementById('cartOverlay').classList.add('hidden');
-    document.getElementById('cartSidebar').classList.add('hidden');
+    cerrarCarrito();
     
     // Cargar la página de finalizar compra
     fetch('client/finalizarcompra.php')
@@ -1479,7 +1403,7 @@ function ofRenderProductos() {
                         '<button onclick="cardCantidad(this,1)" class="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm font-bold">+</button>' +
                     '</div>' +
                 '</div>' +
-                '<button class="w-full bg-slate-900 dark:bg-primary text-white py-2 rounded-lg font-medium text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"><span class="material-symbols-outlined text-lg">shopping_cart</span> Añadir al carrito</button>' +
+                '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="w-full bg-slate-900 dark:bg-primary text-white py-2 rounded-lg font-medium text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"><span class="material-symbols-outlined text-lg">shopping_cart</span> Añadir al carrito</button>' +
             '</div>' +
         '</div>';
     });
@@ -1660,7 +1584,7 @@ function loadProductos() {
                                         <button onclick="prevCantidad(1)" class="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-lg font-bold">+</button>
                                     </div>
                                 </div>
-                                <button class="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-lg flex items-center justify-center gap-2 font-bold transition-colors">
+                                <button onclick="agregarAlCarritoDesdePreview()" class="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-lg flex items-center justify-center gap-2 font-bold transition-colors">
                                     <span class="material-symbols-outlined">shopping_cart</span>
                                     Agregar al Carrito
                                 </button>
@@ -1814,7 +1738,7 @@ function prodAplicarFiltros() {
                         '<span class="text-xl font-bold text-slate-900 dark:text-white">' + window._cfgMoneda + ' ' + precioFinal + '</span>' +
                         (enOferta ? '<span class="text-xs text-slate-400 line-through">' + window._cfgMoneda + ' ' + precioOriginal + '</span>' : '') +
                     '</div>' +
-                    '<button class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
+                    '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
                         '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar</button>' +
                 '</div>' +
             '</div>' +
@@ -1865,10 +1789,12 @@ function validarPrevCantidad() {
 // --- Vista previa de producto ---
 let _prevImgIndex = 0;
 let _prevImagenes = [];
+let _prevProductoActual = null;
 
 function abrirVistaPrevia(index) {
     const prod = window._productosData[index];
     if (!prod) return;
+    _prevProductoActual = prod;
 
     const modal = document.getElementById('modalVistaPrevia');
     const enOferta = prod.en_oferta == 1 && prod.precio_descuento;
@@ -2081,6 +2007,227 @@ window.confirm = function(message) {
 
 // Hacer CustomModal disponible globalmente
 window.CustomModal = CustomModal;
+
+// ========== CARRITO DE COMPRAS ==========
+function abrirCarrito() {
+    document.getElementById('cartOverlay').classList.remove('hidden');
+    document.getElementById('cartSidebar').classList.remove('hidden');
+    cargarCarrito();
+}
+
+function cerrarCarrito() {
+    document.getElementById('cartOverlay').classList.add('hidden');
+    document.getElementById('cartSidebar').classList.add('hidden');
+}
+
+function actualizarBadge(cantidad) {
+    const badge = document.getElementById('cartBadge');
+    const sidebarBadge = document.getElementById('cartSidebarBadge');
+    if (badge) badge.textContent = cantidad;
+    if (sidebarBadge) sidebarBadge.textContent = cantidad + ' ítems';
+}
+
+function cargarCarrito() {
+    fetch('api/api_carrito.php?accion=listar')
+        .then(r => r.json())
+        .then(data => {
+            if (data.exito) {
+                renderizarCarrito(data.carrito);
+            } else {
+                // No autenticado o error
+                const cont = document.getElementById('cartItemsContainer');
+                cont.innerHTML = '<div class="text-center py-12"><span class="material-symbols-outlined text-5xl text-slate-200">person_off</span><p class="text-slate-400 mt-3">Inicia sesión para usar el carrito</p></div>';
+                actualizarBadge(0);
+            }
+        })
+        .catch(() => {});
+}
+
+function renderizarCarrito(data) {
+    const cont = document.getElementById('cartItemsContainer');
+    const items = data.items || [];
+    const mon = window._cfgMoneda || 'L';
+
+    actualizarBadge(data.total_cantidad || 0);
+
+    if (items.length === 0) {
+        cont.innerHTML = '<div class="text-center py-12"><span class="material-symbols-outlined text-5xl text-slate-200">shopping_cart</span><p class="text-slate-400 mt-3">Tu carrito está vacío</p></div>';
+        document.getElementById('cartSubtotal').textContent = mon + ' 0.00';
+        document.getElementById('cartImpuesto').textContent = mon + ' 0.00';
+        document.getElementById('cartTotal').textContent = mon + ' 0.00';
+        document.getElementById('cartBtnFinalizar').disabled = true;
+        return;
+    }
+
+    document.getElementById('cartBtnFinalizar').disabled = false;
+    let html = '';
+    items.forEach(item => {
+            let imgSrc = 'https://via.placeholder.com/80?text=Sin+Imagen';
+            if (item.imagen && typeof item.imagen === 'string' && item.imagen.trim() !== '') {
+                if (item.imagen.includes('img/productos/')) {
+                    imgSrc = item.imagen;
+                } else {
+                    imgSrc = 'img/productos/' + item.imagen;
+                }
+            }
+        html += '<div class="flex gap-4 group">' +
+            '<div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden flex-shrink-0">' +
+                '<img alt="' + (item.nombre || '') + '" class="w-full h-full object-cover" src="' + imgSrc + '"/>' +
+            '</div>' +
+            '<div class="flex-1 flex flex-col justify-between">' +
+                '<div class="flex justify-between items-start">' +
+                    '<h3 class="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">' + (item.nombre || '') + '</h3>' +
+                    '<button onclick="eliminarDelCarrito(' + item.id_carrito_detalle + ')" class="text-slate-400 hover:text-red-500 transition-colors">' +
+                        '<span class="material-symbols-outlined text-lg">delete</span>' +
+                    '</button>' +
+                '</div>' +
+                '<div class="flex items-center justify-between mt-2">' +
+                    '<div class="flex items-center border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden">' +
+                        '<button onclick="actualizarCantidadCarrito(' + item.id_carrito_detalle + ',' + (item.cantidad - 1) + ')" class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">' +
+                            '<span class="material-symbols-outlined text-xs block">remove</span>' +
+                        '</button>' +
+                        '<span class="px-3 py-1 text-xs font-bold">' + item.cantidad + '</span>' +
+                        '<button onclick="actualizarCantidadCarrito(' + item.id_carrito_detalle + ',' + (item.cantidad + 1) + ')" class="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">' +
+                            '<span class="material-symbols-outlined text-xs block">add</span>' +
+                        '</button>' +
+                    '</div>' +
+                    '<div class="text-right">' +
+                        '<span class="font-bold text-slate-900 dark:text-white">' + mon + ' ' + parseFloat(item.subtotal).toFixed(2) + '</span>' +
+                        (item.tasa_impuesto > 0 ? '<br><span class="text-[10px] text-slate-400">IVA ' + item.tasa_impuesto + '%</span>' : '') +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    });
+    cont.innerHTML = html;
+
+    document.getElementById('cartSubtotal').textContent = mon + ' ' + parseFloat(data.subtotal).toFixed(2);
+    document.getElementById('cartImpuesto').textContent = mon + ' ' + parseFloat(data.impuesto_total).toFixed(2);
+    document.getElementById('cartTotal').textContent = mon + ' ' + parseFloat(data.total).toFixed(2);
+}
+
+function agregarAlCarritoDesdeCard(btn, idProducto) {
+    const cantInput = btn.closest('.flex')?.parentElement?.querySelector('input[type="number"]');
+    const cantidad = cantInput ? parseInt(cantInput.value) || 1 : 1;
+    agregarAlCarrito(idProducto, cantidad, btn);
+}
+
+function agregarAlCarritoDesdePreview() {
+    const prevQtyEl = document.getElementById('prevCantidad');
+    const cantidad = prevQtyEl ? parseInt(prevQtyEl.textContent) || 1 : 1;
+    if (!_prevProductoActual || !_prevProductoActual.id_producto) {
+        CustomModal.show('warning', 'Carrito', 'No se pudo identificar el producto.');
+        return;
+    }
+    agregarAlCarrito(_prevProductoActual.id_producto, cantidad);
+}
+
+function agregarAlCarrito(idProducto, cantidad, btnElement) {
+    if (btnElement) {
+        btnElement.disabled = true;
+        btnElement.innerHTML = '<span class="material-symbols-outlined text-lg animate-spin">sync</span>';
+    }
+
+    const formData = new FormData();
+    formData.append('accion', 'agregar');
+    formData.append('id_producto', idProducto);
+    formData.append('cantidad', cantidad || 1);
+
+    fetch('api/api_carrito.php', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (data.exito) {
+                actualizarBadge(data.carrito ? data.carrito.total_cantidad || 0 : 0);
+                // Mostrar mini notificación
+                mostrarToastCarrito('Producto agregado al carrito');
+                // Si el sidebar está abierto, refrescar
+                if (!document.getElementById('cartSidebar').classList.contains('hidden')) {
+                    cargarCarrito();
+                }
+            } else {
+                CustomModal.show('error', 'Carrito', data.error || 'Error al agregar producto');
+            }
+        })
+        .catch(() => {
+            CustomModal.show('error', 'Carrito', 'Error de conexión');
+        })
+        .finally(() => {
+            if (btnElement) {
+                btnElement.disabled = false;
+                btnElement.innerHTML = '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar';
+            }
+        });
+}
+
+function actualizarCantidadCarrito(idDetalle, nuevaCantidad) {
+    const formData = new FormData();
+    formData.append('accion', 'actualizar');
+    formData.append('id_carrito_detalle', idDetalle);
+    formData.append('cantidad', nuevaCantidad);
+
+    fetch('api/api_carrito.php', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (data.exito) cargarCarrito();
+            else CustomModal.show('error', 'Carrito', data.error || 'Error al actualizar');
+        })
+        .catch(() => {});
+}
+
+function eliminarDelCarrito(idDetalle) {
+    const formData = new FormData();
+    formData.append('accion', 'eliminar');
+    formData.append('id_carrito_detalle', idDetalle);
+
+    fetch('api/api_carrito.php', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (data.exito) cargarCarrito();
+        })
+        .catch(() => {});
+}
+
+function vaciarCarrito() {
+    CustomModal.show('confirm', 'Vaciar Carrito', '¿Estás seguro de que deseas vaciar todo el carrito?', function(confirm) {
+        if (!confirm) return;
+        const formData = new FormData();
+        formData.append('accion', 'vaciar');
+        fetch('api/api_carrito.php', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => {
+                if (data.exito) cargarCarrito();
+            })
+            .catch(() => {});
+    });
+}
+
+function mostrarToastCarrito(mensaje) {
+    let toast = document.getElementById('cartToast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'cartToast';
+        toast.className = 'fixed bottom-6 right-6 z-[200] bg-green-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2 text-sm font-semibold transition-all duration-300 translate-y-20 opacity-0';
+        document.body.appendChild(toast);
+    }
+    toast.innerHTML = '<span class="material-symbols-outlined text-lg">check_circle</span> ' + mensaje;
+    requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-20', 'opacity-0');
+        setTimeout(() => {
+            toast.classList.add('translate-y-20', 'opacity-0');
+        }, 2500);
+    });
+}
+
+// Cargar conteo del carrito al iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('api/api_carrito.php?accion=contar')
+        .then(r => r.json())
+        .then(data => {
+            if (data.exito) actualizarBadge(data.total || 0);
+        })
+        .catch(() => {});
+});
+// ========== FIN CARRITO ==========
 </script>
 
 </body></html>

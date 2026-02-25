@@ -144,16 +144,27 @@
                         placeholder="Descripción de la categoría..."></textarea>
                 </div>
 
-                <!-- Estado -->
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                        <i class="fas fa-toggle-on text-green-500 mr-1"></i> Estado
-                    </label>
-                    <select id="cat-estado"
-                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition text-sm">
-                        <option value="activo">Activo</option>
-                        <option value="inactivo">Inactivo</option>
-                    </select>
+                <!-- Tasa de Impuesto e Estado -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-percent text-amber-500 mr-1"></i> Tasa de Impuesto (%)
+                        </label>
+                        <input type="number" id="cat-tasa-impuesto" step="0.01" min="0" max="100"
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition text-sm"
+                            placeholder="Ej: 15.00">
+                        <p class="text-xs text-gray-400 mt-1" id="cat-impuesto-info">Dejar vacío para heredar del padre (subcategorías) o 0% (principales)</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-toggle-on text-green-500 mr-1"></i> Estado
+                        </label>
+                        <select id="cat-estado"
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition text-sm">
+                            <option value="activo">Activo</option>
+                            <option value="inactivo">Inactivo</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Botones -->
@@ -288,6 +299,8 @@
             if (cat.descripcion) html += esc(cat.descripcion) + ' &middot; ';
             html += '<span class="text-indigo-500 font-medium">' + (cat.total_hijos || 0) + ' sub</span>';
             html += ' &middot; <span class="text-gray-500">' + (cat.total_productos || 0) + ' productos</span>';
+            var tasaTexto = (cat.tasa_impuesto !== null && cat.tasa_impuesto !== '') ? cat.tasa_impuesto + '%' : '0%';
+            html += ' &middot; <span class="text-amber-600 font-medium"><i class="fas fa-percent text-[9px]"></i> ' + tasaTexto + ' imp.</span>';
             html += '</p></div>';
             // Acciones
             html += '<div class="flex items-center gap-1 flex-shrink-0">';
@@ -319,6 +332,8 @@
                     if (sub.descripcion) html += '<p class="text-xs text-gray-400 truncate">' + esc(sub.descripcion) + '</p>';
                     html += '</div>';
                     html += '<div class="flex items-center gap-1 flex-shrink-0">';
+                    var subTasaTexto = (sub.tasa_impuesto !== null && sub.tasa_impuesto !== '') ? sub.tasa_impuesto + '%' : '<span title="Hereda del padre">heredado</span>';
+                    html += '<span class="text-[11px] text-amber-500 mr-1" title="Impuesto"><i class="fas fa-percent text-[8px]"></i> ' + subTasaTexto + '</span>';
                     html += '<span class="text-[11px] text-gray-400 mr-1">' + (sub.total_productos || 0) + ' prod.</span>';
                     html += '<button onclick="editarCategoria(' + sub.id_categoria + ')" title="Editar" class="bg-blue-50 hover:bg-blue-100 text-blue-600 w-7 h-7 rounded text-xs transition flex items-center justify-center"><i class="fas fa-edit"></i></button>';
                     html += '<button onclick="eliminarCategoria(' + sub.id_categoria + ', \'' + esc(sub.nombre).replace(/\x27/g, "\\\x27") + '\')" title="Eliminar" class="bg-red-50 hover:bg-red-100 text-red-600 w-7 h-7 rounded text-xs transition flex items-center justify-center"><i class="fas fa-trash"></i></button>';
@@ -397,6 +412,7 @@
         document.getElementById('cat-nombre').value = '';
         document.getElementById('cat-icono').value = '';
         document.getElementById('cat-descripcion').value = '';
+        document.getElementById('cat-tasa-impuesto').value = '';
         document.getElementById('cat-estado').value = 'activo';
 
         if (idPadre) {
@@ -430,6 +446,7 @@
                 document.getElementById('cat-nombre').value = cat.nombre;
                 document.getElementById('cat-icono').value = cat.icono || '';
                 document.getElementById('cat-descripcion').value = cat.descripcion || '';
+                document.getElementById('cat-tasa-impuesto').value = (cat.tasa_impuesto !== null && cat.tasa_impuesto !== '') ? cat.tasa_impuesto : '';
                 document.getElementById('cat-estado').value = cat.estado;
 
                 var titulo = cat.id_padre
@@ -462,6 +479,7 @@
         var descripcion = document.getElementById('cat-descripcion').value.trim();
         var estado = document.getElementById('cat-estado').value;
         var id_padre = document.getElementById('cat-id-padre').value;
+        var tasa_impuesto = document.getElementById('cat-tasa-impuesto').value;
 
         if (!nombre) {
             if (typeof CustomModal !== 'undefined') CustomModal.show('warning', 'Campo requerido', 'El nombre es obligatorio');
@@ -475,6 +493,7 @@
         formData.append('icono', icono);
         formData.append('descripcion', descripcion);
         formData.append('estado', estado);
+        formData.append('tasa_impuesto', tasa_impuesto);
         if (id_padre) formData.append('id_padre', id_padre);
 
         fetch(CAT_API_URL, { method: 'POST', body: formData })

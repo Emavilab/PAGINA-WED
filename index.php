@@ -714,8 +714,12 @@ function cargarProductosDestacados() {
             }
             // Guardar para vista previa
             window._todosProductos = data;
+            // Los productos destacados deben ser la fuente de la vista previa
+            // para que abrirVistaPrevia(index) use el índice correcto
             // Tomar los últimos 8 productos (más recientes)
             var destacados = data.slice(0, 8);
+            // Establecer el array que usa la vista previa
+            window._productosData = destacados;
             var mon = window._cfgMoneda || 'L';
             var html = '';
             destacados.forEach(function(prod, idx) {
@@ -1763,8 +1767,11 @@ function prodLimpiarFiltros() {
 
 // --- Control de cantidad en tarjetas ---
 function cardCantidad(btn, delta) {
-    const container = btn.closest('.flex');
-    const input = container.querySelector('input[type="number"]');
+    // Buscar el input numérico dentro del mismo control de cantidad
+    const wrapper = btn.parentElement || btn.closest('div');
+    if (!wrapper) return;
+    const input = wrapper.querySelector('input[type="number"]');
+    if (!input) return;
     let val = parseInt(input.value) || 1;
     val = Math.max(1, val + delta);
     input.value = val;
@@ -1786,12 +1793,57 @@ function validarPrevCantidad() {
     input.value = val;
 }
 
+// Asegura que exista en el DOM un modal global de vista previa usado por abrirVistaPrevia()
+function ensurePreviewModal() {
+    if (document.getElementById('modalVistaPrevia')) return;
+    const modalHtml = `
+    <div id="modalVistaPrevia" class="fixed inset-0 z-[9999] hidden">
+        <div class="absolute inset-0 bg-black/60 modal-blur" onclick="cerrarVistaPrevia()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto pointer-events-auto relative">
+                <button onclick="cerrarVistaPrevia()" class="absolute top-4 right-4 z-10 w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-600 hover:text-red-500 hover:bg-red-50 transition-colors"><span class="material-symbols-outlined">close</span></button>
+                <div class="flex flex-col md:flex-row">
+                    <div class="md:w-1/2 p-6">
+                        <div class="relative aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700 mb-4">
+                            <img id="prevImgPrincipal" src="" alt="" class="w-full h-full object-cover"/>
+                            <button id="prevBtnLeft" onclick="cambiarImgPrevia(-1)" class="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md"><span class="material-symbols-outlined text-sm">arrow_back_ios_new</span></button>
+                            <button id="prevBtnRight" onclick="cambiarImgPrevia(1)" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md"><span class="material-symbols-outlined text-sm">arrow_forward_ios</span></button>
+                        </div>
+                        <div id="prevMiniaturas" class="flex gap-2 overflow-x-auto pb-2"></div>
+                    </div>
+                    <div class="md:w-1/2 p-6 md:pl-2 flex flex-col justify-center">
+                        <span id="prevCategoria" class="text-xs text-primary font-semibold uppercase tracking-wider mb-2"></span>
+                        <h2 id="prevNombre" class="text-2xl font-bold text-slate-900 dark:text-white mb-3"></h2>
+                        <p id="prevMarca" class="text-sm text-slate-400 mb-3"></p>
+                        <p id="prevDescripcion" class="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed"></p>
+                        <div class="flex items-center gap-3 mb-4"><span id="prevPrecio" class="text-3xl font-bold text-slate-900 dark:text-white"></span><span id="prevPrecioOriginal" class="text-lg text-slate-400 line-through hidden"></span><span id="prevBadgeOferta" class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded hidden">OFERTA</span></div>
+                        <div class="flex items-center gap-2 mb-6"><span id="prevStockIcon" class="material-symbols-outlined text-lg"></span><span id="prevStock" class="text-sm font-medium"></span></div>
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Cantidad:</span>
+                            <div class="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                                <button onclick="prevCantidad(-1)" class="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-lg font-bold">−</button>
+                                <input id="prevCantidadInput" type="number" value="1" min="1" class="w-12 h-9 text-center border-x border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-bold text-slate-900 dark:text-white focus:outline-none [appearance:textfield]" onchange="validarPrevCantidad()"/>
+                                <button onclick="prevCantidad(1)" class="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-lg font-bold">+</button>
+                            </div>
+                        </div>
+                        <button onclick="agregarAlCarritoDesdePreview()" class="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-lg flex items-center justify-center gap-2 font-bold transition-colors"><span class="material-symbols-outlined">shopping_cart</span> Agregar al Carrito</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>`;
+    const div = document.createElement('div');
+    div.innerHTML = modalHtml;
+    document.body.appendChild(div.firstElementChild);
+}
+
 // --- Vista previa de producto ---
 let _prevImgIndex = 0;
 let _prevImagenes = [];
 let _prevProductoActual = null;
 
 function abrirVistaPrevia(index) {
+    ensurePreviewModal();
     const prod = window._productosData[index];
     if (!prod) return;
     _prevProductoActual = prod;
@@ -2107,14 +2159,16 @@ function renderizarCarrito(data) {
 }
 
 function agregarAlCarritoDesdeCard(btn, idProducto) {
-    const cantInput = btn.closest('.flex')?.parentElement?.querySelector('input[type="number"]');
+    // Buscar la tarjeta del producto y dentro de ella el input de cantidad
+    const card = btn.closest('.product-card') || btn.closest('[data-product-id]') || btn.closest('section');
+    const cantInput = card ? card.querySelector('.card-qty, input[type="number"]') : null;
     const cantidad = cantInput ? parseInt(cantInput.value) || 1 : 1;
     agregarAlCarrito(idProducto, cantidad, btn);
 }
 
 function agregarAlCarritoDesdePreview() {
-    const prevQtyEl = document.getElementById('prevCantidad');
-    const cantidad = prevQtyEl ? parseInt(prevQtyEl.textContent) || 1 : 1;
+    const prevQtyEl = document.getElementById('prevCantidadInput');
+    const cantidad = prevQtyEl ? parseInt(prevQtyEl.value) || 1 : 1;
     if (!_prevProductoActual || !_prevProductoActual.id_producto) {
         CustomModal.show('warning', 'Carrito', 'No se pudo identificar el producto.');
         return;

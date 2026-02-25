@@ -147,6 +147,7 @@ if ($metodo === 'POST') {
         $descripcion = trim($_POST['descripcion'] ?? '');
         $estado = $_POST['estado'] ?? 'activo';
         $id_padre = !empty($_POST['id_padre']) ? (int)$_POST['id_padre'] : null;
+        $tasa_impuesto = isset($_POST['tasa_impuesto']) && $_POST['tasa_impuesto'] !== '' ? (float)$_POST['tasa_impuesto'] : null;
 
         if (empty($nombre)) {
             echo json_encode(['exito' => false, 'error' => 'El nombre es obligatorio']);
@@ -183,8 +184,8 @@ if ($metodo === 'POST') {
             }
         }
 
-        $stmt = $conexion->prepare("INSERT INTO categorias (nombre, id_padre, icono, descripcion, estado) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("sisss", $nombre, $id_padre, $icono, $descripcion, $estado);
+        $stmt = $conexion->prepare("INSERT INTO categorias (nombre, id_padre, icono, descripcion, estado, tasa_impuesto) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("sisssd", $nombre, $id_padre, $icono, $descripcion, $estado, $tasa_impuesto);
 
         if ($stmt->execute()) {
             $tipo = $id_padre ? 'Subcategoría' : 'Categoría principal';
@@ -203,6 +204,7 @@ if ($metodo === 'POST') {
         $descripcion = trim($_POST['descripcion'] ?? '');
         $estado = $_POST['estado'] ?? 'activo';
         $id_padre = !empty($_POST['id_padre']) ? (int)$_POST['id_padre'] : null;
+        $tasa_impuesto = isset($_POST['tasa_impuesto']) && $_POST['tasa_impuesto'] !== '' ? (float)$_POST['tasa_impuesto'] : null;
 
         if ($id <= 0) {
             echo json_encode(['exito' => false, 'error' => 'ID inválido']);
@@ -252,8 +254,8 @@ if ($metodo === 'POST') {
             exit();
         }
 
-        $stmt = $conexion->prepare("UPDATE categorias SET nombre = ?, id_padre = ?, icono = ?, descripcion = ?, estado = ? WHERE id_categoria = ?");
-        $stmt->bind_param("sisssi", $nombre, $id_padre, $icono, $descripcion, $estado, $id);
+        $stmt = $conexion->prepare("UPDATE categorias SET nombre = ?, id_padre = ?, icono = ?, descripcion = ?, estado = ?, tasa_impuesto = ? WHERE id_categoria = ?");
+        $stmt->bind_param("sisssdi", $nombre, $id_padre, $icono, $descripcion, $estado, $tasa_impuesto, $id);
 
         if ($stmt->execute()) {
             echo json_encode(['exito' => true, 'mensaje' => 'Categoría actualizada correctamente']);

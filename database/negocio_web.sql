@@ -87,20 +87,21 @@ CREATE TABLE `categorias` (
   `nombre` varchar(100) NOT NULL,
   `descripcion` varchar(200) DEFAULT NULL,
   `estado` enum('activo','inactivo') DEFAULT 'activo',
-  `icono` varchar(100) DEFAULT NULL
+  `icono` varchar(100) DEFAULT NULL,
+  `tasa_impuesto` decimal(5,2) DEFAULT NULL COMMENT 'Tasa de impuesto (%). NULL = hereda del padre o usa 0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `categorias`
 --
 
-INSERT INTO `categorias` (`id_categoria`, `id_padre`, `nombre`, `descripcion`, `estado`, `icono`) VALUES
-(4, NULL, 'electronica', 'electrica', 'activo', 'fa-bolt'),
-(9, 4, 'lacteos', '', 'activo', ''),
-(10, NULL, 'lacteos', '', 'activo', 'fa-cheese'),
-(11, 10, 'queso', '', 'activo', ''),
-(14, NULL, 'muebles', '', 'activo', 'fa-couch'),
-(15, 14, 'estante', '', 'activo', 'fa-house');
+INSERT INTO `categorias` (`id_categoria`, `id_padre`, `nombre`, `descripcion`, `estado`, `icono`, `tasa_impuesto`) VALUES
+(4, NULL, 'electronica', 'electrica', 'activo', 'fa-bolt', 15.00),
+(9, 4, 'lacteos', '', 'activo', '', NULL),
+(10, NULL, 'lacteos', '', 'activo', 'fa-cheese', 7.00),
+(11, 10, 'queso', '', 'activo', '', NULL),
+(14, NULL, 'muebles', '', 'activo', 'fa-couch', 15.00),
+(15, 14, 'estante', '', 'activo', 'fa-house', NULL);
 
 -- --------------------------------------------------------
 
@@ -174,6 +175,8 @@ CREATE TABLE `detalle_pedido` (
   `cantidad` int(11) NOT NULL,
   `precio_unitario` decimal(10,2) NOT NULL,
   `subtotal` decimal(10,2) NOT NULL,
+  `tasa_impuesto` decimal(5,2) DEFAULT 0.00,
+  `monto_impuesto` decimal(10,2) DEFAULT 0.00,
   `id_pedido` int(11) NOT NULL,
   `id_producto` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -328,6 +331,7 @@ CREATE TABLE `pedidos` (
   `id_pedido` int(11) NOT NULL,
   `fecha_pedido` timestamp NOT NULL DEFAULT current_timestamp(),
   `subtotal` decimal(10,2) NOT NULL,
+  `impuesto_total` decimal(10,2) DEFAULT 0.00,
   `total` decimal(10,2) NOT NULL,
   `estado` enum('pendiente','confirmado','enviado','entregado') DEFAULT 'pendiente',
   `id_cliente` int(11) NOT NULL,

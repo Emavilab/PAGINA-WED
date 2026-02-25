@@ -404,6 +404,8 @@ window._cfgTelefono = '<?php echo addslashes($cfg_telefono); ?>';
 window._cfgDireccion = '<?php echo addslashes($cfg_direccion); ?>';
 window._cfgSlogan = '<?php echo addslashes($cfg_slogan); ?>';
 window._cfgRedes = <?php echo json_encode($cfg_redes, JSON_UNESCAPED_SLASHES); ?>;
+// Indicar si el usuario está autenticado (usado por acciones que requieren login)
+window._usuarioAutenticado = <?php echo $usuarioAutenticado ? 'true' : 'false'; ?>;
 
 // --- Mapa de iconos FA a Material Symbols ---
 const iconoFaToMaterial = {
@@ -651,7 +653,7 @@ function loadProductosPorCategoria(idCategoria, nombreCategoria) {
                         '<div class="relative aspect-square overflow-hidden bg-slate-100 dark:bg-slate-700">' +
                             '<img alt="' + prod.nombre + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src="' + imgSrc + '" onerror="this.src=\'https://via.placeholder.com/300x300?text=Sin+Imagen\'"/>' +
                             '<div class="product-actions absolute inset-0 bg-black/5 flex items-center justify-center gap-3 opacity-0 translate-y-4 transition-all duration-300">' +
-                                '<button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-primary shadow-lg transition-colors" title="Lista de deseos"><span class="material-symbols-outlined">favorite</span></button>' +
+                                '<button onclick="toggleWishlist(this,' + prod.id_producto + ')" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-primary shadow-lg transition-colors" title="Lista de deseos"><span class="material-symbols-outlined">favorite</span></button>' +
                                 '<button onclick="abrirVistaPrevia(' + index + ')" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-primary shadow-lg transition-colors" title="Vista previa"><span class="material-symbols-outlined">visibility</span></button>' +
                             '</div>' +
                             (enOferta ? '<div class="absolute top-3 left-3"><span class="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Oferta</span></div>' : '') +
@@ -732,7 +734,7 @@ function cargarProductosDestacados() {
                     '<div class="relative aspect-square overflow-hidden bg-slate-100 dark:bg-slate-700">' +
                         '<img alt="' + prod.nombre + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src="' + imgSrc + '" onerror="this.src=\'https://via.placeholder.com/300x300?text=Sin+Imagen\'"/>' +
                         '<div class="product-actions absolute inset-0 bg-black/5 flex items-center justify-center gap-3 opacity-0 translate-y-4 transition-all duration-300">' +
-                            '<button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-primary shadow-lg transition-colors" title="Lista de deseos"><span class="material-symbols-outlined">favorite</span></button>' +
+                            '<button onclick="toggleWishlist(this,' + prod.id_producto + ')" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-primary shadow-lg transition-colors" title="Lista de deseos"><span class="material-symbols-outlined">favorite</span></button>' +
                             '<button onclick="abrirVistaPrevia(' + idx + ')" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-primary shadow-lg transition-colors" title="Vista previa"><span class="material-symbols-outlined">visibility</span></button>' +
                         '</div>' +
                         (enOferta ? '<div class="absolute top-3 left-3"><span class="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Oferta</span></div>' : '') +
@@ -1001,7 +1003,26 @@ function loadListaDeseos() {
     fetch('client/listadedeseo.php')
         .then(response => response.text())
         .then(data => {
+            // Insertar el HTML
             document.getElementById('mainContent').innerHTML = data;
+
+            // Extraer y ejecutar scripts inline del HTML (para inicializar fetchWishlist())
+            const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/g;
+            let scriptMatch;
+            while ((scriptMatch = scriptRegex.exec(data)) !== null) {
+                try {
+                    const script = document.createElement('script');
+                    script.textContent = scriptMatch[1];
+                    document.body.appendChild(script);
+                } catch (e) { console.error('Error ejecutando script de listadedeseo:', e); }
+            }
+
+            // Garantizar que fetchWishlist() se ejecute aunque por alguna razón los scripts inline no se registren inmediatamente
+            setTimeout(() => {
+                try { if (typeof fetchWishlist === 'function') fetchWishlist(); }
+                catch(e) { console.error('Error llamando fetchWishlist tras inyectar listadedeseo:', e); }
+            }, 80);
+
             // Scroll hacia arriba para ver el contenido
             window.scrollTo(0, 0);
         })
@@ -1388,7 +1409,7 @@ function ofRenderProductos() {
                 '<img alt="' + prod.nombre + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="' + imgSrc + '" onerror="this.src=\'https://via.placeholder.com/300x300?text=Sin+Imagen\'"/>' +
                 '<span class="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded-lg text-xs font-bold">-' + pctDesc + '%</span>' +
                 '<div class="product-actions absolute inset-0 bg-black/5 flex items-center justify-center gap-3 opacity-0 translate-y-4 transition-all duration-300">' +
-                    '<button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-red-500 shadow-lg transition-colors" title="Lista de deseos"><span class="material-symbols-outlined">favorite</span></button>' +
+                            '<button onclick="toggleWishlist(this,' + prod.id_producto + ')" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-red-500 shadow-lg transition-colors" title="Lista de deseos"><span class="material-symbols-outlined">favorite</span></button>' +
                     '<button onclick="abrirVistaPrevia(' + idx + ')" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-primary shadow-lg transition-colors" title="Vista previa"><span class="material-symbols-outlined">visibility</span></button>' +
                 '</div>' +
             '</div>' +
@@ -1721,7 +1742,7 @@ function prodAplicarFiltros() {
             '<div class="relative aspect-square overflow-hidden bg-slate-100 dark:bg-slate-700">' +
                 '<img alt="' + prod.nombre + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src="' + imgSrc + '" onerror="this.src=\'https://via.placeholder.com/300x300?text=Sin+Imagen\'"/>' +
                 '<div class="product-actions absolute inset-0 bg-black/5 flex items-center justify-center gap-3 opacity-0 translate-y-4 transition-all duration-300">' +
-                    '<button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-primary shadow-lg transition-colors" title="Lista de deseos"><span class="material-symbols-outlined">favorite</span></button>' +
+                    '<button onclick="toggleWishlist(this,' + prod.id_producto + ')" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-primary shadow-lg transition-colors" title="Lista de deseos"><span class="material-symbols-outlined">favorite</span></button>' +
                     '<button onclick="abrirVistaPrevia(' + index + ')" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-primary shadow-lg transition-colors" title="Vista previa"><span class="material-symbols-outlined">visibility</span></button>' +
                 '</div>' +
                 (enOferta ? '<div class="absolute top-3 left-3"><span class="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Oferta</span></div>' : '') +
@@ -2177,6 +2198,12 @@ function agregarAlCarritoDesdePreview() {
 }
 
 function agregarAlCarrito(idProducto, cantidad, btnElement) {
+    if (!window._usuarioAutenticado) {
+        CustomModal.show('confirm', 'Inicia sesión', 'Necesitas iniciar sesión para agregar productos al carrito. ¿Ir a iniciar sesión?', function(ok) {
+            if (ok) loadLogin();
+        });
+        return;
+    }
     if (btnElement) {
         btnElement.disabled = true;
         btnElement.innerHTML = '<span class="material-symbols-outlined text-lg animate-spin">sync</span>';
@@ -2187,7 +2214,7 @@ function agregarAlCarrito(idProducto, cantidad, btnElement) {
     formData.append('id_producto', idProducto);
     formData.append('cantidad', cantidad || 1);
 
-    fetch('api/api_carrito.php', { method: 'POST', body: formData })
+    fetch('api/api_carrito.php', { method: 'POST', body: formData, credentials: 'same-origin' })
         .then(r => r.json())
         .then(data => {
             if (data.exito) {
@@ -2270,6 +2297,48 @@ function mostrarToastCarrito(mensaje) {
             toast.classList.add('translate-y-20', 'opacity-0');
         }, 2500);
     });
+}
+
+// Toggle / agregar producto a Lista de Deseos (requiere autenticación)
+function toggleWishlist(btn, idProducto) {
+    if (!window._usuarioAutenticado) {
+        CustomModal.show('confirm', 'Inicia sesión', 'Necesitas iniciar sesión para usar la lista de deseos. ¿Ir a iniciar sesión?', function(ok) {
+            if (ok) loadLogin();
+        });
+        return;
+    }
+
+    try { btn.disabled = true; } catch(e) {}
+
+    const formData = new FormData();
+    formData.append('accion', 'agregar');
+    formData.append('id_producto', idProducto);
+
+    fetch('api/api_lista_deseos.php', { method: 'POST', body: formData, credentials: 'same-origin' })
+        .then(response => {
+            // Intentar parsear JSON; si falla, devolver el texto para mostrarlo
+            return response.text().then(text => {
+                try { return JSON.parse(text); } catch (e) { throw new Error(text || 'Respuesta no válida del servidor'); }
+            });
+        })
+        .then(data => {
+            if (data.exito) {
+                // Si la API responde con un mensaje indicando que ya existe, mostrarlo claramente
+                if (data.mensaje && /ya en la lista/i.test(data.mensaje)) {
+                    CustomModal.show('info', 'Lista de deseos', data.mensaje);
+                } else {
+                    mostrarToastCarrito('Guardado en Lista de Deseos');
+                    try { btn.classList.add('text-red-500'); } catch(e) {}
+                }
+            } else {
+                // Mostrar error retornado por la API
+                CustomModal.show('error', 'Lista de deseos', data.error || 'Error al agregar el producto');
+            }
+        })
+        .catch(err => {
+            CustomModal.show('error', 'Lista de deseos', err.message || 'Error de conexión');
+        })
+        .finally(() => { try { btn.disabled = false; } catch(e) {} });
 }
 
 // Cargar conteo del carrito al iniciar

@@ -78,7 +78,7 @@ $cfg_pie = htmlspecialchars($cfg['pie_pagina'] ?? '');
 <header class="sticky top-0 z-50 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-slate-800 shadow-sm">
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 <div class="flex items-center justify-between h-20 gap-6">
-<div class="flex items-center gap-2 flex-shrink-0">
+<div class="flex items-center gap-2 flex-shrink-0 cursor-pointer" onclick="if(typeof loadHome==='function'){loadHome();}else{location.reload();}" tabindex="0" role="button" aria-label="Ir al inicio">
 <?php if(!empty($cfg_logo)): ?>
 <img src="img/<?php echo $cfg_logo; ?>" alt="<?php echo $cfg_nombre; ?>" class="w-10 h-10 object-contain rounded-lg">
 <?php else: ?>

@@ -1,34 +1,29 @@
--- phpMyAdmin SQL Dump
--- version 5.2.1
--- https://www.phpmyadmin.net/
+-- MySQL dump 10.13  Distrib 8.0.33, for Win64 (x86_64)
 --
--- Servidor: 127.0.0.1
--- Tiempo de generación: 25-02-2026 a las 00:30:13
--- Versión del servidor: 10.4.32-MariaDB
--- Versión de PHP: 8.2.12
-
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-START TRANSACTION;
-SET time_zone = "+00:00";
-
+-- Host: 127.0.0.1    Database: negocio_web
+-- ------------------------------------------------------
+-- Server version	5.5.5-10.4.32-MariaDB
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Base de datos: `negocio_web`
+-- Table structure for table `banners`
 --
 
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `banners`
---
-
+DROP TABLE IF EXISTS `banners`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `banners` (
-  `id_banner` int(11) NOT NULL,
+  `id_banner` int(11) NOT NULL AUTO_INCREMENT,
   `titulo` varchar(200) NOT NULL,
   `descripcion` varchar(255) DEFAULT NULL,
   `imagen` varchar(255) DEFAULT NULL,
@@ -36,104 +31,100 @@ CREATE TABLE `banners` (
   `enlace` varchar(255) DEFAULT '#',
   `orden` int(11) DEFAULT 0,
   `estado` enum('activo','inactivo') DEFAULT 'activo',
-  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_banner`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Volcado de datos para la tabla `banners`
+-- Table structure for table `carrito_detalle`
 --
 
-INSERT INTO `banners` (`id_banner`, `titulo`, `descripcion`, `imagen`, `texto_boton`, `enlace`, `orden`, `estado`, `fecha_creacion`) VALUES
-(1, 'Productos nuevos', 'Hasta el 30% en descuento', 'banner_1771973947_699e2d3b8c038.png', 'ver ahora', '', 1, 'activo', '2026-02-24 22:59:07'),
-(2, 'Las mejores ofertas ', 'fgfd', 'banner_1771974572_699e2facc7cfe.jpg', 'ver ahora ', '#productos', 2, 'activo', '2026-02-24 23:09:32');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `carritos`
---
-
-CREATE TABLE `carritos` (
-  `id_carrito` int(11) NOT NULL,
-  `id_cliente` int(11) NOT NULL,
-  `fecha_creacion` datetime DEFAULT current_timestamp(),
-  `estado` enum('activo','comprado','cancelado') DEFAULT 'activo'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `carrito_detalle`
---
-
+DROP TABLE IF EXISTS `carrito_detalle`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `carrito_detalle` (
-  `id_carrito_detalle` int(11) NOT NULL,
+  `id_carrito_detalle` int(11) NOT NULL AUTO_INCREMENT,
   `id_carrito` int(11) NOT NULL,
   `id_producto` int(11) NOT NULL,
   `cantidad` int(11) NOT NULL,
   `precio_unitario` decimal(10,2) NOT NULL,
-  `subtotal` decimal(10,2) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
+  `subtotal` decimal(10,2) NOT NULL,
+  PRIMARY KEY (`id_carrito_detalle`),
+  KEY `id_carrito` (`id_carrito`),
+  KEY `id_producto` (`id_producto`),
+  CONSTRAINT `carrito_detalle_ibfk_1` FOREIGN KEY (`id_carrito`) REFERENCES `carritos` (`id_carrito`),
+  CONSTRAINT `carrito_detalle_ibfk_2` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`)
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Estructura de tabla para la tabla `categorias`
+-- Table structure for table `carritos`
 --
 
+DROP TABLE IF EXISTS `carritos`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `carritos` (
+  `id_carrito` int(11) NOT NULL AUTO_INCREMENT,
+  `id_cliente` int(11) NOT NULL,
+  `fecha_creacion` datetime DEFAULT current_timestamp(),
+  `estado` enum('activo','comprado','cancelado') DEFAULT 'activo',
+  PRIMARY KEY (`id_carrito`),
+  KEY `id_cliente` (`id_cliente`),
+  CONSTRAINT `carritos_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `clientes` (`id_cliente`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `categorias`
+--
+
+DROP TABLE IF EXISTS `categorias`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `categorias` (
-  `id_categoria` int(11) NOT NULL,
+  `id_categoria` int(11) NOT NULL AUTO_INCREMENT,
   `id_padre` int(11) DEFAULT NULL,
   `nombre` varchar(100) NOT NULL,
   `descripcion` varchar(200) DEFAULT NULL,
   `estado` enum('activo','inactivo') DEFAULT 'activo',
   `icono` varchar(100) DEFAULT NULL,
-  `tasa_impuesto` decimal(5,2) DEFAULT NULL COMMENT 'Tasa de impuesto (%). NULL = hereda del padre o usa 0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `tasa_impuesto` decimal(5,2) DEFAULT NULL COMMENT 'Tasa de impuesto (%). NULL = hereda del padre o usa 0',
+  PRIMARY KEY (`id_categoria`),
+  KEY `idx_id_padre` (`id_padre`),
+  CONSTRAINT `fk_categoria_padre` FOREIGN KEY (`id_padre`) REFERENCES `categorias` (`id_categoria`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Volcado de datos para la tabla `categorias`
+-- Table structure for table `clientes`
 --
 
-INSERT INTO `categorias` (`id_categoria`, `id_padre`, `nombre`, `descripcion`, `estado`, `icono`, `tasa_impuesto`) VALUES
-(4, NULL, 'electronica', 'electrica', 'activo', 'fa-bolt', 15.00),
-(9, 4, 'lacteos', '', 'activo', '', NULL),
-(10, NULL, 'lacteos', '', 'activo', 'fa-cheese', 7.00),
-(11, 10, 'queso', '', 'activo', '', NULL),
-(14, NULL, 'muebles', '', 'activo', 'fa-couch', 15.00),
-(15, 14, 'estante', '', 'activo', 'fa-house', NULL);
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `clientes`
---
-
+DROP TABLE IF EXISTS `clientes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `clientes` (
-  `id_cliente` int(11) NOT NULL,
+  `id_cliente` int(11) NOT NULL AUTO_INCREMENT,
   `id_usuario` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL,
   `estado` enum('activo','bloqueado') DEFAULT 'activo',
-  `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_cliente`),
+  KEY `fk_clientes_usuarios` (`id_usuario`),
+  CONSTRAINT `fk_clientes_usuarios` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Volcado de datos para la tabla `clientes`
+-- Table structure for table `configuracion`
 --
 
-INSERT INTO `clientes` (`id_cliente`, `id_usuario`, `nombre`, `estado`, `fecha_registro`) VALUES
-(15, 26, 'edurado1201', 'activo', '2026-02-23 17:35:28'),
-(16, 27, 'hfhhfhf', 'activo', '2026-02-23 17:47:14'),
-(17, 28, 'edurado1201', 'activo', '2026-02-23 23:56:47');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `configuracion`
---
-
+DROP TABLE IF EXISTS `configuracion`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `configuracion` (
-  `id_config` int(11) NOT NULL,
+  `id_config` int(11) NOT NULL AUTO_INCREMENT,
   `nombre_negocio` varchar(100) DEFAULT NULL,
   `logo` varchar(255) DEFAULT NULL,
   `telefono` varchar(20) DEFAULT NULL,
@@ -154,58 +145,66 @@ CREATE TABLE `configuracion` (
   `hero_descripcion` text DEFAULT NULL,
   `hero_imagen` varchar(255) DEFAULT NULL,
   `hero_btn_primario` varchar(100) DEFAULT 'Comprar Ahora',
-  `hero_btn_secundario` varchar(100) DEFAULT 'Ver Catálogo'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `hero_btn_secundario` varchar(100) DEFAULT 'Ver Catálogo',
+  PRIMARY KEY (`id_config`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Volcado de datos para la tabla `configuracion`
+-- Table structure for table `detalle_pedido`
 --
 
-INSERT INTO `configuracion` (`id_config`, `nombre_negocio`, `logo`, `telefono`, `correo`, `direccion`, `texto_inicio`, `redes_sociales`, `moneda`, `impuesto`, `slogan`, `horario_atencion`, `pie_pagina`, `favicon`, `texto_banner_superior`, `hero_etiqueta`, `hero_titulo`, `hero_subtitulo`, `hero_descripcion`, `hero_imagen`, `hero_btn_primario`, `hero_btn_secundario`) VALUES
-(1, 'Mi Negocio', 'logo_1771970057.png', '9999-9999', 'contacto@minegocio.com', 'Dirección del negocio', 'Bienvenido a nuestro negocio', '{\"facebook\":\"https://www.facebook.com/?locale=es_LA\",\"instagram\":\"https://www.instagram.com/\",\"whatsapp\":\"\",\"tiktok\":\"\",\"twitter\":\"https://x.com/?lang=es\",\"youtube\":\"\"}', 'HNL', 0.00, 'Tu mejor tienda online', 'Lun-Vier 7 am - 5 pm', '2026 Mi Negocio Derecho Reservados', NULL, '', 'Ofertas exclusivas online', 'bienvenido a nuestra tienda online', 'Los mejores productos', 'lo mejor', 'hero_1771974058.jpg', 'Comprar Ahora', 'Ver Catálogo');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `detalle_pedido`
---
-
+DROP TABLE IF EXISTS `detalle_pedido`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `detalle_pedido` (
-  `id_detalle` int(11) NOT NULL,
+  `id_detalle` int(11) NOT NULL AUTO_INCREMENT,
   `cantidad` int(11) NOT NULL,
   `precio_unitario` decimal(10,2) NOT NULL,
   `subtotal` decimal(10,2) NOT NULL,
   `tasa_impuesto` decimal(5,2) DEFAULT 0.00,
   `monto_impuesto` decimal(10,2) DEFAULT 0.00,
   `id_pedido` int(11) NOT NULL,
-  `id_producto` int(11) NOT NULL
+  `id_producto` int(11) NOT NULL,
+  PRIMARY KEY (`id_detalle`),
+  KEY `id_pedido` (`id_pedido`),
+  KEY `id_producto` (`id_producto`),
+  CONSTRAINT `detalle_pedido_ibfk_1` FOREIGN KEY (`id_pedido`) REFERENCES `pedidos` (`id_pedido`),
+  CONSTRAINT `detalle_pedido_ibfk_2` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Estructura de tabla para la tabla `direcciones_cliente`
+-- Table structure for table `direcciones_cliente`
 --
 
+DROP TABLE IF EXISTS `direcciones_cliente`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `direcciones_cliente` (
-  `id_direccion` int(11) NOT NULL,
+  `id_direccion` int(11) NOT NULL AUTO_INCREMENT,
   `id_cliente` int(11) NOT NULL,
   `direccion` varchar(200) NOT NULL,
   `ciudad` varchar(100) NOT NULL,
   `codigo_postal` varchar(20) DEFAULT NULL,
   `telefono` varchar(20) DEFAULT NULL,
   `referencia` varchar(200) DEFAULT NULL,
-  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_direccion`),
+  KEY `id_cliente` (`id_cliente`),
+  CONSTRAINT `direcciones_cliente_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `clientes` (`id_cliente`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Estructura de tabla para la tabla `hero_slides`
+-- Table structure for table `hero_slides`
 --
 
+DROP TABLE IF EXISTS `hero_slides`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `hero_slides` (
-  `id_slide` int(11) NOT NULL,
+  `id_slide` int(11) NOT NULL AUTO_INCREMENT,
   `titulo` varchar(200) NOT NULL,
   `subtitulo` varchar(255) DEFAULT NULL,
   `imagen` varchar(255) DEFAULT NULL,
@@ -213,59 +212,77 @@ CREATE TABLE `hero_slides` (
   `enlace` varchar(255) DEFAULT '#',
   `orden` int(11) DEFAULT 0,
   `estado` enum('activo','inactivo') DEFAULT 'activo',
-  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_slide`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Volcado de datos para la tabla `hero_slides`
+-- Table structure for table `historial_pedido`
 --
 
-INSERT INTO `hero_slides` (`id_slide`, `titulo`, `subtitulo`, `imagen`, `texto_boton`, `enlace`, `orden`, `estado`, `fecha_creacion`) VALUES
-(1, 'verano', 'ofertas de verano', 'slide_1771975599_699e33af9eb72.png', 'comprar ahora', '#productos', 0, 'activo', '2026-02-24 23:26:39');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `historial_pedido`
---
-
+DROP TABLE IF EXISTS `historial_pedido`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `historial_pedido` (
-  `id_historial` int(11) NOT NULL,
+  `id_historial` int(11) NOT NULL AUTO_INCREMENT,
   `id_pedido` int(11) NOT NULL,
   `estado` varchar(50) NOT NULL,
   `comentario` varchar(200) DEFAULT NULL,
   `fecha_cambio` timestamp NOT NULL DEFAULT current_timestamp(),
-  `id_usuario` int(11) DEFAULT NULL
+  `id_usuario` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id_historial`),
+  KEY `id_pedido` (`id_pedido`),
+  KEY `id_usuario` (`id_usuario`),
+  CONSTRAINT `historial_pedido_ibfk_1` FOREIGN KEY (`id_pedido`) REFERENCES `pedidos` (`id_pedido`),
+  CONSTRAINT `historial_pedido_ibfk_2` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Estructura de tabla para la tabla `marcas`
+-- Table structure for table `lista_deseos`
 --
 
+DROP TABLE IF EXISTS `lista_deseos`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `lista_deseos` (
+  `id_lista` int(11) NOT NULL AUTO_INCREMENT,
+  `id_cliente` int(11) NOT NULL,
+  `id_producto` int(11) NOT NULL,
+  `fecha_agregado` timestamp NOT NULL DEFAULT current_timestamp(),
+  `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_lista`),
+  UNIQUE KEY `unique_cliente_producto` (`id_cliente`,`id_producto`)
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `marcas`
+--
+
+DROP TABLE IF EXISTS `marcas`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `marcas` (
-  `id_marca` int(11) NOT NULL,
+  `id_marca` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(100) NOT NULL,
   `estado` enum('activo','inactivo') DEFAULT 'activo',
-  `logo` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `logo` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id_marca`),
+  UNIQUE KEY `nombre` (`nombre`)
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Volcado de datos para la tabla `marcas`
+-- Table structure for table `mensajes_contacto`
 --
 
-INSERT INTO `marcas` (`id_marca`, `nombre`, `estado`, `logo`) VALUES
-(1, 'sula', 'activo', 'marca_1771872387_699ca083e47a5.png');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `mensajes_contacto`
---
-
+DROP TABLE IF EXISTS `mensajes_contacto`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `mensajes_contacto` (
-  `id_mensaje` int(11) NOT NULL,
+  `id_mensaje` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(100) NOT NULL,
   `correo` varchar(100) NOT NULL,
   `telefono` varchar(20) DEFAULT NULL,
@@ -274,61 +291,54 @@ CREATE TABLE `mensajes_contacto` (
   `estado` enum('nuevo','leido','respondido','cerrado') DEFAULT 'nuevo',
   `fecha_mensaje` timestamp NOT NULL DEFAULT current_timestamp(),
   `fecha_respuesta` timestamp NULL DEFAULT NULL,
-  `respuesta` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
+  `respuesta` text DEFAULT NULL,
+  PRIMARY KEY (`id_mensaje`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Estructura de tabla para la tabla `metodos_envio`
+-- Table structure for table `metodos_envio`
 --
 
+DROP TABLE IF EXISTS `metodos_envio`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `metodos_envio` (
-  `id_envio` int(11) NOT NULL,
+  `id_envio` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(100) NOT NULL,
   `descripcion` varchar(150) DEFAULT NULL,
   `costo` decimal(10,2) DEFAULT 0.00,
   `tiempo_estimado` varchar(50) DEFAULT NULL,
-  `estado` enum('activo','inactivo') DEFAULT 'activo'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `estado` enum('activo','inactivo') DEFAULT 'activo',
+  PRIMARY KEY (`id_envio`)
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Volcado de datos para la tabla `metodos_envio`
+-- Table structure for table `metodos_pago`
 --
 
-INSERT INTO `metodos_envio` (`id_envio`, `nombre`, `descripcion`, `costo`, `tiempo_estimado`, `estado`) VALUES
-(3, 'avila', 'll', 100.00, '2 horas', 'activo'),
-(41, 'gustavo', 'll', 200.00, '12 hora', 'activo');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `metodos_pago`
---
-
+DROP TABLE IF EXISTS `metodos_pago`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `metodos_pago` (
-  `id_metodo_pago` int(11) NOT NULL,
+  `id_metodo_pago` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(100) NOT NULL,
   `descripcion` varchar(150) DEFAULT NULL,
-  `estado` enum('activo','inactivo') DEFAULT 'activo'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `estado` enum('activo','inactivo') DEFAULT 'activo',
+  PRIMARY KEY (`id_metodo_pago`)
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Volcado de datos para la tabla `metodos_pago`
+-- Table structure for table `pedidos`
 --
 
-INSERT INTO `metodos_pago` (`id_metodo_pago`, `nombre`, `descripcion`, `estado`) VALUES
-(3, 'avila', 'hgfrd', 'activo'),
-(18, 'javier a', 'hg', 'activo');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `pedidos`
---
-
+DROP TABLE IF EXISTS `pedidos`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `pedidos` (
-  `id_pedido` int(11) NOT NULL,
+  `id_pedido` int(11) NOT NULL AUTO_INCREMENT,
   `fecha_pedido` timestamp NOT NULL DEFAULT current_timestamp(),
   `subtotal` decimal(10,2) NOT NULL,
   `impuesto_total` decimal(10,2) DEFAULT 0.00,
@@ -337,17 +347,47 @@ CREATE TABLE `pedidos` (
   `id_cliente` int(11) NOT NULL,
   `id_direccion` int(11) NOT NULL,
   `id_envio` int(11) NOT NULL,
-  `id_metodo_pago` int(11) NOT NULL
+  `id_metodo_pago` int(11) NOT NULL,
+  PRIMARY KEY (`id_pedido`),
+  KEY `id_cliente` (`id_cliente`),
+  KEY `id_direccion` (`id_direccion`),
+  KEY `id_envio` (`id_envio`),
+  KEY `id_metodo_pago` (`id_metodo_pago`),
+  CONSTRAINT `pedidos_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `clientes` (`id_cliente`),
+  CONSTRAINT `pedidos_ibfk_2` FOREIGN KEY (`id_direccion`) REFERENCES `direcciones_cliente` (`id_direccion`),
+  CONSTRAINT `pedidos_ibfk_3` FOREIGN KEY (`id_envio`) REFERENCES `metodos_envio` (`id_envio`),
+  CONSTRAINT `pedidos_ibfk_4` FOREIGN KEY (`id_metodo_pago`) REFERENCES `metodos_pago` (`id_metodo_pago`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Estructura de tabla para la tabla `productos`
+-- Table structure for table `producto_imagenes`
 --
 
-CREATE TABLE `productos` (
+DROP TABLE IF EXISTS `producto_imagenes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `producto_imagenes` (
+  `id_imagen` int(11) NOT NULL AUTO_INCREMENT,
   `id_producto` int(11) NOT NULL,
+  `ruta_imagen` varchar(255) NOT NULL,
+  `orden` int(11) DEFAULT 1,
+  `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_imagen`),
+  KEY `fk_producto_imagen` (`id_producto`),
+  CONSTRAINT `fk_producto_imagen` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `productos`
+--
+
+DROP TABLE IF EXISTS `productos`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `productos` (
+  `id_producto` int(11) NOT NULL AUTO_INCREMENT,
   `codigo` varchar(50) DEFAULT NULL,
   `nombre` varchar(100) NOT NULL,
   `descripcion` text DEFAULT NULL,
@@ -360,427 +400,65 @@ CREATE TABLE `productos` (
   `precio_descuento` decimal(10,2) DEFAULT NULL,
   `en_oferta` tinyint(1) DEFAULT 0,
   `fecha_inicio_oferta` date DEFAULT NULL,
-  `fecha_fin_oferta` date DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `fecha_fin_oferta` date DEFAULT NULL,
+  PRIMARY KEY (`id_producto`),
+  UNIQUE KEY `codigo` (`codigo`),
+  KEY `id_categoria` (`id_categoria`),
+  KEY `id_marca` (`id_marca`),
+  CONSTRAINT `productos_ibfk_1` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id_categoria`),
+  CONSTRAINT `productos_ibfk_2` FOREIGN KEY (`id_marca`) REFERENCES `marcas` (`id_marca`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Volcado de datos para la tabla `productos`
+-- Table structure for table `roles`
 --
 
-INSERT INTO `productos` (`id_producto`, `codigo`, `nombre`, `descripcion`, `precio`, `stock`, `estado`, `fecha_creacion`, `id_categoria`, `id_marca`, `precio_descuento`, `en_oferta`, `fecha_inicio_oferta`, `fecha_fin_oferta`) VALUES
-(1, '2020', 'queso', 'aads', 100.00, 100, 'disponible', '2026-02-21 07:36:29', 9, 1, 50.00, 1, '2026-02-21', '2026-02-28'),
-(4, '3030', 'computadora', 'muy buena', 10000.00, 5, 'disponible', '2026-02-24 00:04:40', 15, 1, NULL, 0, NULL, NULL),
-(5, '3031', 'queso chedar', 'fsdffs', 100.00, 100, 'disponible', '2026-02-24 20:29:35', 11, 1, 80.00, 1, '2026-02-24', '2026-02-26');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `producto_imagenes`
---
-
-CREATE TABLE `producto_imagenes` (
-  `id_imagen` int(11) NOT NULL,
-  `id_producto` int(11) NOT NULL,
-  `ruta_imagen` varchar(255) NOT NULL,
-  `orden` int(11) DEFAULT 1,
-  `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `producto_imagenes`
---
-
-INSERT INTO `producto_imagenes` (`id_imagen`, `id_producto`, `ruta_imagen`, `orden`, `fecha_registro`) VALUES
-(1, 1, 'img/productos/prod_1_1771659389_0.jpg', 1, '2026-02-21 07:36:29'),
-(2, 1, 'img/productos/prod_1_1771659389_1.jpg', 2, '2026-02-21 07:36:29'),
-(5, 4, 'img/productos/prod_4_1771891480_0.jpeg', 1, '2026-02-24 00:04:40'),
-(6, 5, 'img/productos/prod_5_1771964975_0.png', 1, '2026-02-24 20:29:35');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `roles`
---
-
+DROP TABLE IF EXISTS `roles`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `roles` (
-  `id_rol` int(11) NOT NULL,
+  `id_rol` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(50) NOT NULL,
-  `descripcion` varchar(150) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `descripcion` varchar(150) DEFAULT NULL,
+  PRIMARY KEY (`id_rol`),
+  UNIQUE KEY `nombre` (`nombre`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Volcado de datos para la tabla `roles`
+-- Table structure for table `usuarios`
 --
 
-INSERT INTO `roles` (`id_rol`, `nombre`, `descripcion`) VALUES
-(1, 'admin', 'Administrador del sistema'),
-(2, 'vendedor', 'Gestión de pedidos'),
-(3, 'cliente', 'Cliente de la tienda');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `usuarios`
---
-
+DROP TABLE IF EXISTS `usuarios`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `usuarios` (
-  `id_usuario` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(100) NOT NULL,
   `correo` varchar(100) NOT NULL,
   `contraseña` varchar(255) NOT NULL,
   `estado` enum('activo','inactivo') DEFAULT 'activo',
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
-  `id_rol` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `id_rol` int(11) NOT NULL,
+  PRIMARY KEY (`id_usuario`),
+  UNIQUE KEY `correo` (`correo`),
+  KEY `id_rol` (`id_rol`),
+  CONSTRAINT `usuarios_ibfk_1` FOREIGN KEY (`id_rol`) REFERENCES `roles` (`id_rol`)
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Volcado de datos para la tabla `usuarios`
+-- Dumping routines for database 'negocio_web'
 --
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
-INSERT INTO `usuarios` (`id_usuario`, `nombre`, `correo`, `contraseña`, `estado`, `fecha_creacion`, `id_rol`) VALUES
-(7, 'eduardo avila12', 'ea31925712@gmail.com', '$2y$10$zp9Olr3n1B4wzEAx/x/KPuA4X/w57ofm51gLbg78ZMHfdwRmIoPSO', 'activo', '2026-02-16 02:10:19', 1),
-(13, 'Eduardo1201', 'ea319257166@gmail.com', '$2y$10$36vlWeiRgGcwbL8NBX6mIObuA9T9DAn3nnSSoMfaX4nwTTZUn..PO', 'activo', '2026-02-16 04:17:30', 2),
-(25, 'avila', 'avila@gmial.com', '$2y$10$YXz3tyVcNs4X7Uqm9uRqL.ft5Ctqv6Vfroi.UHisvr7fVuX7RoSCW', 'activo', '2026-02-23 17:31:20', 1),
-(26, 'edurado1201', 'ea3192571@gmail.com', '$2y$10$dTYqXm4kKFmA8W.pt6PdPu0GoopXGRREphwUzNG/ti7wmNfAAlPHa', 'activo', '2026-02-23 17:35:28', 3),
-(27, 'hfhhfhf', 'aa@gmail.com', '$2y$10$omoWw8PFsHdZ5oMPwEoIaOsUZKeCADa.qkdNfLPTkF4THya4SCkXa', 'activo', '2026-02-23 17:47:14', 3),
-(28, 'edurado1201', 'aa25@gmail.com', '$2y$10$OA6SHQTSxlky2zj/kwPqLOSI8H0hgQiNfJyPMl6sg1ATzgArrEX0W', 'inactivo', '2026-02-23 23:56:47', 3);
-
---
--- Índices para tablas volcadas
---
-
---
--- Indices de la tabla `banners`
---
-ALTER TABLE `banners`
-  ADD PRIMARY KEY (`id_banner`);
-
---
--- Indices de la tabla `carritos`
---
-ALTER TABLE `carritos`
-  ADD PRIMARY KEY (`id_carrito`),
-  ADD KEY `id_cliente` (`id_cliente`);
-
---
--- Indices de la tabla `carrito_detalle`
---
-ALTER TABLE `carrito_detalle`
-  ADD PRIMARY KEY (`id_carrito_detalle`),
-  ADD KEY `id_carrito` (`id_carrito`),
-  ADD KEY `id_producto` (`id_producto`);
-
---
--- Indices de la tabla `categorias`
---
-ALTER TABLE `categorias`
-  ADD PRIMARY KEY (`id_categoria`),
-  ADD KEY `idx_id_padre` (`id_padre`);
-
---
--- Indices de la tabla `clientes`
---
-ALTER TABLE `clientes`
-  ADD PRIMARY KEY (`id_cliente`),
-  ADD KEY `fk_clientes_usuarios` (`id_usuario`);
-
---
--- Indices de la tabla `configuracion`
---
-ALTER TABLE `configuracion`
-  ADD PRIMARY KEY (`id_config`);
-
---
--- Indices de la tabla `detalle_pedido`
---
-ALTER TABLE `detalle_pedido`
-  ADD PRIMARY KEY (`id_detalle`),
-  ADD KEY `id_pedido` (`id_pedido`),
-  ADD KEY `id_producto` (`id_producto`);
-
---
--- Indices de la tabla `direcciones_cliente`
---
-ALTER TABLE `direcciones_cliente`
-  ADD PRIMARY KEY (`id_direccion`),
-  ADD KEY `id_cliente` (`id_cliente`);
-
---
--- Indices de la tabla `hero_slides`
---
-ALTER TABLE `hero_slides`
-  ADD PRIMARY KEY (`id_slide`);
-
---
--- Indices de la tabla `historial_pedido`
---
-ALTER TABLE `historial_pedido`
-  ADD PRIMARY KEY (`id_historial`),
-  ADD KEY `id_pedido` (`id_pedido`),
-  ADD KEY `id_usuario` (`id_usuario`);
-
---
--- Indices de la tabla `marcas`
---
-ALTER TABLE `marcas`
-  ADD PRIMARY KEY (`id_marca`),
-  ADD UNIQUE KEY `nombre` (`nombre`);
-
---
--- Indices de la tabla `mensajes_contacto`
---
-ALTER TABLE `mensajes_contacto`
-  ADD PRIMARY KEY (`id_mensaje`);
-
---
--- Indices de la tabla `metodos_envio`
---
-ALTER TABLE `metodos_envio`
-  ADD PRIMARY KEY (`id_envio`);
-
---
--- Indices de la tabla `metodos_pago`
---
-ALTER TABLE `metodos_pago`
-  ADD PRIMARY KEY (`id_metodo_pago`);
-
---
--- Indices de la tabla `pedidos`
---
-ALTER TABLE `pedidos`
-  ADD PRIMARY KEY (`id_pedido`),
-  ADD KEY `id_cliente` (`id_cliente`),
-  ADD KEY `id_direccion` (`id_direccion`),
-  ADD KEY `id_envio` (`id_envio`),
-  ADD KEY `id_metodo_pago` (`id_metodo_pago`);
-
---
--- Indices de la tabla `productos`
---
-ALTER TABLE `productos`
-  ADD PRIMARY KEY (`id_producto`),
-  ADD UNIQUE KEY `codigo` (`codigo`),
-  ADD KEY `id_categoria` (`id_categoria`),
-  ADD KEY `id_marca` (`id_marca`);
-
---
--- Indices de la tabla `producto_imagenes`
---
-ALTER TABLE `producto_imagenes`
-  ADD PRIMARY KEY (`id_imagen`),
-  ADD KEY `fk_producto_imagen` (`id_producto`);
-
---
--- Indices de la tabla `roles`
---
-ALTER TABLE `roles`
-  ADD PRIMARY KEY (`id_rol`),
-  ADD UNIQUE KEY `nombre` (`nombre`);
-
---
--- Indices de la tabla `usuarios`
---
-ALTER TABLE `usuarios`
-  ADD PRIMARY KEY (`id_usuario`),
-  ADD UNIQUE KEY `correo` (`correo`),
-  ADD KEY `id_rol` (`id_rol`);
-
---
--- AUTO_INCREMENT de las tablas volcadas
---
-
---
--- AUTO_INCREMENT de la tabla `banners`
---
-ALTER TABLE `banners`
-  MODIFY `id_banner` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT de la tabla `carritos`
---
-ALTER TABLE `carritos`
-  MODIFY `id_carrito` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de la tabla `carrito_detalle`
---
-ALTER TABLE `carrito_detalle`
-  MODIFY `id_carrito_detalle` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de la tabla `categorias`
---
-ALTER TABLE `categorias`
-  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
-
---
--- AUTO_INCREMENT de la tabla `clientes`
---
-ALTER TABLE `clientes`
-  MODIFY `id_cliente` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
-
---
--- AUTO_INCREMENT de la tabla `configuracion`
---
-ALTER TABLE `configuracion`
-  MODIFY `id_config` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT de la tabla `detalle_pedido`
---
-ALTER TABLE `detalle_pedido`
-  MODIFY `id_detalle` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de la tabla `direcciones_cliente`
---
-ALTER TABLE `direcciones_cliente`
-  MODIFY `id_direccion` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de la tabla `hero_slides`
---
-ALTER TABLE `hero_slides`
-  MODIFY `id_slide` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT de la tabla `historial_pedido`
---
-ALTER TABLE `historial_pedido`
-  MODIFY `id_historial` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de la tabla `marcas`
---
-ALTER TABLE `marcas`
-  MODIFY `id_marca` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
-
---
--- AUTO_INCREMENT de la tabla `mensajes_contacto`
---
-ALTER TABLE `mensajes_contacto`
-  MODIFY `id_mensaje` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
---
--- AUTO_INCREMENT de la tabla `metodos_envio`
---
-ALTER TABLE `metodos_envio`
-  MODIFY `id_envio` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
-
---
--- AUTO_INCREMENT de la tabla `metodos_pago`
---
-ALTER TABLE `metodos_pago`
-  MODIFY `id_metodo_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
-
---
--- AUTO_INCREMENT de la tabla `pedidos`
---
-ALTER TABLE `pedidos`
-  MODIFY `id_pedido` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de la tabla `productos`
---
-ALTER TABLE `productos`
-  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
---
--- AUTO_INCREMENT de la tabla `producto_imagenes`
---
-ALTER TABLE `producto_imagenes`
-  MODIFY `id_imagen` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
-
---
--- AUTO_INCREMENT de la tabla `roles`
---
-ALTER TABLE `roles`
-  MODIFY `id_rol` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
--- AUTO_INCREMENT de la tabla `usuarios`
---
-ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
-
---
--- Restricciones para tablas volcadas
---
-
---
--- Filtros para la tabla `carritos`
---
-ALTER TABLE `carritos`
-  ADD CONSTRAINT `carritos_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `clientes` (`id_cliente`);
-
---
--- Filtros para la tabla `carrito_detalle`
---
-ALTER TABLE `carrito_detalle`
-  ADD CONSTRAINT `carrito_detalle_ibfk_1` FOREIGN KEY (`id_carrito`) REFERENCES `carritos` (`id_carrito`),
-  ADD CONSTRAINT `carrito_detalle_ibfk_2` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`);
-
---
--- Filtros para la tabla `categorias`
---
-ALTER TABLE `categorias`
-  ADD CONSTRAINT `fk_categoria_padre` FOREIGN KEY (`id_padre`) REFERENCES `categorias` (`id_categoria`) ON DELETE CASCADE;
-
---
--- Filtros para la tabla `clientes`
---
-ALTER TABLE `clientes`
-  ADD CONSTRAINT `fk_clientes_usuarios` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Filtros para la tabla `detalle_pedido`
---
-ALTER TABLE `detalle_pedido`
-  ADD CONSTRAINT `detalle_pedido_ibfk_1` FOREIGN KEY (`id_pedido`) REFERENCES `pedidos` (`id_pedido`),
-  ADD CONSTRAINT `detalle_pedido_ibfk_2` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`);
-
---
--- Filtros para la tabla `direcciones_cliente`
---
-ALTER TABLE `direcciones_cliente`
-  ADD CONSTRAINT `direcciones_cliente_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `clientes` (`id_cliente`);
-
---
--- Filtros para la tabla `historial_pedido`
---
-ALTER TABLE `historial_pedido`
-  ADD CONSTRAINT `historial_pedido_ibfk_1` FOREIGN KEY (`id_pedido`) REFERENCES `pedidos` (`id_pedido`),
-  ADD CONSTRAINT `historial_pedido_ibfk_2` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`);
-
---
--- Filtros para la tabla `pedidos`
---
-ALTER TABLE `pedidos`
-  ADD CONSTRAINT `pedidos_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `clientes` (`id_cliente`),
-  ADD CONSTRAINT `pedidos_ibfk_2` FOREIGN KEY (`id_direccion`) REFERENCES `direcciones_cliente` (`id_direccion`),
-  ADD CONSTRAINT `pedidos_ibfk_3` FOREIGN KEY (`id_envio`) REFERENCES `metodos_envio` (`id_envio`),
-  ADD CONSTRAINT `pedidos_ibfk_4` FOREIGN KEY (`id_metodo_pago`) REFERENCES `metodos_pago` (`id_metodo_pago`);
-
---
--- Filtros para la tabla `productos`
---
-ALTER TABLE `productos`
-  ADD CONSTRAINT `productos_ibfk_1` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id_categoria`),
-  ADD CONSTRAINT `productos_ibfk_2` FOREIGN KEY (`id_marca`) REFERENCES `marcas` (`id_marca`);
-
---
--- Filtros para la tabla `producto_imagenes`
---
-ALTER TABLE `producto_imagenes`
-  ADD CONSTRAINT `fk_producto_imagen` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Filtros para la tabla `usuarios`
---
-ALTER TABLE `usuarios`
-  ADD CONSTRAINT `usuarios_ibfk_1` FOREIGN KEY (`id_rol`) REFERENCES `roles` (`id_rol`);
-COMMIT;
-
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2026-02-25 22:14:34

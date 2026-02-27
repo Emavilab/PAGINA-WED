@@ -384,10 +384,14 @@ $cfg_pie = htmlspecialchars($cfg['pie_pagina'] ?? '');
 </div>
 </div>
 <div class="space-y-3">
-<button onclick="loadFinalizarCompra()" id="cartBtnFinalizar" class="w-full bg-primary hover:bg-primary-dark text-white py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-<span class="material-symbols-outlined">payments</span>
-                Finalizar Compra
-            </button>
+<button 
+    onclick="loadFinalizarCompra()" 
+    id="cartBtnFinalizar"
+    class="w-full bg-primary hover:bg-primary-dark text-white py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+    
+    <span class="material-symbols-outlined">payments</span>
+    Finalizar Compra
+</button>
 <button onclick="vaciarCarrito()" id="cartBtnVaciar" class="w-full border-2 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 py-3 rounded-xl font-bold hover:bg-red-50 dark:hover:bg-red-900/20 transition-all flex items-center justify-center gap-2">
 <span class="material-symbols-outlined text-lg">delete_sweep</span> Vaciar Carrito
             </button>
@@ -973,21 +977,57 @@ function loadRegistrarse() {
         .catch(error => console.error('Error al cargar registro:', error));
 }
 
-function loadFinalizarCompra() {
-    // Cerrar el carrito
+function initCheckout() {
+    console.log("TEST INIT CHECKOUT FUNCIONA");
+    cargarDireccionesCheckout();
+
+}
+window.loadFinalizarCompra = function () {
+
+    console.log("Se ejecutó loadFinalizarCompra");
+
     cerrarCarrito();
-    
-    // Cargar la página de finalizar compra
+
     fetch('client/finalizarcompra.php')
         .then(response => response.text())
         .then(data => {
-            document.getElementById('mainContent').innerHTML = data;
-            // Scroll hacia arriba para ver el contenido
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data;
+
+            const bodyContent = tempDiv.querySelector('body')?.innerHTML || data;
+
+            document.getElementById('mainContent').innerHTML = bodyContent;
+
+            //  EJECUTAR SCRIPTS
+            const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/g;
+            let scriptMatch;
+
+            while ((scriptMatch = scriptRegex.exec(data)) !== null) {
+                const script = document.createElement('script');
+                script.textContent = scriptMatch[1];
+                document.body.appendChild(script);
+            }
+
+            // Ahora sí existe cargarDireccionesCheckout
+            if (typeof initCheckout === "function") {
+                initCheckout();
+            }
+
             window.scrollTo(0, 0);
         })
         .catch(error => console.error('Error al cargar finalizarcompra:', error));
-}
+};
+document.addEventListener("click", function (e) {
 
+    const btnFinalizar = e.target.closest("button[data-action='finalizar-compra']");
+
+    if (btnFinalizar) {
+        console.log("CLICK FINALIZAR DETECTADO");
+        window.loadFinalizarCompra();
+    }
+
+});
 function loadHistorialPedidos() {
     fetch('client/historialpedidoC.php')
         .then(response => response.text())
@@ -2354,6 +2394,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(() => {});
 });
 // ========== FIN CARRITO ==========
+
 </script>
 
 </body></html>

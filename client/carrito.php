@@ -138,13 +138,11 @@
 </div>
 </div>
 <div class="space-y-3">
-<button class="w-full bg-primary hover:bg-primary-dark text-white py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
-<span class="material-symbols-outlined">payments</span>
-                Finalizar Compra
-            </button>
-<button class="w-full border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 py-3 rounded-xl font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
-                Ver Carrito
-            </button>
+<button id="btnFinalizarCompra"
+    class="w-full bg-primary hover:bg-primary-dark text-white py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+    <span class="material-symbols-outlined">payments</span>
+    Finalizar Compra
+</button>
 </div>
 <p class="text-center text-xs text-slate-500 mt-4">Envío gratis aplicado para este pedido 🚚</p>
 </div>

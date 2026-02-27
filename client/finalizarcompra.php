@@ -57,65 +57,7 @@
 </div>
 <div class="mb-8">
 <label class="block text-sm font-semibold mb-4 text-slate-600 dark:text-slate-400 uppercase tracking-wider">Seleccionar dirección guardada</label>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-<label class="relative group">
-<input checked="" class="peer hidden" name="saved_address" type="radio" value="home"/>
-<div class="h-full p-4 rounded-xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 cursor-pointer transition-all peer-checked:border-primary peer-checked:bg-primary/5 hover:border-primary/50">
-<div class="flex justify-between items-start mb-2">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-primary">home</span>
-<span class="font-bold text-slate-900 dark:text-white">Casa</span>
-</div>
-<div class="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center peer-checked:border-primary">
-<div class="w-2.5 h-2.5 rounded-full bg-primary scale-0 transition-transform peer-checked:scale-100"></div>
-</div>
-</div>
-<p class="text-sm opacity-70 leading-relaxed">Calle Mayor 12, 4ºB<br/>28013 Madrid, España</p>
-<p class="text-xs mt-2 font-medium">+34 600 123 456</p>
-</div>
-</label>
-<label class="relative group">
-<input class="peer hidden" name="saved_address" type="radio" value="office"/>
-<div class="h-full p-4 rounded-xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 cursor-pointer transition-all peer-checked:border-primary peer-checked:bg-primary/5 hover:border-primary/50">
-<div class="flex justify-between items-start mb-2">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-primary">work</span>
-<span class="font-bold text-slate-900 dark:text-white">Oficina</span>
-</div>
-<div class="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center peer-checked:border-primary">
-<div class="w-2.5 h-2.5 rounded-full bg-primary scale-0 transition-transform peer-checked:scale-100"></div>
-</div>
-</div>
-<p class="text-sm opacity-70 leading-relaxed">Paseo de la Castellana 200, Planta 10<br/>28046 Madrid, España</p>
-<p class="text-xs mt-2 font-medium">+34 912 345 678</p>
-</div>
-</label>
-</div>
-<div class="mt-4">
-<input class="peer hidden" id="use-new-address" name="saved_address" type="radio"/>
-<label class="inline-flex items-center gap-2 text-primary font-semibold text-sm cursor-pointer hover:underline" for="use-new-address">
-<span class="material-icons text-base">add_circle_outline</span>
-+ Usar otra dirección
-</label>
-<div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-4" id="new-address-form">
-<div class="md:col-span-2">
-<label class="block text-sm font-medium mb-1.5 opacity-80">Dirección de Entrega</label>
-<input class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:border-primary focus:ring-primary" placeholder="Calle, número, piso, departamento" type="text"/>
-</div>
-<div>
-<label class="block text-sm font-medium mb-1.5 opacity-80">Ciudad</label>
-<input class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:border-primary focus:ring-primary" placeholder="Ej. Madrid" type="text"/>
-</div>
-<div>
-<label class="block text-sm font-medium mb-1.5 opacity-80">Código Postal</label>
-<input class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:border-primary focus:ring-primary" placeholder="28001" type="text"/>
-</div>
-<div class="md:col-span-2">
-<label class="block text-sm font-medium mb-1.5 opacity-80">Teléfono de Contacto</label>
-<input class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:border-primary focus:ring-primary" placeholder="+34 600 000 000" type="tel"/>
-</div>
-</div>
-</div>
+<div id="checkout-direcciones" class="grid grid-cols-1 md:grid-cols-2 gap-4">
 </div>
 </section>
 
@@ -268,4 +210,124 @@ Al confirmar el pedido, aceptas nuestras Políticas de Privacidad y Términos de
 </aside>
 </div>
 </main>
-</body></html>
+<script>
+
+/* ===============================
+   INICIALIZADOR PARA SPA
+================================= */
+function initCheckout() {
+    console.log("Inicializando checkout...");
+    cargarDireccionesCheckout();
+}
+
+
+/* ===============================
+   CARGAR DIRECCIONES
+================================= */
+async function cargarDireccionesCheckout() {
+
+    console.log("Cargando direcciones checkout...");
+
+    const contenedor = document.getElementById("checkout-direcciones");
+    if (!contenedor) return;
+
+    try {
+
+        const response = await fetch("api/api_obtener_direcciones.php", {
+            credentials: "include"
+        });
+
+        const data = await response.json();
+
+        if (!data.success || !data.direcciones.length) {
+            contenedor.innerHTML = "<p class='text-sm text-slate-500'>No tienes direcciones guardadas.</p>";
+            return;
+        }
+
+        contenedor.innerHTML = "";
+
+        data.direcciones.forEach((dir, index) => {
+
+            contenedor.innerHTML += `
+                <label class="relative group">
+                    <input 
+                        class="peer hidden" 
+                        name="saved_address" 
+                        type="radio" 
+                        value="${dir.id_direccion}"
+                        ${index === 0 ? "checked" : ""}
+                    />
+
+                    <div class="h-full p-4 rounded-xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 cursor-pointer transition-all peer-checked:border-primary peer-checked:bg-primary/5 hover:border-primary/50">
+                        
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary">location_on</span>
+                                <span class="font-bold text-slate-900 dark:text-white">
+                                    Dirección
+                                </span>
+                            </div>
+
+                            <div class="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center peer-checked:border-primary">
+                                <div class="w-2.5 h-2.5 rounded-full bg-primary scale-0 transition-transform peer-checked:scale-100"></div>
+                            </div>
+                        </div>
+
+                        <p class="text-sm opacity-70 leading-relaxed">
+                            ${dir.direccion}<br/>
+                            ${dir.ciudad}
+                        </p>
+
+                        <p class="text-xs mt-2 font-medium">
+                            ${dir.telefono || "-"}
+                        </p>
+
+                    </div>
+                </label>
+            `;
+        });
+
+    } catch (error) {
+        console.error("Error cargando direcciones checkout:", error);
+    }
+}
+
+
+/* ===============================
+   OBTENER DIRECCIÓN SELECCIONADA
+================================= */
+function obtenerDireccionSeleccionada() {
+    const seleccionada = document.querySelector('input[name="saved_address"]:checked');
+    return seleccionada ? seleccionada.value : null;
+}
+
+
+/* ===============================
+   CONFIRMAR PAGO
+================================= */
+function confirmarPago() {
+
+    const direccionId = obtenerDireccionSeleccionada();
+
+    if (!direccionId) {
+        alert("Selecciona una dirección antes de continuar.");
+        return;
+    }
+
+    console.log("Dirección seleccionada:", direccionId);
+
+    // 🔥 Aquí luego haremos el fetch para crear pedido
+    // Ejemplo futuro:
+    /*
+    fetch("api/api_crear_pedido.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+            id_direccion: direccionId
+        })
+    });
+    */
+}
+
+</script>

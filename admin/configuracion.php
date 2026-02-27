@@ -49,6 +49,9 @@ $redes = !empty($config['redes_sociales']) ? json_decode($config['redes_sociales
                 <button onclick="mostrarTab('hero-slides')" class="tab-btn bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold transition">
                     <i class="fas fa-play-circle mr-2"></i> Hero Carrusel
                 </button>
+                <button onclick="mostrarTab('header-footer')" class="tab-btn bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold transition">
+                    <i class="fas fa-heading mr-2"></i> Header y Footer
+                </button>
             </div>
 
             <!-- ==================== MARCAS ==================== -->
@@ -866,6 +869,137 @@ $redes = !empty($config['redes_sociales']) ? json_decode($config['redes_sociales
                     </div>
                 </div>
             </div>
+
+            <!-- ==================== HEADER Y FOOTER ==================== -->
+            <div id="tab-header-footer" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- HEADER -->
+                    <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                        <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-5 flex items-center gap-3">
+                            <i class="fas fa-heading text-white text-xl"></i>
+                            <h2 class="text-xl font-bold text-white">Editar Header</h2>
+                        </div>
+                        <div class="p-8">
+                            <form id="formHeader" onsubmit="return submitHeader(event)">
+                                <input type="hidden" name="accion" value="guardar">
+                                <input type="hidden" name="tipo" value="header">
+                                
+                                <div class="mb-6">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-heading text-blue-500 mr-1"></i> Título (Opcional)
+                                    </label>
+                                    <input type="text" name="titulo" id="header_titulo" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Ej: Mi Tienda Online">
+                                </div>
+
+                                <div class="mb-6">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-code text-blue-500 mr-1"></i> Código HTML del Header
+                                    </label>
+                                    <textarea id="header_contenido" name="contenido" rows="12" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition font-mono text-sm" placeholder="Pega aquí el código HTML de tu header..."></textarea>
+                                    <p class="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                                        <i class="fas fa-lightbulb"></i> 
+                                        Puedes usar HTML, CSS y Tailwind CSS. Se recomienda que incluya navegación y logo.
+                                    </p>
+                                </div>
+
+                                <div class="mb-6">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-toggle-on text-blue-500 mr-1"></i> Estado
+                                    </label>
+                                    <select name="estado" id="header_estado" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">
+                                        <option value="activo">Activo</option>
+                                        <option value="inactivo">Inactivo</option>
+                                    </select>
+                                </div>
+
+                                <div class="flex gap-3 pt-4 border-t border-gray-200">
+                                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2">
+                                        <i class="fas fa-save"></i> Guardar Header
+                                    </button>
+                                    <button type="button" onclick="cargarHeader()" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white px-6 py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2">
+                                        <i class="fas fa-redo"></i> Recargar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- FOOTER -->
+                    <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                        <div class="bg-gradient-to-r from-gray-700 to-gray-900 p-5 flex items-center gap-3">
+                            <i class="fas fa-shoe-prints text-white text-xl"></i>
+                            <h2 class="text-xl font-bold text-white">Editar Footer</h2>
+                        </div>
+                        <div class="p-8">
+                            <form id="formFooter" onsubmit="return submitFooter(event)">
+                                <input type="hidden" name="accion" value="guardar">
+                                <input type="hidden" name="tipo" value="footer">
+                                
+                                <div class="mb-6">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-heading text-gray-600 mr-1"></i> Título (Opcional)
+                                    </label>
+                                    <input type="text" name="titulo" id="footer_titulo" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-600 outline-none transition" placeholder="Ej: Información de la Empresa">
+                                </div>
+
+                                <div class="mb-6">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-code text-gray-600 mr-1"></i> Código HTML del Footer
+                                    </label>
+                                    <textarea id="footer_contenido" name="contenido" rows="12" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-600 outline-none transition font-mono text-sm" placeholder="Pega aquí el código HTML de tu footer..."></textarea>
+                                    <p class="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                                        <i class="fas fa-lightbulb"></i> 
+                                        Puedes usar HTML, CSS y Tailwind CSS. Se recomienda que incluya copyright, links y contacto.
+                                    </p>
+                                </div>
+
+                                <div class="mb-6">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        <i class="fas fa-toggle-on text-gray-600 mr-1"></i> Estado
+                                    </label>
+                                    <select name="estado" id="footer_estado" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-600 outline-none transition">
+                                        <option value="activo">Activo</option>
+                                        <option value="inactivo">Inactivo</option>
+                                    </select>
+                                </div>
+
+                                <div class="flex gap-3 pt-4 border-t border-gray-200">
+                                    <button type="submit" class="flex-1 bg-gray-700 hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2">
+                                        <i class="fas fa-save"></i> Guardar Footer
+                                    </button>
+                                    <button type="button" onclick="cargarFooter()" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white px-6 py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2">
+                                        <i class="fas fa-redo"></i> Recargar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PREVISUALIZACIÓN -->
+                <div class="mt-8 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                    <div class="bg-gradient-to-r from-cyan-600 to-cyan-800 p-5 flex items-center gap-3">
+                        <i class="fas fa-eye text-white text-xl"></i>
+                        <h2 class="text-xl font-bold text-white">Previsualización</h2>
+                    </div>
+                    <div class="p-8">
+                        <div class="space-y-8">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-200">Header Actual</h3>
+                                <div id="header_preview" class="border border-gray-200 rounded-lg p-4 bg-gray-50 overflow-auto max-h-96">
+                                    <p class="text-gray-400 text-center">Cargando...</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-200">Footer Actual</h3>
+                                <div id="footer_preview" class="border border-gray-200 rounded-lg p-4 bg-gray-50 overflow-auto max-h-96">
+                                    <p class="text-gray-400 text-center">Cargando...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -1273,6 +1407,104 @@ function submitSlide(e) {
     enviarFormulario('formSlide');
     return false;
 }
-</script>
+
+// ==================== HEADER Y FOOTER ====================
+function cargarHeader() {
+    fetch('../api/api_header_footer.php?accion=obtener&tipo=header')
+    .then(res => res.json())
+    .then(data => {
+        if (data.exito && data.datos) {
+            document.getElementById('header_titulo').value = data.datos.titulo || '';
+            document.getElementById('header_contenido').value = data.datos.contenido || '';
+            document.getElementById('header_estado').value = data.datos.estado || 'activo';
+            document.getElementById('header_preview').innerHTML = data.datos.contenido || '<p class="text-gray-400">No hay contenido</p>';
+        } else {
+            document.getElementById('header_preview').innerHTML = '<p class="text-gray-400">No hay header configurado</p>';
+        }
+    })
+    .catch(() => mostrarModalError('Error al cargar el header'));
+}
+
+function cargarFooter() {
+    fetch('../api/api_header_footer.php?accion=obtener&tipo=footer')
+    .then(res => res.json())
+    .then(data => {
+        if (data.exito && data.datos) {
+            document.getElementById('footer_titulo').value = data.datos.titulo || '';
+            document.getElementById('footer_contenido').value = data.datos.contenido || '';
+            document.getElementById('footer_estado').value = data.datos.estado || 'activo';
+            document.getElementById('footer_preview').innerHTML = data.datos.contenido || '<p class="text-gray-400">No hay contenido</p>';
+        } else {
+            document.getElementById('footer_preview').innerHTML = '<p class="text-gray-400">No hay footer configurado</p>';
+        }
+    })
+    .catch(() => mostrarModalError('Error al cargar el footer'));
+}
+
+function submitHeader(e) {
+    e.preventDefault();
+    const contenido = document.getElementById('header_contenido').value.trim();
+    if (!contenido) { 
+        mostrarModalError('El contenido del header no puede estar vacío'); 
+        return false; 
+    }
+    const formData = new FormData(document.getElementById('formHeader'));
+    
+    fetch('../api/api_header_footer.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.exito) {
+            mostrarModalExito(data.mensaje);
+            setTimeout(() => cargarHeader(), 1500);
+        } else {
+            mostrarModalError(data.mensaje || 'Error al guardar');
+        }
+    })
+    .catch(() => mostrarModalError('Error de conexión'));
+    return false;
+}
+
+function submitFooter(e) {
+    e.preventDefault();
+    const contenido = document.getElementById('footer_contenido').value.trim();
+    if (!contenido) { 
+        mostrarModalError('El contenido del footer no puede estar vacío'); 
+        return false; 
+    }
+    const formData = new FormData(document.getElementById('formFooter'));
+    
+    fetch('../api/api_header_footer.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.exito) {
+            mostrarModalExito(data.mensaje);
+            setTimeout(() => cargarFooter(), 1500);
+        } else {
+            mostrarModalError(data.mensaje || 'Error al guardar');
+        }
+    })
+    .catch(() => mostrarModalError('Error de conexión'));
+    return false;
+}
+
+// Cargar header y footer cuando se abre el tab
+document.addEventListener('DOMContentLoaded', function() {
+    const originalMostrarTab = window.mostrarTab;
+    window.mostrarTab = function(tabId) {
+        originalMostrarTab(tabId);
+        if (tabId === 'header-footer') {
+            setTimeout(() => {
+                cargarHeader();
+                cargarFooter();
+            }, 100);
+        }
+    };
+});
 </body>
 </html>

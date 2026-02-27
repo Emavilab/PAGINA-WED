@@ -40,11 +40,15 @@ function obtenerDatosUsuario() {
     }
     
     $id_usuario = $_SESSION['id_usuario'];
-    $query = "SELECT u.*, c.nombre as nombre_cliente, r.nombre as nombre_rol
-              FROM usuarios u 
-              LEFT JOIN clientes c ON u.id_usuario = c.id_usuario
-              LEFT JOIN roles r ON u.id_rol = r.id_rol
-              WHERE u.id_usuario = ?";
+    $query = "SELECT 
+            u.*, 
+            c.id_cliente,
+            c.nombre as nombre_cliente, 
+            r.nombre as nombre_rol
+          FROM usuarios u 
+          LEFT JOIN clientes c ON u.id_usuario = c.id_usuario
+          LEFT JOIN roles r ON u.id_rol = r.id_rol
+          WHERE u.id_usuario = ?";
     
     $stmt = $conexion->prepare($query);
     $stmt->bind_param("i", $id_usuario);

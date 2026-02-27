@@ -1033,20 +1033,17 @@ function loadPerfil() {
     fetch('client/perfil.php')
         .then(response => response.text())
         .then(data => {
-            // Si es un error JSON, redirigir al login
+
+            // Si devuelve JSON de error (no autenticado)
             if (data.includes('"exito"')) {
                 window.location.href = 'index.php';
                 return;
             }
-            
-            // Extraer solo el contenido del PHP
-            // Remover etiquetas PHP
-            let bodyContent = data.replace(/<\?php[\s\S]*?\?>/g, '');
-            
-            // Insertar el contenido envuelto en main dentro de mainContent
-            document.getElementById('mainContent').innerHTML = bodyContent;
-            
-            // Extraer y ejecutar scripts
+
+            // Insertar directamente el HTML
+            document.getElementById('mainContent').innerHTML = data;
+
+            // Extraer y ejecutar scripts internos
             const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/g;
             let scriptMatch;
             while ((scriptMatch = scriptRegex.exec(data)) !== null) {
@@ -1054,13 +1051,19 @@ function loadPerfil() {
                 script.textContent = scriptMatch[1];
                 document.body.appendChild(script);
             }
-            
-            // Scroll hacia arriba para ver el contenido
+
+            // 🔥 IMPORTANTE EN SPA:
+            // Esperar un micro-delay y luego inicializar la vista
+            setTimeout(() => {
+                if (typeof iniciarPerfil === 'function') {
+                    iniciarPerfil();
+                }
+            }, 50);
+
             window.scrollTo(0, 0);
         })
         .catch(error => console.error('Error al cargar perfil:', error));
 }
-
 function loadContactanos() {
     var redes = window._cfgRedes || {};
     var html = '<main class="max-w-7xl mx-auto px-4 py-12">' +

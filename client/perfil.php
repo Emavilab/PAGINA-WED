@@ -111,72 +111,28 @@ Seguridad
 <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white">Mis Direcciones</h2>
 <p class="text-slate-500 dark:text-slate-400 mt-1">Gestiona tus lugares de entrega para un proceso de compra más rápido.</p>
 </div>
-<button class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-blue-600 text-white font-bold rounded-xl shadow-md transition-all active:scale-95">
-<span class="material-symbols-outlined text-lg">add</span>
-Agregar Nueva Dirección
+<button onclick="abrirModalDireccion()" 
+class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-blue-600 text-white font-bold rounded-xl shadow-md transition-all active:scale-95">
+
+    <span class="material-symbols-outlined">add</span>
+    Añadir dirección
+
 </button>
 </div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-<div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-primary shadow-sm overflow-hidden relative">
-<div class="absolute top-4 right-4 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">Predeterminada</div>
-<div class="p-6">
-<div class="flex items-center gap-3 mb-4">
-<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
-<span class="material-symbols-outlined">home</span>
+<div id="contenedor-direcciones" 
+     class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
 </div>
-<div>
-<h3 class="font-bold text-slate-900 dark:text-white">Casa</h3>
-<p class="text-xs text-slate-500">Juan Pérez</p>
-</div>
-</div>
-<div class="space-y-1 text-sm text-slate-600 dark:text-slate-400 mb-6">
-<p>Calle de Serrano, 45, 3º Izquierda</p>
-<p>28001 Madrid, España</p>
-<p>Tel: +34 600 000 000</p>
-</div>
-<div class="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-<button class="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700">
-<span class="material-symbols-outlined text-base">edit</span>
-Editar
-</button>
-<button class="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors border border-transparent">
-<span class="material-symbols-outlined text-base">delete</span>
-Eliminar
-</button>
-</div>
-</div>
-</div>
-<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-<div class="p-6">
-<div class="flex items-center gap-3 mb-4">
-<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
-<span class="material-symbols-outlined">work</span>
-</div>
-<div>
-<h3 class="font-bold text-slate-900 dark:text-white">Oficina</h3>
-<p class="text-xs text-slate-500">Juan Pérez - RetailCMS HQ</p>
-</div>
-</div>
-<div class="space-y-1 text-sm text-slate-600 dark:text-slate-400 mb-6">
-<p>Paseo de la Castellana, 100</p>
-<p>28046 Madrid, España</p>
-<p>Tel: +34 600 000 001</p>
-</div>
-<div class="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-<button class="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700">
-<span class="material-symbols-outlined text-base">edit</span>
-Editar
-</button>
-<button class="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors border border-transparent">
-<span class="material-symbols-outlined text-base">delete</span>
-Eliminar
-</button>
-</div>
-</div>
-</div>
-<button class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 flex flex-col items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all group">
-<span class="material-symbols-outlined text-4xl mb-2 group-hover:scale-110 transition-transform">add_circle</span>
-<span class="font-bold">Añadir otra dirección</span>
+<button onclick="abrirModalDireccion()" 
+class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 flex flex-col items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all group">
+
+    <span class="material-symbols-outlined text-4xl mb-2 group-hover:scale-110 transition-transform">
+        add_circle
+    </span>
+
+    <span class="font-bold">
+        Añadir otra dirección
+    </span>
+
 </button>
 </div>
 </div>
@@ -184,9 +140,135 @@ Eliminar
 </div>
 </div>
 </main>
+<!-- Modal Agregar Dirección -->
+<div id="modal-direccion" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl w-full max-w-lg p-8 shadow-xl relative">
+        <h3 class="text-xl font-bold mb-6">Agregar Nueva Dirección</h3>
 
+        <form id="form-direccion" class="space-y-4">
+
+            <div>
+                <label class="text-sm font-semibold">Dirección</label>
+                <input type="text" name="direccion" required class="w-full border rounded-lg px-4 py-2">
+            </div>
+
+            <div>
+                <label class="text-sm font-semibold">Ciudad</label>
+                <input type="text" name="ciudad" required class="w-full border rounded-lg px-4 py-2">
+            </div>
+
+            <div>
+                <label class="text-sm font-semibold">Código Postal</label>
+                <input type="text" name="codigo_postal" class="w-full border rounded-lg px-4 py-2">
+            </div>
+
+            <div>
+                <label class="text-sm font-semibold">Teléfono</label>
+                <input type="text" name="telefono" class="w-full border rounded-lg px-4 py-2">
+            </div>
+
+            <div>
+                <label class="text-sm font-semibold">Referencia</label>
+                <input type="text" name="referencia" class="w-full border rounded-lg px-4 py-2">
+            </div>
+
+            <div id="mensaje-direccion" class="hidden text-sm rounded-lg px-3 py-2"></div>
+
+            <div class="flex justify-end gap-3 pt-4">
+                <button type="button" onclick="cerrarModalDireccion()" class="px-4 py-2 border rounded-lg">
+                    Cancelar
+                </button>
+                <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg">
+                    Guardar
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+<!-- Modal Editar Dirección -->
+<div id="modal-editar-direccion" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl w-full max-w-lg p-8 shadow-xl relative">
+        <h3 class="text-xl font-bold mb-6">Editar Dirección</h3>
+
+        <form id="form-editar-direccion" class="space-y-4">
+
+            <input type="hidden" name="id_direccion" id="edit-id">
+
+            <div>
+                <label class="text-sm font-semibold">Dirección</label>
+                <input type="text" name="direccion" id="edit-direccion" required class="w-full border rounded-lg px-4 py-2">
+            </div>
+
+            <div>
+                <label class="text-sm font-semibold">Ciudad</label>
+                <input type="text" name="ciudad" id="edit-ciudad" required class="w-full border rounded-lg px-4 py-2">
+            </div>
+
+            <div>
+                <label class="text-sm font-semibold">Código Postal</label>
+                <input type="text" name="codigo_postal" id="edit-cp" class="w-full border rounded-lg px-4 py-2">
+            </div>
+
+            <div>
+                <label class="text-sm font-semibold">Teléfono</label>
+                <input type="text" name="telefono" id="edit-telefono" class="w-full border rounded-lg px-4 py-2">
+            </div>
+
+            <div>
+                <label class="text-sm font-semibold">Referencia</label>
+                <input type="text" name="referencia" id="edit-referencia" class="w-full border rounded-lg px-4 py-2">
+            </div>
+
+            <div id="mensaje-editar-direccion" class="hidden text-sm rounded-lg px-3 py-2"></div>
+
+            <div class="flex justify-end gap-3 pt-4">
+                <button type="button" onclick="cerrarEditarDireccion()" class="px-4 py-2 border rounded-lg">
+                    Cancelar
+                </button>
+                <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg">
+                    Guardar Cambios
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+<!-- Modal Confirmar Eliminación Dirección -->
+<div id="modal-eliminar-direccion" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-8 shadow-xl relative">
+        
+        <h3 class="text-xl font-bold mb-4 text-slate-900 dark:text-white">
+            Confirmar eliminación
+        </h3>
+
+        <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
+            ¿Seguro que deseas eliminar esta dirección?
+        </p>
+
+        <div class="flex justify-end gap-3">
+            <button 
+                type="button"
+                onclick="cerrarModalEliminarDireccion()"
+                class="px-4 py-2 border rounded-lg">
+                Cancelar
+            </button>
+
+            <button 
+                type="button"
+                onclick="confirmarEliminarDireccion()"
+                class="px-6 py-2 bg-red-600 text-white rounded-lg">
+                Eliminar
+            </button>
+        </div>
+
+    </div>
+</div>
 <script>
-// Manejo de tabs
+// ===============================
+// MANEJO DE TABS
+// ===============================
+let direccionAEliminar = null;
 function initTabs() {
     const tabs = document.querySelectorAll('.nav-tab');
     
@@ -200,26 +282,22 @@ function initTabs() {
 }
 
 function showTab(tabName) {
-    // Esconder todos los tabs
     const tabContents = document.querySelectorAll('.tab-content');
     tabContents.forEach(content => {
         content.classList.add('hidden');
     });
-    
-    // Remover clase activa de todos los botones
+
     const tabs = document.querySelectorAll('.nav-tab');
     tabs.forEach(tab => {
         tab.classList.remove('nav-link-active');
         tab.classList.add('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-50', 'dark:hover:bg-slate-800');
     });
-    
-    // Mostrar el tab seleccionado
+
     const activeContent = document.getElementById('tab-' + tabName);
     if (activeContent) {
         activeContent.classList.remove('hidden');
     }
-    
-    // Agregar clase activa al botón clickeado
+
     const activeTab = document.querySelector('.nav-tab[data-tab="' + tabName + '"]');
     if (activeTab) {
         activeTab.classList.add('nav-link-active');
@@ -227,7 +305,165 @@ function showTab(tabName) {
     }
 }
 
-// Manejo del formulario de perfil
+
+// ===============================
+// MODAL DIRECCIÓN
+// ===============================
+
+function abrirModalDireccion() {
+    const modal = document.getElementById('modal-direccion');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function cerrarModalDireccion() {
+    const modal = document.getElementById('modal-direccion');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+function abrirEditarDireccion(id, direccion, ciudad, cp, telefono, referencia) {
+
+    document.getElementById("edit-id").value = id;
+    document.getElementById("edit-direccion").value = direccion;
+    document.getElementById("edit-ciudad").value = ciudad;
+    document.getElementById("edit-cp").value = cp;
+    document.getElementById("edit-telefono").value = telefono;
+    document.getElementById("edit-referencia").value = referencia;
+
+    const modal = document.getElementById("modal-editar-direccion");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+}
+
+function cerrarEditarDireccion() {
+    const modal = document.getElementById("modal-editar-direccion");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+}
+function abrirModalEliminarDireccion(id) {
+    direccionAEliminar = id;
+
+    const modal = document.getElementById("modal-eliminar-direccion");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+}
+
+function cerrarModalEliminarDireccion() {
+    direccionAEliminar = null;
+
+    const modal = document.getElementById("modal-eliminar-direccion");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+}
+async function confirmarEliminarDireccion() {
+
+    if (!direccionAEliminar) return;
+
+    const formData = new FormData();
+    formData.append("id_direccion", direccionAEliminar);
+
+    const response = await fetch("api/api_eliminar_direccion.php", {
+        method: "POST",
+        body: formData,
+        credentials: "include"
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+        cerrarModalEliminarDireccion();
+        cargarDirecciones();
+    }
+}
+
+// ===============================
+// INICIALIZADOR DE LA VISTA (SPA)
+// ===============================
+function iniciarPerfil() {
+
+    initTabs();
+    setupPerfilForm();
+    setupContraseñaForm();
+    cargarDirecciones();
+
+
+    const formDireccion = document.getElementById("form-direccion");
+
+    if (formDireccion) {
+        formDireccion.addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const mensaje = document.getElementById("mensaje-direccion");
+            mensaje.classList.add("hidden");
+
+            const formData = new FormData(this);
+
+            try {
+
+                const response = await fetch("api/api_crear_direccion.php", {
+                    method: "POST",
+                    body: formData,
+                    credentials: "include" // 🔥 ENVÍA LA SESIÓN
+                });
+
+                const data = await response.json();
+
+                if (data.success) { // 🔥 ahora coincide con el backend
+                    mensaje.classList.remove("hidden");
+                    mensaje.classList.remove("bg-red-100", "text-red-700");
+                    mensaje.classList.add("bg-green-100", "text-green-700");
+                    mensaje.textContent = data.message;
+
+                   setTimeout(() => {
+                        cerrarModalDireccion();
+                        this.reset();
+                        cargarDirecciones();
+                    }, 500);
+                } else {
+                    mensaje.classList.remove("hidden");
+                    mensaje.classList.add("bg-red-100", "text-red-700");
+                    mensaje.textContent = data.message;
+                }
+
+            } catch (error) {
+
+                mensaje.classList.remove("hidden");
+                mensaje.classList.add("bg-red-100", "text-red-700");
+                mensaje.textContent = "Error del servidor";
+                console.error(error);
+            }
+
+        });
+    }
+    const formEditar = document.getElementById("form-editar-direccion");
+
+if (formEditar) {
+
+    formEditar.addEventListener("submit", async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        const response = await fetch("api/api_editar_direccion.php", {
+            method: "POST",
+            body: formData,
+            credentials: "include"
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            cerrarEditarDireccion();
+            cargarDirecciones();
+        }
+    });
+}
+}
+
+// ===============================
+// FORMULARIO PERFIL
+// ===============================
+
 function setupPerfilForm() {
     const form = document.getElementById('form-perfil-modal');
     if (!form) return;
@@ -235,13 +471,11 @@ function setupPerfilForm() {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        // Limpiar mensajes previos
         const mensajeError = document.getElementById('mensaje-perfil-error');
         const mensajeExito = document.getElementById('mensaje-perfil-exito');
         if (mensajeError) mensajeError.classList.add('hidden');
         if (mensajeExito) mensajeExito.classList.add('hidden');
         
-        // Obtener datos del formulario
         const formData = new FormData(this);
         
         try {
@@ -253,38 +487,132 @@ function setupPerfilForm() {
             const data = await response.json();
             
             if (data.exito) {
-                // Mostrar mensaje de éxito
                 if (mensajeExito) {
                     mensajeExito.textContent = data.mensaje;
                     mensajeExito.classList.remove('hidden');
                 }
                 
-                // Recargar la página después de 2 segundos
                 setTimeout(() => {
                     location.reload();
                 }, 2000);
             } else {
-                // Mostrar errores
                 if (mensajeError) {
-                    if (data.errores && Array.isArray(data.errores)) {
-                        mensajeError.innerHTML = '<strong>Errores:</strong><ul class="mt-2">' + 
-                            data.errores.map(e => '<li>• ' + e + '</li>').join('') + '</ul>';
-                    } else {
-                        mensajeError.textContent = data.mensaje || 'Error desconocido';
-                    }
+                    mensajeError.textContent = data.mensaje || 'Error desconocido';
                     mensajeError.classList.remove('hidden');
                 }
             }
         } catch (error) {
             if (mensajeError) {
-                mensajeError.textContent = 'Error al conectar con el servidor: ' + error.message;
+                mensajeError.textContent = 'Error al conectar con el servidor';
                 mensajeError.classList.remove('hidden');
             }
         }
     });
 }
+async function cargarDirecciones() {
 
-// Manejo del formulario de cambiar contraseña
+    const contenedor = document.getElementById("contenedor-direcciones");
+
+    try {
+
+        const response = await fetch("api/api_obtener_direcciones.php", {
+            credentials: "include"
+        });
+
+        const data = await response.json();
+
+        if (!data.success) return;
+
+        contenedor.innerHTML = "";
+
+        data.direcciones.forEach(dir => {
+
+            contenedor.innerHTML += `
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+                    
+                    <h4 class="font-bold text-slate-900 dark:text-white mb-2">
+                        ${dir.direccion}
+                    </h4>
+
+                    <p class="text-sm text-slate-600 dark:text-slate-400">
+                        ${dir.ciudad}
+                    </p>
+
+                    <p class="text-sm text-slate-600 dark:text-slate-400">
+                        CP: ${dir.codigo_postal || '-'}
+                    </p>
+
+                    <p class="text-sm text-slate-600 dark:text-slate-400">
+                        Tel: ${dir.telefono || '-'}
+                    </p>
+
+                    <p class="text-sm text-slate-600 dark:text-slate-400">
+                        Ref: ${dir.referencia || '-'}
+                    </p>
+
+                    <div class="flex gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+
+                        <button 
+                            type="button"
+                            class="btn-editar flex-1 py-2 text-sm font-bold rounded-lg border border-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                            data-id="${dir.id_direccion}"
+                            data-direccion="${dir.direccion}"
+                            data-ciudad="${dir.ciudad}"
+                            data-cp="${dir.codigo_postal || ''}"
+                            data-telefono="${dir.telefono || ''}"
+                            data-referencia="${dir.referencia || ''}">
+                            Editar
+                        </button>
+
+                        <button 
+                            type="button"
+                            class="btn-eliminar flex-1 py-2 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                            data-id="${dir.id_direccion}">
+                            Eliminar
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+        });
+
+    } catch (error) {
+        console.error("Error cargando direcciones:", error);
+    }
+}
+function eliminarDireccion(id) {
+
+    CustomModal.show(
+        'warning',
+        'Confirmación',
+        '¿Seguro que deseas eliminar esta dirección?',
+        async (confirmed) => {
+
+            if (!confirmed) return;
+
+            const formData = new FormData();
+            formData.append("id_direccion", id);
+
+            const response = await fetch("api/api_eliminar_direccion.php", {
+                method: "POST",
+                body: formData,
+                credentials: "include"
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                cargarDirecciones();
+            }
+        }
+    );
+}
+
+// ===============================
+// FORMULARIO CONTRASEÑA
+// ===============================
+
 function setupContraseñaForm() {
     const form = document.getElementById('form-contraseña-modal');
     if (!form) return;
@@ -292,13 +620,11 @@ function setupContraseñaForm() {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        // Limpiar mensajes previos
         const mensajeError = document.getElementById('mensaje-contraseña-error');
         const mensajeExito = document.getElementById('mensaje-contraseña-exito');
         if (mensajeError) mensajeError.classList.add('hidden');
         if (mensajeExito) mensajeExito.classList.add('hidden');
         
-        // Obtener datos del formulario
         const formData = new FormData(this);
         
         try {
@@ -310,46 +636,41 @@ function setupContraseñaForm() {
             const data = await response.json();
             
             if (data.exito) {
-                // Mostrar mensaje de éxito
                 if (mensajeExito) {
                     mensajeExito.textContent = data.mensaje;
                     mensajeExito.classList.remove('hidden');
                 }
                 
-                // Limpiar formulario
                 form.reset();
-                
-                // Recargar la página después de 2 segundos
+
                 setTimeout(() => {
                     location.reload();
                 }, 2000);
             } else {
-                // Mostrar errores
                 if (mensajeError) {
-                    if (data.errores && Array.isArray(data.errores)) {
-                        mensajeError.innerHTML = '<strong>Errores:</strong><ul class="mt-2">' + 
-                            data.errores.map(e => '<li>• ' + e + '</li>').join('') + '</ul>';
-                    } else {
-                        mensajeError.textContent = data.mensaje || 'Error desconocido';
-                    }
+                    mensajeError.textContent = data.mensaje || 'Error desconocido';
                     mensajeError.classList.remove('hidden');
                 }
             }
         } catch (error) {
             if (mensajeError) {
-                mensajeError.textContent = 'Error al conectar con el servidor: ' + error.message;
+                mensajeError.textContent = 'Error al conectar con el servidor';
                 mensajeError.classList.remove('hidden');
             }
         }
     });
 }
 
-// Función para eliminar cuenta
+
+// ===============================
+// ELIMINAR CUENTA
+// ===============================
+
 function eliminarCuenta() {
     CustomModal.show('warning', 'Confirmar eliminación', '¿Estás completamente seguro? Esta acción no se puede deshacer.', (confirmed) => {
         if (!confirmed) return;
         
-        CustomModal.show('warning', 'Segunda confirmación', 'Se eliminarán todos tus datos, pedidos e información personal. ¿Continuar?', (confirmed2) => {
+        CustomModal.show('warning', 'Segunda confirmación', 'Se eliminarán todos tus datos. ¿Continuar?', (confirmed2) => {
             if (!confirmed2) return;
             
             fetch('api/api_eliminar_cuenta.php', {
@@ -362,26 +683,33 @@ function eliminarCuenta() {
                         window.location.href = data.redirect;
                     });
                 } else {
-                    CustomModal.show('error', 'Error', 'Error: ' + data.mensaje);
+                    CustomModal.show('error', 'Error', data.mensaje);
                 }
             })
-            .catch(error => {
-                CustomModal.show('error', 'Error', 'Error al eliminar la cuenta: ' + error.message);
+            .catch(() => {
+                CustomModal.show('error', 'Error', 'Error al eliminar la cuenta');
             });
         });
     });
 }
+document.addEventListener("click", function(e) {
 
-// Ejecutar cuando todo esté listo
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        initTabs();
-        setupPerfilForm();
-        setupContraseñaForm();
-    });
-} else {
-    initTabs();
-    setupPerfilForm();
-    setupContraseñaForm();
-}
+    const btnEditar = e.target.closest(".btn-editar");
+    const btnEliminar = e.target.closest(".btn-eliminar");
+
+    if (btnEditar) {
+        abrirEditarDireccion(
+            btnEditar.dataset.id,
+            btnEditar.dataset.direccion,
+            btnEditar.dataset.ciudad,
+            btnEditar.dataset.cp,
+            btnEditar.dataset.telefono,
+            btnEditar.dataset.referencia
+        );
+    }
+
+    if (btnEliminar) {
+       abrirModalEliminarDireccion(btnEliminar.dataset.id);
+    }
+});
 </script>

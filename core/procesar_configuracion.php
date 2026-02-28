@@ -159,6 +159,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $hero_btn_primario = mysqli_real_escape_string($conexion, $_POST['hero_btn_primario'] ?? '');
         $hero_btn_secundario = mysqli_real_escape_string($conexion, $_POST['hero_btn_secundario'] ?? '');
 
+        // Colores del tema (se validan más abajo)
+        $color_primary_raw = $_POST['color_primary'] ?? '';
+        $color_primary_dark_raw = $_POST['color_primary_dark'] ?? '';
+        $color_bg_light_raw = $_POST['color_background_light'] ?? '';
+        $color_bg_dark_raw = $_POST['color_background_dark'] ?? '';
+
         // Menú de navegación del header (JSON) y columnas del footer (JSON)
         $header_menu_raw = $_POST['header_menu_json'] ?? '[]';
         $footer_cols_raw = $_POST['footer_columns_json'] ?? '[]';
@@ -260,6 +266,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Verificar si existe configuración
         $check = mysqli_query($conexion, "SELECT id_config FROM configuracion WHERE id_config = 1");
         if (mysqli_num_rows($check) > 0) {
+            // Normalizar colores (asegurar formato #RRGGBB o usar defecto)
+            $normalizeColor = function($value, $default) {
+                $value = trim((string)$value);
+                if ($value === '') return $default;
+                if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) return $default;
+                return strtoupper($value);
+            };
+            $color_primary = $normalizeColor($color_primary_raw, '#137FEC');
+            $color_primary_dark = $normalizeColor($color_primary_dark_raw, '#0D66C2');
+            $color_bg_light = $normalizeColor($color_bg_light_raw, '#F6F7F8');
+            $color_bg_dark = $normalizeColor($color_bg_dark_raw, '#101922');
+
             $sql = "UPDATE configuracion SET 
                 nombre_negocio = '$nombre_negocio',
                 slogan = '$slogan',
@@ -275,6 +293,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 texto_banner_superior = '$texto_banner_superior',
                 header_menu = '$header_menu_json',
                 footer_columns = '$footer_cols_json',
+                color_primary = '$color_primary',
+                color_primary_dark = '$color_primary_dark',
+                color_background_light = '$color_bg_light',
+                color_background_dark = '$color_bg_dark',
                 hero_etiqueta = '$hero_etiqueta',
                 hero_titulo = '$hero_titulo',
                 hero_subtitulo = '$hero_subtitulo',
@@ -286,12 +308,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $hero_img_sql
                 WHERE id_config = 1";
         } else {
+            // Normalizar colores para nuevo registro
+            $normalizeColor = function($value, $default) {
+                $value = trim((string)$value);
+                if ($value === '') return $default;
+                if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) return $default;
+                return strtoupper($value);
+            };
+            $color_primary = $normalizeColor($color_primary_raw, '#137FEC');
+            $color_primary_dark = $normalizeColor($color_primary_dark_raw, '#0D66C2');
+            $color_bg_light = $normalizeColor($color_bg_light_raw, '#F6F7F8');
+            $color_bg_dark = $normalizeColor($color_bg_dark_raw, '#101922');
+
             $logo_col = !empty($logo_sql) ? ', logo' : '';
             $logo_val = !empty($logo_sql) ? ", '$logo_nombre'" : '';
             $fav_col = !empty($favicon_sql) ? ', favicon' : '';
             $fav_val = !empty($favicon_sql) ? ", '$favicon_nombre'" : '';
-            $sql = "INSERT INTO configuracion (nombre_negocio, slogan, correo, telefono, direccion, moneda, impuesto, horario_atencion, texto_inicio, pie_pagina, redes_sociales, header_menu, footer_columns$logo_col$fav_col) 
-                    VALUES ('$nombre_negocio', '$slogan', '$correo', '$telefono', '$direccion', '$moneda', $impuesto, '$horario_atencion', '$texto_inicio', '$pie_pagina', '$redes', '$header_menu_json', '$footer_cols_json'$logo_val$fav_val)";
+            $sql = "INSERT INTO configuracion (nombre_negocio, slogan, correo, telefono, direccion, moneda, impuesto, horario_atencion, texto_inicio, pie_pagina, redes_sociales, header_menu, footer_columns, color_primary, color_primary_dark, color_background_light, color_background_dark$logo_col$fav_col) 
+                    VALUES ('$nombre_negocio', '$slogan', '$correo', '$telefono', '$direccion', '$moneda', $impuesto, '$horario_atencion', '$texto_inicio', '$pie_pagina', '$redes', '$header_menu_json', '$footer_cols_json', '$color_primary', '$color_primary_dark', '$color_bg_light', '$color_bg_dark'$logo_val$fav_val)";
         }
 
         if (mysqli_query($conexion, $sql)) {

@@ -36,6 +36,20 @@ $simbolos_moneda = ['USD' => '$', 'EUR' => '€', 'MXN' => '$', 'COP' => '$', 'A
 $cfg_moneda = $simbolos_moneda[$cfg_moneda_cod] ?? $cfg_moneda_cod;
 $cfg_slogan = htmlspecialchars($cfg['slogan'] ?? '');
 $cfg_pie = htmlspecialchars($cfg['pie_pagina'] ?? '');
+
+// Colores del tema (con valores por defecto y validación rápida)
+function normalizar_color_publico($valor, $defecto) {
+    if (!is_string($valor)) return $defecto;
+    $valor = trim($valor);
+    if ($valor === '') return $defecto;
+    if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $valor)) return $defecto;
+    return strtoupper($valor);
+}
+
+$cfg_color_primary = normalizar_color_publico($cfg['color_primary'] ?? '#137fec', '#137FEC');
+$cfg_color_primary_dark = normalizar_color_publico($cfg['color_primary_dark'] ?? '#0d66c2', '#0D66C2');
+$cfg_color_bg_light = normalizar_color_publico($cfg['color_background_light'] ?? '#f6f7f8', '#F6F7F8');
+$cfg_color_bg_dark = normalizar_color_publico($cfg['color_background_dark'] ?? '#101922', '#101922');
 ?>
 <!DOCTYPE html>
 <html lang="es"><head>
@@ -52,10 +66,10 @@ $cfg_pie = htmlspecialchars($cfg['pie_pagina'] ?? '');
           theme: {
             extend: {
               colors: {
-                "primary": "#137fec",
-                "primary-dark": "#0d66c2",
-                "background-light": "#f6f7f8",
-                "background-dark": "#101922",
+                "primary": "<?php echo $cfg_color_primary; ?>",
+                "primary-dark": "<?php echo $cfg_color_primary_dark; ?>",
+                "background-light": "<?php echo $cfg_color_bg_light; ?>",
+                "background-dark": "<?php echo $cfg_color_bg_dark; ?>",
                 "neutral-light": "#e2e8f0",
                 "neutral-dark": "#1e293b",
               },
@@ -177,7 +191,7 @@ foreach ($menu_items as $item) {
     if ($label === '' || $path === '') continue;
 
     $labelEsc = htmlspecialchars($label);
-    $icon = htmlspecialchars($item['icon'] ?? '');
+    $icon = trim($item['icon'] ?? '');
 
     $isInternal = false;
     $onclick = '';
@@ -193,28 +207,78 @@ foreach ($menu_items as $item) {
                 break;
             case '/productos':
                 $onclick = 'loadProductos()';
+                if ($icon === '') $icon = 'inventory_2';
                 break;
             case '/contacto':
             case '/contactanos':
                 $onclick = 'loadContactanos()';
                 break;
+            case '/lista-deseos':
+            case '/lista_deseos':
+                $onclick = 'loadListaDeseos()';
+                break;
+            case '/pedidos':
+            case '/mis-pedidos':
+                $onclick = 'loadHistorialPedidos()';
+                break;
+            case '/carrito':
+                $onclick = 'abrirCarrito()';
+                break;
+            case '/inicio':
+            case '/home':
+                $onclick = 'if(typeof loadHome===\'function\'){loadHome();}else{location.href=\'index.php\';}';
+                break;
             default:
                 $isInternal = false; // no hay mapeo, tratar como link normal
                 break;
+        }
+
+        // Iconos por defecto según ruta si no se definió uno
+        if ($icon === '') {
+            switch ($path) {
+                case '/categorias':
+                    $icon = 'grid_view';
+                    break;
+                case '/ofertas':
+                    $icon = 'sell';
+                    break;
+                case '/productos':
+                    $icon = 'inventory_2';
+                    break;
+                case '/contacto':
+                case '/contactanos':
+                    $icon = 'contact_support';
+                    break;
+                case '/lista-deseos':
+                case '/lista_deseos':
+                    $icon = 'favorite';
+                    break;
+                case '/pedidos':
+                case '/mis-pedidos':
+                    $icon = 'package_2';
+                    break;
+                case '/carrito':
+                    $icon = 'shopping_cart';
+                    break;
+                case '/inicio':
+                case '/home':
+                    $icon = 'home';
+                    break;
+            }
         }
     }
 
     if ($isInternal && $onclick !== '') {
         echo '<button onclick="' . $onclick . '" class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary flex items-center gap-2 bg-none border-none cursor-pointer">';
         if ($icon !== '') {
-            echo '<span class="material-symbols-outlined text-xl">' . $icon . '</span> ';
+            echo '<span class="material-symbols-outlined text-xl">' . htmlspecialchars($icon) . '</span> ';
         }
         echo $labelEsc . '</button>';
     } else {
         $href = htmlspecialchars($path);
         echo '<a href="' . $href . '" class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary flex items-center gap-2">';
         if ($icon !== '') {
-            echo '<span class="material-symbols-outlined text-xl">' . $icon . '</span> ';
+            echo '<span class="material-symbols-outlined text-xl">' . htmlspecialchars($icon) . '</span> ';
         }
         echo $labelEsc . '</a>';
     }
@@ -417,8 +481,53 @@ foreach ($footer_cols as $col) {
         $pth = trim($lnk['path'] ?? '');
         if ($lbl === '' || $pth === '') continue;
         $lblEsc = htmlspecialchars($lbl);
-        $href = htmlspecialchars($pth);
-        echo '<li><a class="text-slate-500 dark:text-slate-400 text-sm hover:text-primary transition-colors" href="' . $href . '">' . $lblEsc . '</a></li>';
+
+        $isInternal = false;
+        $onclick = '';
+
+        if ($pth !== '' && $pth[0] === '/') {
+            $isInternal = true;
+            switch ($pth) {
+                case '/categorias':
+                    $onclick = 'loadCategoriasPanel()';
+                    break;
+                case '/ofertas':
+                    $onclick = 'loadOfertas()';
+                    break;
+                case '/productos':
+                    $onclick = 'loadProductos()';
+                    break;
+                case '/contacto':
+                case '/contactanos':
+                    $onclick = 'loadContactanos()';
+                    break;
+                case '/lista-deseos':
+                case '/lista_deseos':
+                    $onclick = 'loadListaDeseos()';
+                    break;
+                case '/pedidos':
+                case '/mis-pedidos':
+                    $onclick = 'loadHistorialPedidos()';
+                    break;
+                case '/carrito':
+                    $onclick = 'abrirCarrito()';
+                    break;
+                case '/inicio':
+                case '/home':
+                    $onclick = 'if(typeof loadHome===\'function\'){loadHome();}else{location.href=\'index.php\';}';
+                    break;
+                default:
+                    $isInternal = false;
+                    break;
+            }
+        }
+
+        if ($isInternal && $onclick !== '') {
+            echo '<li><button onclick="' . $onclick . '" class="text-left bg-none border-none cursor-pointer text-slate-500 dark:text-slate-400 text-sm hover:text-primary transition-colors w-full">' . $lblEsc . '</button></li>';
+        } else {
+            $href = htmlspecialchars($pth);
+            echo '<li><a class="text-slate-500 dark:text-slate-400 text-sm hover:text-primary transition-colors" href="' . $href . '">' . $lblEsc . '</a></li>';
+        }
     }
     echo '</ul>';
     echo '</div>';

@@ -1,3 +1,22 @@
+<?php
+require_once '../core/conexion.php';
+
+// Cargar configuración general de colores
+$res_cfg_login = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
+$cfg_login = ($res_cfg_login && mysqli_num_rows($res_cfg_login) > 0) ? mysqli_fetch_assoc($res_cfg_login) : [];
+
+function normalizar_color_login($valor, $defecto) {
+    if (!is_string($valor)) return $defecto;
+    $valor = trim($valor);
+    if ($valor === '') return $defecto;
+    if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $valor)) return $defecto;
+    return strtoupper($valor);
+}
+
+$login_primary = normalizar_color_login($cfg_login['color_primary'] ?? '#137fec', '#137FEC');
+$login_bg_light = normalizar_color_login($cfg_login['color_background_light'] ?? '#f6f7f8', '#F6F7F8');
+$login_bg_dark = normalizar_color_login($cfg_login['color_background_dark'] ?? '#15191d', '#15191D');
+?>
 <!DOCTYPE html>
 <html class="light" lang="es"><head>
 <meta charset="utf-8"/>
@@ -13,9 +32,9 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: "#137fec",
-                        "background-light": "#f6f7f8",
-                        "background-dark": "#15191d"
+                        primary: "<?php echo $login_primary; ?>",
+                        "background-light": "<?php echo $login_bg_light; ?>",
+                        "background-dark": "<?php echo $login_bg_dark; ?>"
                     },
                     fontFamily: {
                         display: "Inter"

@@ -15,6 +15,23 @@ $res_pagos = mysqli_query($conexion, "SELECT * FROM metodos_pago ORDER BY id_met
 $res_config = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
 $config = ($res_config && mysqli_num_rows($res_config) > 0) ? mysqli_fetch_assoc($res_config) : [];
 $redes = !empty($config['redes_sociales']) ? json_decode($config['redes_sociales'], true) : [];
+
+// Menú de navegación del header (JSON) y columnas del footer (JSON)
+$header_menu = [];
+if (!empty($config['header_menu'])) {
+    $tmp = json_decode($config['header_menu'], true);
+    if (is_array($tmp)) {
+        $header_menu = $tmp;
+    }
+}
+
+$footer_columns = [];
+if (!empty($config['footer_columns'])) {
+    $tmpFooter = json_decode($config['footer_columns'], true);
+    if (is_array($tmpFooter)) {
+        $footer_columns = $tmpFooter;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -481,6 +498,159 @@ $redes = !empty($config['redes_sociales']) ? json_decode($config['redes_sociales
                                     <textarea name="pie_pagina" id="cfg_pie_pagina" rows="3" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="© 2024 Mi Negocio. Todos los derechos reservados."><?php echo htmlspecialchars($config['pie_pagina'] ?? ''); ?></textarea>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Sección: Menú de Navegación (Header) -->
+                        <div class="mb-8">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold text-slate-700 pb-1 border-b border-slate-200 flex items-center gap-2">
+                                    <i class="fas fa-bars text-cyan-500"></i>
+                                    Menú de Navegación (Header)
+                                </h3>
+                                <button type="button" onclick="agregarItemHeader()" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold shadow-md">
+                                    <i class="fas fa-plus"></i>
+                                    Añadir ítem
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mb-4">
+                                Define las opciones del menú principal del header. Cada elemento puede apuntar a una ruta interna (por ejemplo <code>/categorias</code>) o a una URL externa.
+                            </p>
+                            <div id="header-menu-items" class="space-y-3">
+                                <?php
+                                $header_menu_render = $header_menu;
+                                if (empty($header_menu_render)) {
+                                    $header_menu_render = [
+                                        ['label' => 'Categorías', 'path' => '/categorias'],
+                                        ['label' => 'Ofertas', 'path' => '/ofertas'],
+                                        ['label' => 'Contáctanos', 'path' => '/contacto'],
+                                    ];
+                                }
+                                foreach ($header_menu_render as $item):
+                                    $lbl = htmlspecialchars($item['label'] ?? '');
+                                    $pth = htmlspecialchars($item['path'] ?? '');
+                                ?>
+                                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-slate-50 border border-slate-200 rounded-lg p-4" data-header-item="1">
+                                    <div class="md:col-span-5">
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Texto visible</label>
+                                        <input type="text" class="header-label w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: Categorías" value="<?php echo $lbl; ?>">
+                                    </div>
+                                    <div class="md:col-span-5">
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Ruta / URL</label>
+                                        <input type="text" class="header-path w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="/categorias o https://tusitio.com" value="<?php echo $pth; ?>">
+                                        <p class="text-[11px] text-gray-400 mt-1">Si usas rutas como <code>/categorias</code>, se mapearán automáticamente a las secciones internas cuando sea posible.</p>
+                                    </div>
+                                    <div class="md:col-span-2 flex md:justify-end gap-2 mt-3 md:mt-0">
+                                        <button type="button" onclick="eliminarItemHeader(this)" class="px-3 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 flex items-center gap-1">
+                                            <i class="fas fa-trash"></i>
+                                            Quitar
+                                        </button>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <input type="hidden" name="header_menu_json" id="header_menu_json" value="<?php echo htmlspecialchars($config['header_menu'] ?? ''); ?>">
+                        </div>
+
+                        <!-- Sección: Columnas del Pie de Página (Footer) -->
+                        <div class="mb-8">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold text-slate-700 pb-1 border-b border-slate-200 flex items-center gap-2">
+                                    <i class="fas fa-columns text-cyan-500"></i>
+                                    Columnas del Pie de Página (Footer)
+                                </h3>
+                                <button type="button" onclick="agregarColumnaFooter()" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold shadow-md">
+                                    <i class="fas fa-plus"></i>
+                                    Añadir Columna
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mb-4">
+                                Administra las columnas de enlaces que aparecen en el footer. Puedes crear tantas columnas como necesites y dentro de cada una añadir, editar o quitar enlaces.
+                            </p>
+                            <div id="footer-columns" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <?php
+                                $footer_cols_render = $footer_columns;
+                                if (empty($footer_cols_render)) {
+                                    $footer_cols_render = [
+                                        [
+                                            'title' => 'Sobre Nosotros',
+                                            'links' => [
+                                                ['label' => 'Nuestra Historia', 'path' => '/nosotros'],
+                                                ['label' => 'Bolsa de Trabajo', 'path' => '/empleos'],
+                                                ['label' => 'Sostenibilidad', 'path' => '/sustentabilidad'],
+                                            ],
+                                        ],
+                                        [
+                                            'title' => 'Servicio al Cliente',
+                                            'links' => [
+                                                ['label' => 'Centro de Ayuda', 'path' => '/ayuda'],
+                                                ['label' => 'Políticas de Envío', 'path' => '/envios'],
+                                                ['label' => 'Devoluciones', 'path' => '/devoluciones'],
+                                            ],
+                                        ],
+                                    ];
+                                }
+                                foreach ($footer_cols_render as $col):
+                                    $colTitle = htmlspecialchars($col['title'] ?? '');
+                                    $links = is_array($col['links'] ?? null) ? $col['links'] : [];
+                                ?>
+                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-3" data-footer-column="1">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <div class="flex-1">
+                                            <label class="block text-xs font-semibold text-gray-600 mb-1">Título de la Columna</label>
+                                            <input type="text" class="footer-title w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: Sobre Nosotros" value="<?php echo $colTitle; ?>">
+                                        </div>
+                                        <button type="button" onclick="eliminarColumnaFooter(this)" class="mt-5 px-3 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 flex items-center gap-1">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="space-y-2" data-footer-links>
+                                        <?php if(empty($links)): ?>
+                                            <div class="grid grid-cols-12 gap-2 items-end" data-footer-link>
+                                                <div class="col-span-6">
+                                                    <label class="block text-[11px] font-semibold text-gray-600 mb-1">Texto</label>
+                                                    <input type="text" class="footer-link-label w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: Nuestra Historia">
+                                                </div>
+                                                <div class="col-span-5">
+                                                    <label class="block text-[11px] font-semibold text-gray-600 mb-1">Ruta / URL</label>
+                                                    <input type="text" class="footer-link-path w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="/nosotros">
+                                                </div>
+                                                <div class="col-span-1 flex justify-end">
+                                                    <button type="button" onclick="eliminarEnlaceFooter(this)" class="mb-1 px-2 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        <?php else: ?>
+                                            <?php foreach ($links as $lnk):
+                                                $lnkLabel = htmlspecialchars($lnk['label'] ?? '');
+                                                $lnkPath = htmlspecialchars($lnk['path'] ?? '');
+                                            ?>
+                                            <div class="grid grid-cols-12 gap-2 items-end" data-footer-link>
+                                                <div class="col-span-6">
+                                                    <label class="block text-[11px] font-semibold text-gray-600 mb-1">Texto</label>
+                                                    <input type="text" class="footer-link-label w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" value="<?php echo $lnkLabel; ?>" placeholder="Ej: Nuestra Historia">
+                                                </div>
+                                                <div class="col-span-5">
+                                                    <label class="block text-[11px] font-semibold text-gray-600 mb-1">Ruta / URL</label>
+                                                    <input type="text" class="footer-link-path w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" value="<?php echo $lnkPath; ?>" placeholder="/nosotros">
+                                                </div>
+                                                <div class="col-span-1 flex justify-end">
+                                                    <button type="button" onclick="eliminarEnlaceFooter(this)" class="mb-1 px-2 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </div>
+                                    <button type="button" onclick="agregarEnlaceFooter(this)" class="mt-1 inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-cyan-400 text-cyan-600 text-xs font-semibold hover:bg-cyan-50">
+                                        <i class="fas fa-plus"></i>
+                                        Añadir Enlace
+                                    </button>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <input type="hidden" name="footer_columns_json" id="footer_columns_json" value="<?php echo htmlspecialchars($config['footer_columns'] ?? ''); ?>">
                         </div>
 
                         <!-- Sección: Hero Principal -->
@@ -1158,6 +1328,13 @@ function submitConfigGeneral(e) {
     if (_enviando) return false;
     _enviando = true;
 
+    // Construir los JSON de Header y Footer antes de enviar
+    try {
+        construirHeaderFooterJSON();
+    } catch (err) {
+        console.error(err);
+    }
+
     const form = document.getElementById('formConfigGeneral');
     const formData = new FormData(form);
 
@@ -1177,6 +1354,150 @@ function submitConfigGeneral(e) {
     })
     .catch(() => { _enviando = false; mostrarModalError('Error de conexión con el servidor'); });
     return false;
+}
+
+// Construye los JSON de menú de header y columnas de footer y los coloca en los campos ocultos
+function construirHeaderFooterJSON() {
+    // Header Menu
+    var headerItems = [];
+    document.querySelectorAll('[data-header-item]').forEach(function(row) {
+        var labelInput = row.querySelector('.header-label');
+        var pathInput = row.querySelector('.header-path');
+        if (!labelInput || !pathInput) return;
+        var label = labelInput.value.trim();
+        var path = pathInput.value.trim();
+        if (label && path) {
+            headerItems.push({ label: label, path: path });
+        }
+    });
+    var headerField = document.getElementById('header_menu_json');
+    if (headerField) {
+        headerField.value = JSON.stringify(headerItems);
+    }
+
+    // Footer Columns
+    var columns = [];
+    document.querySelectorAll('[data-footer-column]').forEach(function(colEl) {
+        var titleInput = colEl.querySelector('.footer-title');
+        if (!titleInput) return;
+        var title = titleInput.value.trim();
+        if (!title) return;
+
+        var links = [];
+        colEl.querySelectorAll('[data-footer-link]').forEach(function(linkEl) {
+            var lblInput = linkEl.querySelector('.footer-link-label');
+            var pathInput = linkEl.querySelector('.footer-link-path');
+            if (!lblInput || !pathInput) return;
+            var l = lblInput.value.trim();
+            var p = pathInput.value.trim();
+            if (l && p) {
+                links.push({ label: l, path: p });
+            }
+        });
+
+        columns.push({ title: title, links: links });
+    });
+    var footerField = document.getElementById('footer_columns_json');
+    if (footerField) {
+        footerField.value = JSON.stringify(columns);
+    }
+}
+
+// Helpers UI Header Menu
+function agregarItemHeader() {
+    var cont = document.getElementById('header-menu-items');
+    if (!cont) return;
+    var row = document.createElement('div');
+    row.className = 'grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-slate-50 border border-slate-200 rounded-lg p-4';
+    row.setAttribute('data-header-item', '1');
+    row.innerHTML = '' +
+        '<div class="md:col-span-5">' +
+            '<label class="block text-xs font-semibold text-gray-600 mb-1">Texto visible</label>' +
+            '<input type="text" class="header-label w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: Nueva opción">' +
+        '</div>' +
+        '<div class="md:col-span-5">' +
+            '<label class="block text-xs font-semibold text-gray-600 mb-1">Ruta / URL</label>' +
+            '<input type="text" class="header-path w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="/ruta-o-url">' +
+            '<p class="text-[11px] text-gray-400 mt-1">Ej: /categorias o https://tusitio.com/pagina</p>' +
+        '</div>' +
+        '<div class="md:col-span-2 flex md:justify-end gap-2 mt-3 md:mt-0">' +
+            '<button type="button" onclick="eliminarItemHeader(this)" class="px-3 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 flex items-center gap-1">' +
+                '<i class="fas fa-trash"></i>' +
+                'Quitar' +
+            '</button>' +
+        '</div>';
+    cont.appendChild(row);
+}
+
+function eliminarItemHeader(btn) {
+    var row = btn.closest('[data-header-item]');
+    if (row) row.remove();
+}
+
+// Helpers UI Footer Columns
+function agregarColumnaFooter() {
+    var cont = document.getElementById('footer-columns');
+    if (!cont) return;
+    var col = document.createElement('div');
+    col.className = 'bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-3';
+    col.setAttribute('data-footer-column', '1');
+    col.innerHTML = '' +
+        '<div class="flex items-center justify-between gap-2 mb-1">' +
+            '<div class="flex-1">' +
+                '<label class="block text-xs font-semibold text-gray-600 mb-1">Título de la Columna</label>' +
+                '<input type="text" class="footer-title w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: Nueva Columna">' +
+            '</div>' +
+            '<button type="button" onclick="eliminarColumnaFooter(this)" class="mt-5 px-3 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 flex items-center gap-1">' +
+                '<i class="fas fa-trash"></i>' +
+            '</button>' +
+        '</div>' +
+        '<div class="space-y-2" data-footer-links></div>' +
+        '<button type="button" onclick="agregarEnlaceFooter(this)" class="mt-1 inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-cyan-400 text-cyan-600 text-xs font-semibold hover:bg-cyan-50">' +
+            '<i class="fas fa-plus"></i>' +
+            'Añadir Enlace' +
+        '</button>';
+    cont.appendChild(col);
+
+    // Crear al menos un enlace vacío para esa columna
+    var addBtn = col.querySelector('button[onclick^="agregarEnlaceFooter"]');
+    if (addBtn) {
+        agregarEnlaceFooter(addBtn);
+    }
+}
+
+function eliminarColumnaFooter(btn) {
+    var col = btn.closest('[data-footer-column]');
+    if (col) col.remove();
+}
+
+function agregarEnlaceFooter(btn) {
+    var col = btn.closest('[data-footer-column]');
+    if (!col) return;
+    var cont = col.querySelector('[data-footer-links]');
+    if (!cont) return;
+    var row = document.createElement('div');
+    row.className = 'grid grid-cols-12 gap-2 items-end';
+    row.setAttribute('data-footer-link', '1');
+    row.innerHTML = '' +
+        '<div class="col-span-6">' +
+            '<label class="block text-[11px] font-semibold text-gray-600 mb-1">Texto</label>' +
+            '<input type="text" class="footer-link-label w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: Nueva página">' +
+        '</div>' +
+        '<div class="col-span-5">' +
+            '<label class="block text-[11px] font-semibold text-gray-600 mb-1">Ruta / URL</label>' +
+            '<input type="text" class="footer-link-path w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="/ruta-o-url">' +
+        '</div>' +
+        '<div class="col-span-1 flex justify-end">' +
+            '<button type="button" onclick="eliminarEnlaceFooter(this)" class="mb-1 px-2 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50">' +
+                '<i class="fas fa-times"></i>' +
+            '</button>' +
+        '</div>';
+    cont.appendChild(row);
+}
+
+function eliminarEnlaceFooter(btn) {
+    var row = btn.closest('[data-footer-link]');
+    if (row) row.remove();
 }
 
 function resetConfigGeneral() {

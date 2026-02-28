@@ -9,6 +9,23 @@ $datosUsuario = $usuarioAutenticado ? obtenerDatosUsuario() : null;
 $res_cfg = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
 $cfg = ($res_cfg && mysqli_num_rows($res_cfg) > 0) ? mysqli_fetch_assoc($res_cfg) : [];
 $cfg_redes = !empty($cfg['redes_sociales']) ? json_decode($cfg['redes_sociales'], true) : [];
+
+// Menú del header y columnas del footer configurables (JSON)
+$cfg_header_menu = [];
+if (!empty($cfg['header_menu'])) {
+    $tmpHeader = json_decode($cfg['header_menu'], true);
+    if (is_array($tmpHeader)) {
+        $cfg_header_menu = $tmpHeader;
+    }
+}
+
+$cfg_footer_columns = [];
+if (!empty($cfg['footer_columns'])) {
+    $tmpFooter = json_decode($cfg['footer_columns'], true);
+    if (is_array($tmpFooter)) {
+        $cfg_footer_columns = $tmpFooter;
+    }
+}
 $cfg_nombre = htmlspecialchars($cfg['nombre_negocio'] ?? 'Mi Negocio');
 $cfg_logo = $cfg['logo'] ?? '';
 $cfg_correo = htmlspecialchars($cfg['correo'] ?? '');
@@ -143,20 +160,66 @@ $cfg_pie = htmlspecialchars($cfg['pie_pagina'] ?? '');
 </div>
 </div>
 <nav class="hidden lg:flex items-center space-x-10 py-3 border-t border-slate-100 dark:border-slate-800">
-<button onclick="loadCategoriasPanel()" class="text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-primary flex items-center gap-2 bg-none border-none cursor-pointer">
-<span class="material-symbols-outlined text-xl">grid_view</span> Categorías
-                </button>
-<button onclick="loadProductos()" class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary flex items-center gap-1 bg-none border-none cursor-pointer">
-<span class="material-symbols-outlined text-xl">inventory_2</span> Productos
-                </button>
-<button onclick="loadOfertas()" class="text-sm font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1 bg-none border-none cursor-pointer">
-<span class="material-symbols-outlined text-xl">sell</span> Ofertas
-                </button>
-<button onclick="loadContactanos()"
-        class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary">
-    Contáctanos
-</button>
-<a class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary" href="#">Sucursales</a>
+<?php
+// Si no hay menú configurado, usar un conjunto por defecto
+$menu_items = $cfg_header_menu;
+if (empty($menu_items)) {
+    $menu_items = [
+        ['label' => 'Categorías', 'path' => '/categorias', 'icon' => 'grid_view'],
+        ['label' => 'Ofertas', 'path' => '/ofertas', 'icon' => 'sell'],
+        ['label' => 'Contáctanos', 'path' => '/contacto', 'icon' => 'contact_support'],
+    ];
+}
+
+foreach ($menu_items as $item) {
+    $label = trim($item['label'] ?? '');
+    $path = trim($item['path'] ?? '');
+    if ($label === '' || $path === '') continue;
+
+    $labelEsc = htmlspecialchars($label);
+    $icon = htmlspecialchars($item['icon'] ?? '');
+
+    $isInternal = false;
+    $onclick = '';
+
+    if ($path !== '' && $path[0] === '/') {
+        $isInternal = true;
+        switch ($path) {
+            case '/categorias':
+                $onclick = 'loadCategoriasPanel()';
+                break;
+            case '/ofertas':
+                $onclick = 'loadOfertas()';
+                break;
+            case '/productos':
+                $onclick = 'loadProductos()';
+                break;
+            case '/contacto':
+            case '/contactanos':
+                $onclick = 'loadContactanos()';
+                break;
+            default:
+                $isInternal = false; // no hay mapeo, tratar como link normal
+                break;
+        }
+    }
+
+    if ($isInternal && $onclick !== '') {
+        echo '<button onclick="' . $onclick . '" class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary flex items-center gap-2 bg-none border-none cursor-pointer">';
+        if ($icon !== '') {
+            echo '<span class="material-symbols-outlined text-xl">' . $icon . '</span> ';
+        }
+        echo $labelEsc . '</button>';
+    } else {
+        $href = htmlspecialchars($path);
+        echo '<a href="' . $href . '" class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary flex items-center gap-2">';
+        if ($icon !== '') {
+            echo '<span class="material-symbols-outlined text-xl">' . $icon . '</span> ';
+        }
+        echo $labelEsc . '</a>';
+    }
+}
+?>
 </nav>
 </div>
 </header>
@@ -310,39 +373,57 @@ $cfg_pie = htmlspecialchars($cfg['pie_pagina'] ?? '');
 <?php endif; ?>
 </div>
 </div>
-<div>
-<h4 class="font-bold text-slate-900 dark:text-white mb-6 uppercase text-xs tracking-wider">Sobre Nosotros</h4>
-<ul class="space-y-4">
-<li><a class="text-slate-500 dark:text-slate-400 text-sm hover:text-primary transition-colors" href="#">Nuestra Historia</a></li>
-<li><a class="text-slate-500 dark:text-slate-400 text-sm hover:text-primary transition-colors" href="#">Responsabilidad Corporativa</a></li>
-<li><a class="text-slate-500 dark:text-slate-400 text-sm hover:text-primary transition-colors" href="#">Localizador de Tiendas</a></li>
-<li><a class="text-slate-500 dark:text-slate-400 text-sm hover:text-primary transition-colors" href="#">Bolsa de Trabajo</a></li>
-</ul>
-</div>
-<div>
-<h4 class="font-bold text-slate-900 dark:text-white mb-6 uppercase text-xs tracking-wider">Servicio al Cliente</h4>
-<ul class="space-y-4">
-<li><a class="text-slate-500 dark:text-slate-400 text-sm hover:text-primary transition-colors" href="#">Centro de Ayuda</a></li>
-<li><a class="text-slate-500 dark:text-slate-400 text-sm hover:text-primary transition-colors" href="#">Envíos y Devoluciones</a></li>
-<li><a class="text-slate-500 dark:text-slate-400 text-sm hover:text-primary transition-colors" href="#">Métodos de Pago</a></li>
-<li><a class="text-slate-500 dark:text-slate-400 text-sm hover:text-primary transition-colors" href="#">Tarjetas de Regalo</a></li>
-</ul>
-</div>
-<div>
-<h4 class="font-bold text-slate-900 dark:text-white mb-6 uppercase text-xs tracking-wider">Información Corporativa</h4>
-<ul class="space-y-4">
-<li><a class="text-slate-500 dark:text-slate-400 text-sm hover:text-primary transition-colors" href="#">Relaciones con Inversionistas</a></li>
-<li><a class="text-slate-500 dark:text-slate-400 text-sm hover:text-primary transition-colors" href="#">Términos de Uso</a></li>
-<li><a class="text-slate-500 dark:text-slate-400 text-sm hover:text-primary transition-colors" href="#">Política de Privacidad</a></li>
-<li class="pt-2">
-<div class="flex items-center gap-2 grayscale opacity-60">
-<span class="material-icons-outlined text-2xl">credit_card</span>
-<span class="material-icons-outlined text-2xl">account_balance_wallet</span>
-<span class="material-icons-outlined text-2xl">payments</span>
-</div>
-</li>
-</ul>
-</div>
+<?php
+// Columnas dinámicas del footer
+$footer_cols = $cfg_footer_columns;
+if (empty($footer_cols)) {
+    $footer_cols = [
+        [
+            'title' => 'Sobre Nosotros',
+            'links' => [
+                ['label' => 'Nuestra Historia', 'path' => '/nosotros'],
+                ['label' => 'Bolsa de Trabajo', 'path' => '/empleos'],
+                ['label' => 'Sostenibilidad', 'path' => '/sustentabilidad'],
+            ],
+        ],
+        [
+            'title' => 'Servicio al Cliente',
+            'links' => [
+                ['label' => 'Centro de Ayuda', 'path' => '/ayuda'],
+                ['label' => 'Políticas de Envío', 'path' => '/envios'],
+                ['label' => 'Devoluciones', 'path' => '/devoluciones'],
+            ],
+        ],
+        [
+            'title' => 'Información Legal',
+            'links' => [
+                ['label' => 'Términos de Uso', 'path' => '/terminos'],
+                ['label' => 'Política de Privacidad', 'path' => '/privacidad'],
+            ],
+        ],
+    ];
+}
+
+foreach ($footer_cols as $col) {
+    $title = trim($col['title'] ?? '');
+    if ($title === '') continue;
+    $titleEsc = htmlspecialchars($title);
+    $links = is_array($col['links'] ?? null) ? $col['links'] : [];
+    echo '<div>';
+    echo '<h4 class="font-bold text-slate-900 dark:text-white mb-6 uppercase text-xs tracking-wider">' . $titleEsc . '</h4>';
+    echo '<ul class="space-y-4">';
+    foreach ($links as $lnk) {
+        $lbl = trim($lnk['label'] ?? '');
+        $pth = trim($lnk['path'] ?? '');
+        if ($lbl === '' || $pth === '') continue;
+        $lblEsc = htmlspecialchars($lbl);
+        $href = htmlspecialchars($pth);
+        echo '<li><a class="text-slate-500 dark:text-slate-400 text-sm hover:text-primary transition-colors" href="' . $href . '">' . $lblEsc . '</a></li>';
+    }
+    echo '</ul>';
+    echo '</div>';
+}
+?>
 </div>
 <div class="pt-8 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-400">
 <p><?php echo $cfg_pie ?: '© ' . date('Y') . ' ' . $cfg_nombre . '. Todos los derechos reservados.'; ?></p>

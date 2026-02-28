@@ -159,6 +159,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $hero_btn_primario = mysqli_real_escape_string($conexion, $_POST['hero_btn_primario'] ?? '');
         $hero_btn_secundario = mysqli_real_escape_string($conexion, $_POST['hero_btn_secundario'] ?? '');
 
+        // Menú de navegación del header (JSON) y columnas del footer (JSON)
+        $header_menu_raw = $_POST['header_menu_json'] ?? '[]';
+        $footer_cols_raw = $_POST['footer_columns_json'] ?? '[]';
+
+        $header_menu_arr = json_decode($header_menu_raw, true);
+        if (!is_array($header_menu_arr)) {
+            $header_menu_arr = [];
+        }
+        $footer_cols_arr = json_decode($footer_cols_raw, true);
+        if (!is_array($footer_cols_arr)) {
+            $footer_cols_arr = [];
+        }
+
+        $header_menu_json = mysqli_real_escape_string(
+            $conexion,
+            json_encode($header_menu_arr, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+        );
+        $footer_cols_json = mysqli_real_escape_string(
+            $conexion,
+            json_encode($footer_cols_arr, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+        );
+
         // Redes sociales como JSON
         $redes = json_encode([
             'facebook' => $_POST['red_facebook'] ?? '',
@@ -251,6 +273,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 pie_pagina = '$pie_pagina',
                 redes_sociales = '$redes',
                 texto_banner_superior = '$texto_banner_superior',
+                header_menu = '$header_menu_json',
+                footer_columns = '$footer_cols_json',
                 hero_etiqueta = '$hero_etiqueta',
                 hero_titulo = '$hero_titulo',
                 hero_subtitulo = '$hero_subtitulo',
@@ -266,8 +290,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $logo_val = !empty($logo_sql) ? ", '$logo_nombre'" : '';
             $fav_col = !empty($favicon_sql) ? ', favicon' : '';
             $fav_val = !empty($favicon_sql) ? ", '$favicon_nombre'" : '';
-            $sql = "INSERT INTO configuracion (nombre_negocio, slogan, correo, telefono, direccion, moneda, impuesto, horario_atencion, texto_inicio, pie_pagina, redes_sociales$logo_col$fav_col) 
-                    VALUES ('$nombre_negocio', '$slogan', '$correo', '$telefono', '$direccion', '$moneda', $impuesto, '$horario_atencion', '$texto_inicio', '$pie_pagina', '$redes'$logo_val$fav_val)";
+            $sql = "INSERT INTO configuracion (nombre_negocio, slogan, correo, telefono, direccion, moneda, impuesto, horario_atencion, texto_inicio, pie_pagina, redes_sociales, header_menu, footer_columns$logo_col$fav_col) 
+                    VALUES ('$nombre_negocio', '$slogan', '$correo', '$telefono', '$direccion', '$moneda', $impuesto, '$horario_atencion', '$texto_inicio', '$pie_pagina', '$redes', '$header_menu_json', '$footer_cols_json'$logo_val$fav_val)";
         }
 
         if (mysqli_query($conexion, $sql)) {

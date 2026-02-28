@@ -482,12 +482,7 @@ $color_bg_dark = normalizar_color($config['color_background_dark'] ?? '#101922',
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                        <i class="fas fa-percent text-cyan-500 mr-1"></i> Impuesto (%)
-                                    </label>
-                                    <input type="number" name="impuesto" id="cfg_impuesto" step="0.01" min="0" max="100" value="<?php echo htmlspecialchars($config['impuesto'] ?? '0'); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="0.00">
-                                </div>
+                                <!-- Impuesto eliminado según solicitud -->
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">
                                         <i class="fas fa-clock text-cyan-500 mr-1"></i> Horario de Atención

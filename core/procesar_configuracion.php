@@ -147,7 +147,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $telefono = mysqli_real_escape_string($conexion, $_POST['telefono'] ?? '');
         $direccion = mysqli_real_escape_string($conexion, $_POST['direccion'] ?? '');
         $moneda = mysqli_real_escape_string($conexion, $_POST['moneda'] ?? 'USD');
-        $impuesto = floatval($_POST['impuesto'] ?? 0);
         $horario_atencion = mysqli_real_escape_string($conexion, $_POST['horario_atencion'] ?? '');
         $texto_inicio = mysqli_real_escape_string($conexion, $_POST['texto_inicio'] ?? '');
         $pie_pagina = mysqli_real_escape_string($conexion, $_POST['pie_pagina'] ?? '');
@@ -285,7 +284,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 telefono = '$telefono',
                 direccion = '$direccion',
                 moneda = '$moneda',
-                impuesto = $impuesto,
                 horario_atencion = '$horario_atencion',
                 texto_inicio = '$texto_inicio',
                 pie_pagina = '$pie_pagina',
@@ -324,8 +322,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $logo_val = !empty($logo_sql) ? ", '$logo_nombre'" : '';
             $fav_col = !empty($favicon_sql) ? ', favicon' : '';
             $fav_val = !empty($favicon_sql) ? ", '$favicon_nombre'" : '';
-            $sql = "INSERT INTO configuracion (nombre_negocio, slogan, correo, telefono, direccion, moneda, impuesto, horario_atencion, texto_inicio, pie_pagina, redes_sociales, header_menu, footer_columns, color_primary, color_primary_dark, color_background_light, color_background_dark$logo_col$fav_col) 
-                    VALUES ('$nombre_negocio', '$slogan', '$correo', '$telefono', '$direccion', '$moneda', $impuesto, '$horario_atencion', '$texto_inicio', '$pie_pagina', '$redes', '$header_menu_json', '$footer_cols_json', '$color_primary', '$color_primary_dark', '$color_bg_light', '$color_bg_dark'$logo_val$fav_val)";
+            $sql = "INSERT INTO configuracion (nombre_negocio, slogan, correo, telefono, direccion, moneda, horario_atencion, texto_inicio, pie_pagina, redes_sociales, header_menu, footer_columns, color_primary, color_primary_dark, color_background_light, color_background_dark$logo_col$fav_col) 
+                        VALUES ('$nombre_negocio', '$slogan', '$correo', '$telefono', '$direccion', '$moneda', '$horario_atencion', '$texto_inicio', '$pie_pagina', '$redes', '$header_menu_json', '$footer_cols_json', '$color_primary', '$color_primary_dark', '$color_bg_light', '$color_bg_dark'$logo_val$fav_val)";
         }
 
         if (mysqli_query($conexion, $sql)) {

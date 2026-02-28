@@ -66,19 +66,7 @@
 <span class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">2</span>
 <h2 class="text-xl font-bold">Método de Envío</h2>
 </div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-<label class="relative flex flex-col p-4 border-2 border-primary bg-primary/5 rounded-xl cursor-pointer">
-<input checked="" class="absolute top-4 right-4 text-primary focus:ring-primary" name="shipping" type="radio"/>
-<span class="font-bold text-slate-900 dark:text-white">Envío Estándar</span>
-<span class="text-sm opacity-70 mb-2">3 - 5 días hábiles</span>
-<span class="mt-auto font-bold text-primary">Gratis</span>
-</label>
-<label class="relative flex flex-col p-4 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:border-primary/50 transition-colors">
-<input class="absolute top-4 right-4 text-primary focus:ring-primary" name="shipping" type="radio"/>
-<span class="font-bold text-slate-900 dark:text-white">Envío Express</span>
-<span class="text-sm opacity-70 mb-2">24 - 48 horas</span>
-<span class="mt-auto font-bold">9,90 €</span>
-</label>
+<div id="checkout-metodos-envio" class="grid grid-cols-1 md:grid-cols-2 gap-4">
 </div>
 </section>
 
@@ -88,42 +76,7 @@
 <h2 class="text-xl font-bold">Método de Pago</h2>
 </div>
 <div class="space-y-4">
-<div class="flex flex-wrap gap-2 mb-6">
-<button class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-full font-medium text-sm">
-<span class="material-icons text-sm">credit_card</span> Tarjeta de Crédito
-</button>
-<button class="flex items-center gap-2 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-full font-medium text-sm hover:bg-slate-50 dark:hover:bg-slate-800">
-<span class="material-icons text-sm">account_balance_wallet</span> PayPal
-</button>
-<button class="flex items-center gap-2 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-full font-medium text-sm hover:bg-slate-50 dark:hover:bg-slate-800">
-<span class="material-icons text-sm">payments</span> Contra Entrega
-</button>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-<div class="md:col-span-2">
-<label class="block text-sm font-medium mb-1.5 opacity-80">Número de Tarjeta</label>
-<div class="relative">
-<input class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:border-primary focus:ring-primary pr-12" placeholder="0000 0000 0000 0000" type="text"/>
-<div class="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
-<div class="w-8 h-5 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-[8px] font-bold">VISA</div>
-<div class="w-8 h-5 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-[8px] font-bold">MC</div>
-</div>
-</div>
-</div>
-<div>
-<label class="block text-sm font-medium mb-1.5 opacity-80">Fecha de Expiración</label>
-<input class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:border-primary focus:ring-primary" placeholder="MM/YY" type="text"/>
-</div>
-<div>
-<label class="block text-sm font-medium mb-1.5 opacity-80">CVC / CVV</label>
-<input class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:border-primary focus:ring-primary" placeholder="123" type="text"/>
-</div>
-<div class="md:col-span-2">
-<label class="block text-sm font-medium mb-1.5 opacity-80">Nombre en la Tarjeta</label>
-<input class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:border-primary focus:ring-primary" placeholder="Como aparece en la tarjeta" type="text"/>
-</div>
-</div>
-</div>
+<div id="checkout-metodos-pago" class="flex flex-wrap gap-2 mb-6"></div>
 </section>
 </div>
 
@@ -132,38 +85,7 @@
 <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
 <h2 class="text-lg font-bold mb-6">Resumen del Pedido</h2>
 <div class="space-y-4 mb-6" id="orderSummary">
-<div class="flex gap-4">
-<div class="relative flex-shrink-0">
-<img alt="Zapatillas Deportivas" class="w-16 h-16 rounded-lg object-cover border border-slate-100 dark:border-slate-800" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2QotxqjndSB5qkZ6hi7xoXmCQ1AhcKczkQ1ArMLAFi3o2Pc8HvOehknCvnLosMNLKXSdJuYpb1ydJBqe-M2_wRZv6aFJaYy5XPLnaiHvXXeXqiUM0Z7h9p3TPeV34oSz5WbolLunyugPcZjuuV-Mm1xvFBxEgM4m_FTV5Fj8iKI-1XOlxOYPNu0O9_3BU8Eyd5m8whfdz1Y-5QBX_tpEDETOjizK_4OPsehfx76gY1pyigoSZHW7EA5CpervyDDNVCgftkQJr0yU"/>
-<span class="absolute -top-2 -right-2 w-5 h-5 bg-slate-800 text-white text-[10px] font-bold rounded-full flex items-center justify-center quantity1">1</span>
-</div>
-<div class="flex-1">
-<h4 class="text-sm font-semibold">Zapatillas Ultra Boost v2</h4>
-<p class="text-xs text-slate-500">Talla: 42 | Color: Rojo</p>
-<p class="text-sm font-bold mt-1">129,90 €</p>
-<div class="flex items-center gap-2 mt-2 text-xs">
-<button onclick="decrementQuantity(1, this)" class="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded hover:bg-primary hover:text-white">−</button>
-<span class="px-2">1</span>
-<button onclick="incrementQuantity(1, this)" class="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded hover:bg-primary hover:text-white">+</button>
-</div>
-</div>
-</div>
-<div class="flex gap-4">
-<div class="relative flex-shrink-0">
-<img alt="Smartwatch" class="w-16 h-16 rounded-lg object-cover border border-slate-100 dark:border-slate-800" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdVuwQnq77nE2Q8JQjl4_F5fUS8wcMNBp_ptSJ1huX_zxGEZ-yg2WWFT98LtNB8ay1vSrbFxKApz4QIwz0ysORY3METn3ll4YShVwHvh0RfIsjjamk7zuNbEjFnNOIUUPgksVp91DZQt5FiBESkJKOFUBaae9WqvZXPcPogEDIqQcr997C9nxEJVfSLwcQ_jyy3t-6xzNmU8SG5Gy0edGwS2MZRtDiPJMtTakNk9gG4_psPcniKhXA0tXXy9hWZzqqvnD8rYKVKjU"/>
-<span class="absolute -top-2 -right-2 w-5 h-5 bg-slate-800 text-white text-[10px] font-bold rounded-full flex items-center justify-center quantity2">1</span>
-</div>
-<div class="flex-1">
-<h4 class="text-sm font-semibold">Smartwatch Series 5</h4>
-<p class="text-xs text-slate-500">Talla: Única | Color: Blanco</p>
-<p class="text-sm font-bold mt-1">89,00 €</p>
-<div class="flex items-center gap-2 mt-2 text-xs">
-<button onclick="decrementQuantity(2, this)" class="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded hover:bg-primary hover:text-white">−</button>
-<span class="px-2">1</span>
-<button onclick="incrementQuantity(2, this)" class="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded hover:bg-primary hover:text-white">+</button>
-</div>
-</div>
-</div>
+
 </div>
 <hr class="border-slate-100 dark:border-slate-800 mb-6"/>
 <div class="space-y-3 mb-6">
@@ -218,6 +140,9 @@ Al confirmar el pedido, aceptas nuestras Políticas de Privacidad y Términos de
 function initCheckout() {
     console.log("Inicializando checkout...");
     cargarDireccionesCheckout();
+    cargarMetodosEnvio(); 
+    cargarResumenPedido();
+    cargarMetodosPago();
 }
 
 
@@ -329,5 +254,239 @@ function confirmarPago() {
     });
     */
 }
+let envioSeleccionado = 0;
 
+async function cargarMetodosEnvio() {
+
+    const contenedor = document.getElementById("checkout-metodos-envio");
+    if (!contenedor) return;
+
+    try {
+
+        const response = await fetch("api/api_metodos_envio.php");
+        const data = await response.json();
+
+        if (!data.success || !data.metodos.length) {
+            contenedor.innerHTML = "<p>No hay métodos disponibles</p>";
+            return;
+        }
+
+        contenedor.innerHTML = "";
+
+        data.metodos.forEach((metodo, index) => {
+
+            const checked = index === 0 ? "checked" : "";
+            const border = index === 0 ? 
+                "border-2 border-primary bg-primary/5" : 
+                "border border-slate-200 dark:border-slate-700";
+
+            if(index === 0) {
+                envioSeleccionado = parseFloat(metodo.costo);
+            }
+
+            contenedor.innerHTML += `
+                <label class="relative flex flex-col p-4 ${border} rounded-xl cursor-pointer hover:border-primary/50 transition-colors">
+                    
+                    <input 
+                        type="radio" 
+                        name="shipping" 
+                        value="${metodo.id_envio}" 
+                        ${checked}
+                        class="absolute top-4 right-4 text-primary focus:ring-primary"
+                        onclick="seleccionarEnvio(${metodo.costo})"
+                    />
+
+                    <span class="font-bold text-slate-900 dark:text-white">
+                        ${metodo.nombre}
+                    </span>
+
+                    <span class="text-sm opacity-70 mb-2">
+                        ${metodo.tiempo_estimado || ""}
+                    </span>
+
+                    <span class="mt-auto font-bold ${metodo.costo == 0 ? 'text-emerald-500' : ''}">
+                        ${metodo.costo == 0 ? 'Gratis' : metodo.costo + ' €'}
+                    </span>
+
+                </label>
+            `;
+        });
+
+        cargarResumenPedido();
+
+    } catch (error) {
+        console.error("Error cargando métodos envío:", error);
+    }
+}
+function seleccionarEnvio(costo) {
+    envioSeleccionado = parseFloat(costo);
+    cargarResumenPedido(); // recalcula todo correctamente
+}
+function actualizarTotalConEnvio(subtotal, impuestos) {
+
+    const total = subtotal + impuestos + envioSeleccionado;
+
+    document.getElementById("shippingCost").innerText =
+        envioSeleccionado === 0 ? "Gratis" : envioSeleccionado.toFixed(2) + " €";
+
+    document.getElementById("totalPrice").innerText =
+        total.toFixed(2) + " €";
+}
+
+/* ===============================
+   CARGAR RESUMEN DEL PEDIDO
+================================= */
+async function cargarResumenPedido() {
+
+    const contenedor = document.getElementById("orderSummary");
+    if (!contenedor) return;
+
+    try {
+
+        const response = await fetch("api/api_carrito.php?accion=listar", {
+            credentials: "include"
+        });
+
+        const data = await response.json();
+
+        if (!data.exito || !data.carrito.items.length) {
+            contenedor.innerHTML = "<p class='text-sm text-slate-500'>Tu carrito está vacío.</p>";
+            return;
+        }
+
+        const carrito = data.carrito;
+
+        contenedor.innerHTML = "";
+
+        carrito.items.forEach(item => {
+
+            contenedor.innerHTML += `
+                <div class="flex gap-4">
+                    <div class="relative flex-shrink-0">
+                        <img src="${item.imagen}" 
+                             class="w-16 h-16 rounded-lg object-cover border border-slate-100 dark:border-slate-800">
+                        <span class="absolute -top-2 -right-2 w-5 h-5 bg-slate-800 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                            ${item.cantidad}
+                        </span>
+                    </div>
+
+                    <div class="flex-1">
+                        <h4 class="text-sm font-semibold">${item.nombre}</h4>
+                        <p class="text-sm font-bold mt-1">${item.precio_unitario.toFixed(2)} €</p>
+
+                        <div class="flex items-center gap-2 mt-2 text-xs">
+                            <button onclick="cambiarCantidad(${item.id_carrito_detalle}, ${item.cantidad - 1})"
+                                class="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded hover:bg-primary hover:text-white">
+                                −
+                            </button>
+
+                            <span class="px-2">${item.cantidad}</span>
+
+                            <button onclick="cambiarCantidad(${item.id_carrito_detalle}, ${item.cantidad + 1})"
+                                class="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded hover:bg-primary hover:text-white">
+                                +
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        //  ACTUALIZAR TOTALES DESDE BACKEND
+document.getElementById("subtotal").innerText =
+    carrito.subtotal.toFixed(2) + " €";
+
+document.getElementById("taxes").innerText =
+    carrito.impuesto_total.toFixed(2) + " €";
+
+// Recalcular total con envío seleccionado
+actualizarTotalConEnvio(carrito.subtotal, carrito.impuesto_total);
+        //  Actualizar totales reales desde backend
+        document.getElementById("subtotal").innerText =
+            carrito.subtotal.toFixed(2) + " €";
+
+        document.getElementById("taxes").innerText =
+            carrito.impuesto_total.toFixed(2) + " €";
+
+        actualizarTotalConEnvio(carrito.subtotal, carrito.impuesto_total);
+
+    } catch (error) {
+        console.error("Error cargando resumen:", error);
+    }
+}
+/* ===============================
+   CAMBIAR CANTIDAD
+================================= */
+async function cambiarCantidad(idCarritoDetalle, nuevaCantidad) {
+
+    const formData = new FormData();
+    formData.append("id_carrito_detalle", idCarritoDetalle);
+    formData.append("cantidad", nuevaCantidad);
+
+    await fetch("api/api_carrito.php?accion=actualizar", {
+        method: "POST",
+        body: formData,
+        credentials: "include"
+    });
+
+    cargarResumenPedido();
+}
+let metodoPagoSeleccionado = null;
+
+async function cargarMetodosPago() {
+
+    const contenedor = document.getElementById("checkout-metodos-pago");
+    if (!contenedor) return;
+
+    try {
+
+        const response = await fetch("api/api_metodos_pago.php");
+        const data = await response.json();
+
+        if (!data.exito || !data.metodos.length) {
+            contenedor.innerHTML = "<p>No hay métodos de pago disponibles</p>";
+            return;
+        }
+
+        contenedor.innerHTML = "";
+
+        data.metodos.forEach((metodo, index) => {
+
+            const activo = index === 0;
+            if (activo) metodoPagoSeleccionado = metodo.id_metodo_pago;
+
+            contenedor.innerHTML += `
+                <button 
+                    onclick="seleccionarMetodoPago(${metodo.id_metodo_pago}, this)"
+                    class="flex items-center gap-2 px-4 py-2 
+                    ${activo 
+                        ? 'bg-primary text-white' 
+                        : 'border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'} 
+                    rounded-full font-medium text-sm transition-all">
+
+                    <span class="material-icons text-sm">payments</span>
+                    ${metodo.nombre}
+                </button>
+            `;
+        });
+
+    } catch (error) {
+        console.error("Error cargando métodos pago:", error);
+    }
+}
+function seleccionarMetodoPago(idMetodo, boton) {
+
+    metodoPagoSeleccionado = idMetodo;
+
+    // Quitar estilos activos
+    const botones = document.querySelectorAll("#checkout-metodos-pago button");
+    botones.forEach(btn => {
+        btn.classList.remove("bg-primary", "text-white");
+        btn.classList.add("border", "border-slate-200", "dark:border-slate-700");
+    });
+
+    // Activar el seleccionado
+    boton.classList.remove("border", "border-slate-200", "dark:border-slate-700");
+    boton.classList.add("bg-primary", "text-white");
+}
 </script>

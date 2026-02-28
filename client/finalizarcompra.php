@@ -13,9 +13,9 @@
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#137fec",
-                        "background-light": "#f6f7f8",
-                        "background-dark": "#101922",
+                        primary: "<?php echo $login_primary; ?>",
+                        "background-light": "<?php echo $login_bg_light; ?>",
+                        "background-dark": "<?php echo $login_bg_dark; ?>
                     },
                     fontFamily: {
                         "display": ["Inter"]

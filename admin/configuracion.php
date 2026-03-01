@@ -606,32 +606,44 @@ $color_bg_dark = normalizar_color($config['color_background_dark'] ?? '#101922',
                                     $pth = htmlspecialchars($item['path'] ?? '');
                                     $ico = htmlspecialchars($item['icon'] ?? '');
                                 ?>
-                                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-slate-50 border border-slate-200 rounded-lg p-4" data-header-item="1">
-                                    <div class="md:col-span-4">
-                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Texto visible</label>
-                                        <input type="text" class="header-label w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: Categorías" value="<?php echo $lbl; ?>">
-                                    </div>
-                                    <div class="md:col-span-5">
-                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Ruta / URL</label>
-                                        <input type="text" class="header-path w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="/categorias o https://tusitio.com" value="<?php echo $pth; ?>">
-                                        <p class="text-[11px] text-gray-400 mt-1">Si usas rutas como <code>/categorias</code>, se mapearán automáticamente a las secciones internas cuando sea posible.</p>
-                                    </div>
-                                    <div class="md:col-span-3 flex flex-col gap-2 mt-3 md:mt-0">
+                                <div class="bg-slate-50 border border-slate-200 rounded-lg p-4" data-header-item="1">
+                                    <!-- Fila 1: Label y Path -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                         <div>
-                                            <label class="block text-xs font-semibold text-gray-600 mb-1">Icono (Material Symbols)</label>
+                                            <label class="block text-xs font-semibold text-gray-600 mb-2">Texto visible</label>
+                                            <input type="text" class="header-label w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: Categorías" value="<?php echo $lbl; ?>">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-600 mb-2">Ruta / URL</label>
+                                            <input type="text" class="header-path w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="/categorias o https://tusitio.com" value="<?php echo $pth; ?>">
+                                        </div>
+                                    </div>
+                                    <p class="text-[11px] text-gray-400 mb-4">Si usas rutas como <code>/categorias</code>, se mapearán automáticamente a las secciones internas cuando sea posible.</p>
+                                    
+                                    <!-- Fila 2: Icono y Botones -->
+                                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                                        <div class="md:col-span-5">
+                                            <label class="block text-xs font-semibold text-gray-600 mb-2">Icono (Material Symbols)</label>
                                             <div class="flex gap-2">
                                                 <input type="text" class="header-icon flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: grid_view" value="<?php echo $ico; ?>">
                                                 <button type="button" onclick="abrirSelectorIconos(this)" class="px-3 py-2 rounded-lg border border-cyan-200 text-cyan-600 text-xs font-semibold hover:bg-cyan-50 flex items-center gap-1">
                                                     <span class="material-symbols-outlined text-sm">apps</span>
-                                                    <span>Ver iconos</span>
                                                 </button>
                                             </div>
-                                            <p class="text-[10px] text-gray-400 mt-1">Ejemplos: <code>grid_view</code>, <code>sell</code>, <code>favorite</code>, <code>shopping_cart</code>.</p>
+                                            <p class="text-[10px] text-gray-400 mt-1">Ejemplos: <code>grid_view</code>, <code>sell</code>, <code>favorite</code>.</p>
                                         </div>
-                                        <div class="flex md:justify-end">
-                                            <button type="button" onclick="eliminarItemHeader(this)" class="px-3 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 flex items-center gap-1">
-                                                <i class="fas fa-trash"></i>
-                                                Quitar
+                                        <div class="md:col-span-7 flex gap-2">
+                                            <button type="button" onclick="subirItemHeader(this)" title="Subir" class="flex-1 px-3 py-2 rounded-lg border border-blue-200 text-blue-600 text-xs font-semibold hover:bg-blue-50 flex items-center justify-center gap-2">
+                                                <span class="material-symbols-outlined text-sm">arrow_upward</span>
+                                                <span class="hidden sm:inline">Subir</span>
+                                            </button>
+                                            <button type="button" onclick="bajarItemHeader(this)" title="Bajar" class="flex-1 px-3 py-2 rounded-lg border border-blue-200 text-blue-600 text-xs font-semibold hover:bg-blue-50 flex items-center justify-center gap-2">
+                                                <span class="material-symbols-outlined text-sm">arrow_downward</span>
+                                                <span class="hidden sm:inline">Bajar</span>
+                                            </button>
+                                            <button type="button" onclick="eliminarItemHeader(this)" title="Eliminar" class="flex-1 px-3 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 flex items-center justify-center gap-2">
+                                                <i class="fas fa-trash text-xs"></i>
+                                                <span class="hidden sm:inline">Quitar</span>
                                             </button>
                                         </div>
                                     </div>
@@ -1550,34 +1562,45 @@ function agregarItemHeader() {
     var cont = document.getElementById('header-menu-items');
     if (!cont) return;
     var row = document.createElement('div');
-    row.className = 'grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-slate-50 border border-slate-200 rounded-lg p-4';
+    row.className = 'bg-slate-50 border border-slate-200 rounded-lg p-4';
     row.setAttribute('data-header-item', '1');
     row.innerHTML = '' +
-        '<div class="md:col-span-4">' +
-            '<label class="block text-xs font-semibold text-gray-600 mb-1">Texto visible</label>' +
-            '<input type="text" class="header-label w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: Nueva opción">' +
-        '</div>' +
-        '<div class="md:col-span-5">' +
-            '<label class="block text-xs font-semibold text-gray-600 mb-1">Ruta / URL</label>' +
-            '<input type="text" class="header-path w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="/ruta-o-url">' +
-            '<p class="text-[11px] text-gray-400 mt-1">Ej: /categorias o https://tusitio.com/pagina</p>' +
-        '</div>' +
-        '<div class="md:col-span-3 flex flex-col gap-2 mt-3 md:mt-0">' +
+        '<!-- Fila 1: Label y Path -->' +
+        '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">' +
             '<div>' +
-                '<label class="block text-xs font-semibold text-gray-600 mb-1">Icono (Material Symbols)</label>' +
+                '<label class="block text-xs font-semibold text-gray-600 mb-2">Texto visible</label>' +
+                '<input type="text" class="header-label w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: Nueva opción">' +
+            '</div>' +
+            '<div>' +
+                '<label class="block text-xs font-semibold text-gray-600 mb-2">Ruta / URL</label>' +
+                '<input type="text" class="header-path w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="/ruta-o-url">' +
+            '</div>' +
+        '</div>' +
+        '<p class="text-[11px] text-gray-400 mb-4">Ej: /categorias o https://tusitio.com/pagina. Si usas rutas internas se mapearán automáticamente.</p>' +
+        '<!-- Fila 2: Icono y Botones -->' +
+        '<div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">' +
+            '<div class="md:col-span-5">' +
+                '<label class="block text-xs font-semibold text-gray-600 mb-2">Icono (Material Symbols)</label>' +
                 '<div class="flex gap-2">' +
                     '<input type="text" class="header-icon flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: grid_view">' +
                     '<button type="button" onclick="abrirSelectorIconos(this)" class="px-3 py-2 rounded-lg border border-cyan-200 text-cyan-600 text-xs font-semibold hover:bg-cyan-50 flex items-center gap-1">' +
                         '<span class="material-symbols-outlined text-sm">apps</span>' +
-                        '<span>Ver iconos</span>' +
                     '</button>' +
                 '</div>' +
-                '<p class="text-[10px] text-gray-400 mt-1">Ejemplos: <code>grid_view</code>, <code>sell</code>, <code>favorite</code>, <code>shopping_cart</code>.</p>' +
+                '<p class="text-[10px] text-gray-400 mt-1">Ejemplos: <code>grid_view</code>, <code>sell</code>, <code>favorite</code>.</p>' +
             '</div>' +
-            '<div class="flex md:justify-end">' +
-                '<button type="button" onclick="eliminarItemHeader(this)" class="px-3 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 flex items-center gap-1">' +
-                    '<i class="fas fa-trash"></i>' +
-                    'Quitar' +
+            '<div class="md:col-span-7 flex gap-2">' +
+                '<button type="button" onclick="subirItemHeader(this)" title="Subir" class="flex-1 px-3 py-2 rounded-lg border border-blue-200 text-blue-600 text-xs font-semibold hover:bg-blue-50 flex items-center justify-center gap-2">' +
+                    '<span class="material-symbols-outlined text-sm">arrow_upward</span>' +
+                    '<span class="hidden sm:inline">Subir</span>' +
+                '</button>' +
+                '<button type="button" onclick="bajarItemHeader(this)" title="Bajar" class="flex-1 px-3 py-2 rounded-lg border border-blue-200 text-blue-600 text-xs font-semibold hover:bg-blue-50 flex items-center justify-center gap-2">' +
+                    '<span class="material-symbols-outlined text-sm">arrow_downward</span>' +
+                    '<span class="hidden sm:inline">Bajar</span>' +
+                '</button>' +
+                '<button type="button" onclick="eliminarItemHeader(this)" title="Eliminar" class="flex-1 px-3 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 flex items-center justify-center gap-2">' +
+                    '<i class="fas fa-trash text-xs"></i>' +
+                    '<span class="hidden sm:inline">Quitar</span>' +
                 '</button>' +
             '</div>' +
         '</div>';
@@ -1587,6 +1610,24 @@ function agregarItemHeader() {
 function eliminarItemHeader(btn) {
     var row = btn.closest('[data-header-item]');
     if (row) row.remove();
+}
+
+function subirItemHeader(btn) {
+    var row = btn.closest('[data-header-item]');
+    if (!row || !row.previousElementSibling) return;
+    var prev = row.previousElementSibling;
+    if (prev.getAttribute('data-header-item') === '1') {
+        row.parentNode.insertBefore(row, prev);
+    }
+}
+
+function bajarItemHeader(btn) {
+    var row = btn.closest('[data-header-item]');
+    if (!row || !row.nextElementSibling) return;
+    var next = row.nextElementSibling;
+    if (next.getAttribute('data-header-item') === '1') {
+        next.parentNode.insertBefore(next, row);
+    }
 }
 
 // Selector visual de iconos para el header

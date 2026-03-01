@@ -27,6 +27,53 @@ $usuario = obtenerDatosUsuario();
 $res_cfg_admin = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
 $cfg_admin = ($res_cfg_admin && mysqli_num_rows($res_cfg_admin) > 0) ? mysqli_fetch_assoc($res_cfg_admin) : [];
 
+// Símbolo de moneda
+$cfg_moneda_cod = $cfg_admin['moneda'] ?? 'HNL';
+$simbolos_moneda = ['USD' => '$', 'EUR' => '€', 'MXN' => '$', 'COP' => '$', 'ARS' => '$', 'GTQ' => 'Q', 'HNL' => 'L', 'CRC' => '₡'];
+$cfg_moneda = $simbolos_moneda[$cfg_moneda_cod] ?? $cfg_moneda_cod;
+
+// ==================== OBTENER ESTADÍSTICAS DE LA BASE DE DATOS ====================
+
+// Total de productos
+$res_productos = mysqli_query($conexion, "SELECT COUNT(*) AS total FROM productos");
+$total_productos = ($res_productos && mysqli_num_rows($res_productos) > 0) ? mysqli_fetch_assoc($res_productos)['total'] : 0;
+
+// Total de clientes
+$res_clientes = mysqli_query($conexion, "SELECT COUNT(*) AS total FROM clientes");
+$total_clientes = ($res_clientes && mysqli_num_rows($res_clientes) > 0) ? mysqli_fetch_assoc($res_clientes)['total'] : 0;
+
+// Pedidos de hoy
+$hoy = date('Y-m-d');
+$res_pedidos_hoy = mysqli_query($conexion, "SELECT COUNT(*) AS total FROM pedidos WHERE DATE(fecha_pedido) = '$hoy'");
+$pedidos_hoy = ($res_pedidos_hoy && mysqli_num_rows($res_pedidos_hoy) > 0) ? mysqli_fetch_assoc($res_pedidos_hoy)['total'] : 0;
+
+// Ingresos de hoy (solo pedidos confirmados/entregados = pagados)
+$res_ingresos_hoy = mysqli_query($conexion, "SELECT SUM(total) AS total FROM pedidos WHERE DATE(fecha_pedido) = '$hoy' AND estado IN ('confirmado', 'enviado', 'entregado')");
+$resultado_ingresos = mysqli_fetch_assoc($res_ingresos_hoy);
+$ingresos_hoy = !empty($resultado_ingresos['total']) ? floatval($resultado_ingresos['total']) : 0;
+
+// Estadísticas de pedidos por estado
+$res_pendientes = mysqli_query($conexion, "SELECT COUNT(*) AS total FROM pedidos WHERE estado = 'pendiente'");
+$pedidos_pendientes = ($res_pendientes && mysqli_num_rows($res_pendientes) > 0) ? mysqli_fetch_assoc($res_pendientes)['total'] : 0;
+
+$res_confirmados = mysqli_query($conexion, "SELECT COUNT(*) AS total FROM pedidos WHERE estado = 'confirmado'");
+$pedidos_confirmados = ($res_confirmados && mysqli_num_rows($res_confirmados) > 0) ? mysqli_fetch_assoc($res_confirmados)['total'] : 0;
+
+$res_enviados = mysqli_query($conexion, "SELECT COUNT(*) AS total FROM pedidos WHERE estado = 'enviado'");
+$pedidos_enviados = ($res_enviados && mysqli_num_rows($res_enviados) > 0) ? mysqli_fetch_assoc($res_enviados)['total'] : 0;
+
+$res_entregados = mysqli_query($conexion, "SELECT COUNT(*) AS total FROM pedidos WHERE estado = 'entregado'");
+$pedidos_entregados = ($res_entregados && mysqli_num_rows($res_entregados) > 0) ? mysqli_fetch_assoc($res_entregados)['total'] : 0;
+
+// Total general de pedidos
+$total_pedidos = $pedidos_pendientes + $pedidos_confirmados + $pedidos_enviados + $pedidos_entregados;
+
+// Calcular porcentajes para las barras
+$porcentaje_pendientes = $total_pedidos > 0 ? round(($pedidos_pendientes / $total_pedidos) * 100) : 0;
+$porcentaje_confirmados = $total_pedidos > 0 ? round(($pedidos_confirmados / $total_pedidos) * 100) : 0;
+$porcentaje_enviados = $total_pedidos > 0 ? round(($pedidos_enviados / $total_pedidos) * 100) : 0;
+$porcentaje_entregados = $total_pedidos > 0 ? round(($pedidos_entregados / $total_pedidos) * 100) : 0;
+
 function normalizar_color_admin($valor, $defecto) {
     if (!is_string($valor)) return $defecto;
     $valor = trim($valor);
@@ -167,7 +214,7 @@ $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
 <div class="flex justify-between items-start">
 <div>
 <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Total Productos</p>
-<h3 class="text-2xl font-bold mt-1">2,543</h3>
+<h3 class="text-2xl font-bold mt-1"><?php echo number_format($total_productos); ?></h3>
 <p class="text-xs text-green-500 mt-2 flex items-center font-medium">
 <span class="material-icons-round text-xs mr-1">trending_up</span> 12% este mes
                                 </p>
@@ -181,9 +228,9 @@ $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
 <div class="flex justify-between items-start">
 <div>
 <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Total Clientes</p>
-<h3 class="text-2xl font-bold mt-1">1,234</h3>
-<p class="text-xs text-green-500 mt-2 flex items-center font-medium">
-<span class="material-icons-round text-xs mr-1">trending_up</span> 8% este mes
+<h3 class="text-2xl font-bold mt-1"><?php echo number_format($total_clientes); ?></h3>
+<p class="text-xs text-slate-500 mt-2 flex items-center font-medium">
+<span class="material-icons-round text-xs mr-1">person_add</span> Registrados en el sistema
                                 </p>
 </div>
 <div class="p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 rounded-xl">
@@ -195,9 +242,9 @@ $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
 <div class="flex justify-between items-start">
 <div>
 <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Pedidos Hoy</p>
-<h3 class="text-2xl font-bold mt-1">45</h3>
-<p class="text-xs text-green-500 mt-2 flex items-center font-medium">
-<span class="material-icons-round text-xs mr-1">trending_up</span> 23% vs ayer
+<h3 class="text-2xl font-bold mt-1"><?php echo $pedidos_hoy; ?></h3>
+<p class="text-xs text-slate-500 mt-2 flex items-center font-medium">
+<span class="material-icons-round text-xs mr-1">today</span> <?php echo date('d/m/Y'); ?>
                                 </p>
 </div>
 <div class="p-3 bg-orange-50 dark:bg-orange-900/30 text-orange-500 rounded-xl">
@@ -209,7 +256,7 @@ $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
 <div class="flex justify-between items-start">
 <div>
 <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Ingresos Hoy</p>
-<h3 class="text-2xl font-bold mt-1">$4,532.50</h3>
+<h3 class="text-2xl font-bold mt-1"><?php echo htmlspecialchars($cfg_moneda); ?><?php echo number_format($ingresos_hoy, 2); ?></h3>
 <p class="text-xs text-green-500 mt-2 flex items-center font-medium">
 <span class="material-icons-round text-xs mr-1">trending_up</span> 15% vs ayer
                                 </p>
@@ -242,97 +289,89 @@ $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
 <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm">
 <h4 class="font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-6">
 <span class="material-icons-round text-primary">list_alt</span>
+                            Resumen General de Estadísticas
+                        </h4>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/40 p-6 rounded-lg">
+<div class="flex items-center justify-between mb-4">
+<span class="text-sm text-slate-600 dark:text-slate-300 font-semibold">Pedidos Pendientes</span>
+<span class="material-icons-round text-blue-500">schedule</span>
+</div>
+<h3 class="text-3xl font-bold text-slate-900 dark:text-white"><?php echo $pedidos_pendientes; ?></h3>
+<p class="text-xs text-slate-600 dark:text-slate-400 mt-2">Requieren atención inmediata</p>
+</div>
+
+<div class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/40 p-6 rounded-lg">
+<div class="flex items-center justify-between mb-4">
+<span class="text-sm text-slate-600 dark:text-slate-300 font-semibold">Pedidos Confirmados</span>
+<span class="material-icons-round text-green-500">check_circle</span>
+</div>
+<h3 class="text-3xl font-bold text-slate-900 dark:text-white"><?php echo $pedidos_confirmados; ?></h3>
+<p class="text-xs text-slate-600 dark:text-slate-400 mt-2">En proceso de preparación</p>
+</div>
+
+<div class="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-900/40 p-6 rounded-lg">
+<div class="flex items-center justify-between mb-4">
+<span class="text-sm text-slate-600 dark:text-slate-300 font-semibold">Pedidos Enviados</span>
+<span class="material-icons-round text-orange-500">local_shipping</span>
+</div>
+<h3 class="text-3xl font-bold text-slate-900 dark:text-white"><?php echo $pedidos_enviados; ?></h3>
+<p class="text-xs text-slate-600 dark:text-slate-400 mt-2">En tránsito hacia clientes</p>
+</div>
+
+<div class="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-900/40 p-6 rounded-lg">
+<div class="flex items-center justify-between mb-4">
+<span class="text-sm text-slate-600 dark:text-slate-300 font-semibold">Pedidos Entregados</span>
+<span class="material-icons-round text-emerald-500">task_alt</span>
+</div>
+<h3 class="text-3xl font-bold text-slate-900 dark:text-white"><?php echo $pedidos_entregados; ?></h3>
+<p class="text-xs text-slate-600 dark:text-slate-400 mt-2">Completados exitosamente</p>
+</div>
+</div>
+</div>
+
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm">
+<h4 class="font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-6">
+<span class="material-icons-round text-primary">list_alt</span>
                             Estados de Pedidos
                         </h4>
 <div class="space-y-6">
 <div>
 <div class="flex justify-between mb-2">
 <span class="text-sm text-slate-600 dark:text-slate-400 font-medium">Pendientes</span>
-<span class="text-sm font-bold">12</span>
+<span class="text-sm font-bold"><?php echo $pedidos_pendientes; ?> (<?php echo $porcentaje_pendientes; ?>%)</span>
 </div>
 <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2">
-<div class="bg-blue-500 h-2 rounded-full" style="width: 35%"></div>
+<div class="bg-blue-500 h-2 rounded-full" style="width: <?php echo $porcentaje_pendientes; ?>%"></div>
 </div>
 </div>
 <div>
 <div class="flex justify-between mb-2">
 <span class="text-sm text-slate-600 dark:text-slate-400 font-medium">Confirmados</span>
-<span class="text-sm font-bold">18</span>
+<span class="text-sm font-bold"><?php echo $pedidos_confirmados; ?> (<?php echo $porcentaje_confirmados; ?>%)</span>
 </div>
 <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2">
-<div class="bg-green-500 h-2 rounded-full" style="width: 60%"></div>
+<div class="bg-green-500 h-2 rounded-full" style="width: <?php echo $porcentaje_confirmados; ?>%"></div>
 </div>
 </div>
 <div>
 <div class="flex justify-between mb-2">
 <span class="text-sm text-slate-600 dark:text-slate-400 font-medium">Enviados</span>
-<span class="text-sm font-bold">10</span>
+<span class="text-sm font-bold"><?php echo $pedidos_enviados; ?> (<?php echo $porcentaje_enviados; ?>%)</span>
 </div>
 <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2">
-<div class="bg-orange-500 h-2 rounded-full" style="width: 45%"></div>
+<div class="bg-orange-500 h-2 rounded-full" style="width: <?php echo $porcentaje_enviados; ?>%"></div>
 </div>
 </div>
+<div>
+<div class="flex justify-between mb-2">
+<span class="text-sm text-slate-600 dark:text-slate-400 font-medium">Entregados</span>
+<span class="text-sm font-bold"><?php echo $pedidos_entregados; ?> (<?php echo $porcentaje_entregados; ?>%)</span>
+</div>
+<div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2">
+<div class="bg-emerald-500 h-2 rounded-full" style="width: <?php echo $porcentaje_entregados; ?>%"></div>
 </div>
 </div>
-</div>
-<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm overflow-hidden">
-<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-<h4 class="font-bold text-slate-800 dark:text-white">Pedidos Recientes</h4>
-<button class="text-primary hover:text-blue-600 text-sm font-semibold flex items-center gap-1 group">
-                            Ver todos los pedidos
-                            <span class="material-icons-round text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
-</button>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full text-left">
-<thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 uppercase text-xs font-bold tracking-wider">
-<tr>
-<th class="px-6 py-4">ID Pedido</th>
-<th class="px-6 py-4">Cliente</th>
-<th class="px-6 py-4">Monto</th>
-<th class="px-6 py-4">Estado</th>
-<th class="px-6 py-4">Fecha</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-<td class="px-6 py-4 font-medium text-slate-600 dark:text-slate-300">#1005</td>
-<td class="px-6 py-4">Carlos López</td>
-<td class="px-6 py-4 font-semibold text-green-600">$1,250.00</td>
-<td class="px-6 py-4">
-<span class="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold rounded-full">Entregado</span>
-</td>
-<td class="px-6 py-4 text-slate-500 text-sm">Hoy</td>
-</tr>
-<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-<td class="px-6 py-4 font-medium text-slate-600 dark:text-slate-300">#1004</td>
-<td class="px-6 py-4">Ana Martínez</td>
-<td class="px-6 py-4 font-semibold text-green-600">$890.50</td>
-<td class="px-6 py-4">
-<span class="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs font-bold rounded-full">Enviado</span>
-</td>
-<td class="px-6 py-4 text-slate-500 text-sm">Ayer</td>
-</tr>
-<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-<td class="px-6 py-4 font-medium text-slate-600 dark:text-slate-300">#1003</td>
-<td class="px-6 py-4">Roberto García</td>
-<td class="px-6 py-4 font-semibold text-green-600">$2,100.00</td>
-<td class="px-6 py-4">
-<span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-full">Confirmado</span>
-</td>
-<td class="px-6 py-4 text-slate-500 text-sm">Hace 2 días</td>
-</tr>
-<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-<td class="px-6 py-4 font-medium text-slate-600 dark:text-slate-300">#1002</td>
-<td class="px-6 py-4">María Pérez</td>
-<td class="px-6 py-4 font-semibold text-green-600">$567.30</td>
-<td class="px-6 py-4">
-<span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold rounded-full">Pendiente</span>
-</td>
-<td class="px-6 py-4 text-slate-500 text-sm">Hace 3 días</td>
-</tr>
-</tbody>
-</table>
 </div>
 </div>
 </main>

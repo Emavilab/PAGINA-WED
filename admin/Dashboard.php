@@ -5,6 +5,7 @@
  */
 
 require_once '../core/sesiones.php';
+require_once '../core/conexion.php';
 
 // Verificar autenticación
 if (!usuarioAutenticado()) {
@@ -21,6 +22,24 @@ if ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2) {
 
 // Obtener datos del usuario autenticado
 $usuario = obtenerDatosUsuario();
+
+// Cargar configuración general para colores y nombre
+$res_cfg_admin = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
+$cfg_admin = ($res_cfg_admin && mysqli_num_rows($res_cfg_admin) > 0) ? mysqli_fetch_assoc($res_cfg_admin) : [];
+
+function normalizar_color_admin($valor, $defecto) {
+    if (!is_string($valor)) return $defecto;
+    $valor = trim($valor);
+    if ($valor === '') return $defecto;
+    if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $valor)) return $defecto;
+    return strtoupper($valor);
+}
+
+$admin_primary = normalizar_color_admin($cfg_admin['color_primary'] ?? '#3b82f6', '#3B82F6');
+$admin_bg_light = normalizar_color_admin($cfg_admin['color_background_light'] ?? '#f8fafc', '#F8FAFC');
+$admin_bg_dark = normalizar_color_admin($cfg_admin['color_background_dark'] ?? '#0f172a', '#0F172A');
+$admin_sidebar_dark = '#1e293b';
+$admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
 ?>
 <!DOCTYPE html>
 <html class="light" lang="es"><head>
@@ -37,10 +56,10 @@ $usuario = obtenerDatosUsuario();
         theme: {
           extend: {
             colors: {
-              primary: "#3b82f6",
-              "background-light": "#f8fafc",
-              "background-dark": "#0f172a",
-              "sidebar-dark": "#1e293b",
+              primary: "<?php echo $admin_primary; ?>",
+              "background-light": "<?php echo $admin_bg_light; ?>",
+              "background-dark": "<?php echo $admin_bg_dark; ?>",
+              "sidebar-dark": "<?php echo $admin_sidebar_dark; ?>",
             },
             fontFamily: {
               display: ["Inter", "sans-serif"],
@@ -59,8 +78,8 @@ $usuario = obtenerDatosUsuario();
         body { font-family: 'Inter', sans-serif; }
         .sidebar-active {
             background-color: rgba(59, 130, 246, 0.1);
-            border-left: 4px solid #3b82f6;
-            color: #3b82f6;
+            border-left: 4px solid <?php echo $admin_primary; ?>;
+            color: <?php echo $admin_primary; ?>;
         }
     </style>
 </head>
@@ -72,7 +91,7 @@ $usuario = obtenerDatosUsuario();
 <span class="material-icons-round text-white">store</span>
 </div>
 <div>
-<h1 class="font-bold text-lg leading-tight">Mi Negocio</h1>
+<h1 class="font-bold text-lg leading-tight"><?php echo $admin_nombre; ?></h1>
 <p class="text-xs text-slate-400">Admin Panel</p>
 </div>
 </div>

@@ -1,3 +1,22 @@
+<?php
+require_once '../core/conexion.php';
+
+// Cargar configuración general de colores
+$res_cfg_of = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
+$cfg_of = ($res_cfg_of && mysqli_num_rows($res_cfg_of) > 0) ? mysqli_fetch_assoc($res_cfg_of) : [];
+
+function normalizar_color_ofertas($valor, $defecto) {
+    if (!is_string($valor)) return $defecto;
+    $valor = trim($valor);
+    if ($valor === '') return $defecto;
+    if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $valor)) return $defecto;
+    return strtoupper($valor);
+}
+
+$of_primary = normalizar_color_ofertas($cfg_of['color_primary'] ?? '#137fec', '#137FEC');
+$of_bg_light = normalizar_color_ofertas($cfg_of['color_background_light'] ?? '#f6f7f8', '#F6F7F8');
+$of_bg_dark = normalizar_color_ofertas($cfg_of['color_background_dark'] ?? '#101922', '#101922');
+?>
 <!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="utf-8"/>
@@ -13,10 +32,10 @@
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#137fec",
+                        "primary": "<?php echo $of_primary; ?>",
                         "accent": "#ef4444",
-                        "background-light": "#f6f7f8",
-                        "background-dark": "#101922",
+                        "background-light": "<?php echo $of_bg_light; ?>",
+                        "background-dark": "<?php echo $of_bg_dark; ?>",
                     },
                     fontFamily: {
                         "display": ["Inter"]

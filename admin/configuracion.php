@@ -15,6 +15,37 @@ $res_pagos = mysqli_query($conexion, "SELECT * FROM metodos_pago ORDER BY id_met
 $res_config = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
 $config = ($res_config && mysqli_num_rows($res_config) > 0) ? mysqli_fetch_assoc($res_config) : [];
 $redes = !empty($config['redes_sociales']) ? json_decode($config['redes_sociales'], true) : [];
+
+// Menú de navegación del header (JSON) y columnas del footer (JSON)
+$header_menu = [];
+if (!empty($config['header_menu'])) {
+    $tmp = json_decode($config['header_menu'], true);
+    if (is_array($tmp)) {
+        $header_menu = $tmp;
+    }
+}
+
+$footer_columns = [];
+if (!empty($config['footer_columns'])) {
+    $tmpFooter = json_decode($config['footer_columns'], true);
+    if (is_array($tmpFooter)) {
+        $footer_columns = $tmpFooter;
+    }
+}
+
+// Colores del tema (con valores por defecto y validación básica)
+function normalizar_color($valor, $defecto) {
+    if (!is_string($valor)) return $defecto;
+    $valor = trim($valor);
+    if ($valor === '') return $defecto;
+    if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $valor)) return $defecto;
+    return strtoupper($valor);
+}
+
+$color_primary = normalizar_color($config['color_primary'] ?? '#137fec', '#137FEC');
+$color_primary_dark = normalizar_color($config['color_primary_dark'] ?? '#0d66c2', '#0D66C2');
+$color_bg_light = normalizar_color($config['color_background_light'] ?? '#f6f7f8', '#F6F7F8');
+$color_bg_dark = normalizar_color($config['color_background_dark'] ?? '#101922', '#101922');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -24,6 +55,17 @@ $redes = !empty($config['redes_sociales']) ? json_decode($config['redes_sociales
     <title>Gestión de Configuraciones</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Material Symbols para vista previa de iconos del header -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24;
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
     <div class="min-h-screen">
@@ -440,17 +482,65 @@ $redes = !empty($config['redes_sociales']) ? json_decode($config['redes_sociales
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                        <i class="fas fa-percent text-cyan-500 mr-1"></i> Impuesto (%)
-                                    </label>
-                                    <input type="number" name="impuesto" id="cfg_impuesto" step="0.01" min="0" max="100" value="<?php echo htmlspecialchars($config['impuesto'] ?? '0'); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="0.00">
-                                </div>
+                                <!-- Impuesto eliminado según solicitud -->
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">
                                         <i class="fas fa-clock text-cyan-500 mr-1"></i> Horario de Atención
                                     </label>
                                     <input type="text" name="horario_atencion" id="cfg_horario" value="<?php echo htmlspecialchars($config['horario_atencion'] ?? ''); ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="Lun-Vie 8:00am - 5:00pm">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sección: Colores del Sitio -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-bold text-slate-700 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2">
+                                <i class="fas fa-palette text-cyan-500"></i>
+                                Colores del Sitio
+                            </h3>
+                            <p class="text-xs text-gray-500 mb-4">
+                                Personaliza la paleta principal que se usa en botones, enlaces y fondos. Usa colores con buen contraste para que el texto siempre sea legible.
+                            </p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <label class="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Color Primario</label>
+                                        <input type="color" name="color_primary" value="<?php echo htmlspecialchars($color_primary); ?>" class="w-14 h-10 rounded border border-gray-300 cursor-pointer">
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-xs text-gray-500 mb-1">Se usa en botones, enlaces destacados y acentos principales.</p>
+                                        <input type="text" readonly class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-xs font-mono text-gray-600" value="<?php echo htmlspecialchars($color_primary); ?>">
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <label class="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Color Primario Oscuro</label>
+                                        <input type="color" name="color_primary_dark" value="<?php echo htmlspecialchars($color_primary_dark); ?>" class="w-14 h-10 rounded border border-gray-300 cursor-pointer">
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-xs text-gray-500 mb-1">Se usa cuando pasas el mouse sobre botones y enlaces.</p>
+                                        <input type="text" readonly class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-xs font-mono text-gray-600" value="<?php echo htmlspecialchars($color_primary_dark); ?>">
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <label class="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Fondo Claro</label>
+                                        <input type="color" name="color_background_light" value="<?php echo htmlspecialchars($color_bg_light); ?>" class="w-14 h-10 rounded border border-gray-300 cursor-pointer">
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-xs text-gray-500 mb-1">Color de fondo principal en modo claro.</p>
+                                        <input type="text" readonly class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-xs font-mono text-gray-600" value="<?php echo htmlspecialchars($color_bg_light); ?>">
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <label class="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Fondo Oscuro</label>
+                                        <input type="color" name="color_background_dark" value="<?php echo htmlspecialchars($color_bg_dark); ?>" class="w-14 h-10 rounded border border-gray-300 cursor-pointer">
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-xs text-gray-500 mb-1">Color de fondo en modo oscuro.</p>
+                                        <input type="text" readonly class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-xs font-mono text-gray-600" value="<?php echo htmlspecialchars($color_bg_dark); ?>">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -481,6 +571,176 @@ $redes = !empty($config['redes_sociales']) ? json_decode($config['redes_sociales
                                     <textarea name="pie_pagina" id="cfg_pie_pagina" rows="3" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="© 2024 Mi Negocio. Todos los derechos reservados."><?php echo htmlspecialchars($config['pie_pagina'] ?? ''); ?></textarea>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Sección: Menú de Navegación (Header) -->
+                        <div class="mb-8">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold text-slate-700 pb-1 border-b border-slate-200 flex items-center gap-2">
+                                    <i class="fas fa-bars text-cyan-500"></i>
+                                    Menú de Navegación (Header)
+                                </h3>
+                                <button type="button" onclick="agregarItemHeader()" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold shadow-md">
+                                    <i class="fas fa-plus"></i>
+                                    Añadir ítem
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mb-2">
+                                Define las opciones del menú principal del header. Cada elemento puede apuntar a una ruta interna (por ejemplo <code>/categorias</code>) o a una URL externa.
+                            </p>
+                            <p class="text-[11px] text-gray-400 mb-4">
+                                Opcionalmente puedes definir el nombre del icono de <strong>Material Symbols</strong>, por ejemplo <code>grid_view</code>, <code>sell</code>, <code>shopping_cart</code>. Si lo dejas vacío se usará un icono por defecto según la ruta.
+                            </p>
+                            <div id="header-menu-items" class="space-y-3">
+                                <?php
+                                $header_menu_render = $header_menu;
+                                if (empty($header_menu_render)) {
+                                    $header_menu_render = [
+                                        ['label' => 'Categorías', 'path' => '/categorias'],
+                                        ['label' => 'Ofertas', 'path' => '/ofertas'],
+                                        ['label' => 'Contáctanos', 'path' => '/contacto'],
+                                    ];
+                                }
+                                foreach ($header_menu_render as $item):
+                                    $lbl = htmlspecialchars($item['label'] ?? '');
+                                    $pth = htmlspecialchars($item['path'] ?? '');
+                                    $ico = htmlspecialchars($item['icon'] ?? '');
+                                ?>
+                                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-slate-50 border border-slate-200 rounded-lg p-4" data-header-item="1">
+                                    <div class="md:col-span-4">
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Texto visible</label>
+                                        <input type="text" class="header-label w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: Categorías" value="<?php echo $lbl; ?>">
+                                    </div>
+                                    <div class="md:col-span-5">
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Ruta / URL</label>
+                                        <input type="text" class="header-path w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="/categorias o https://tusitio.com" value="<?php echo $pth; ?>">
+                                        <p class="text-[11px] text-gray-400 mt-1">Si usas rutas como <code>/categorias</code>, se mapearán automáticamente a las secciones internas cuando sea posible.</p>
+                                    </div>
+                                    <div class="md:col-span-3 flex flex-col gap-2 mt-3 md:mt-0">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-600 mb-1">Icono (Material Symbols)</label>
+                                            <div class="flex gap-2">
+                                                <input type="text" class="header-icon flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: grid_view" value="<?php echo $ico; ?>">
+                                                <button type="button" onclick="abrirSelectorIconos(this)" class="px-3 py-2 rounded-lg border border-cyan-200 text-cyan-600 text-xs font-semibold hover:bg-cyan-50 flex items-center gap-1">
+                                                    <span class="material-symbols-outlined text-sm">apps</span>
+                                                    <span>Ver iconos</span>
+                                                </button>
+                                            </div>
+                                            <p class="text-[10px] text-gray-400 mt-1">Ejemplos: <code>grid_view</code>, <code>sell</code>, <code>favorite</code>, <code>shopping_cart</code>.</p>
+                                        </div>
+                                        <div class="flex md:justify-end">
+                                            <button type="button" onclick="eliminarItemHeader(this)" class="px-3 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 flex items-center gap-1">
+                                                <i class="fas fa-trash"></i>
+                                                Quitar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <input type="hidden" name="header_menu_json" id="header_menu_json" value="<?php echo htmlspecialchars($config['header_menu'] ?? ''); ?>">
+                        </div>
+
+                        <!-- Sección: Columnas del Pie de Página (Footer) -->
+                        <div class="mb-8">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold text-slate-700 pb-1 border-b border-slate-200 flex items-center gap-2">
+                                    <i class="fas fa-columns text-cyan-500"></i>
+                                    Columnas del Pie de Página (Footer)
+                                </h3>
+                                <button type="button" onclick="agregarColumnaFooter()" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold shadow-md">
+                                    <i class="fas fa-plus"></i>
+                                    Añadir Columna
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mb-4">
+                                Administra las columnas de enlaces que aparecen en el footer. Puedes crear tantas columnas como necesites y dentro de cada una añadir, editar o quitar enlaces.
+                            </p>
+                            <div id="footer-columns" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <?php
+                                $footer_cols_render = $footer_columns;
+                                if (empty($footer_cols_render)) {
+                                    $footer_cols_render = [
+                                        [
+                                            'title' => 'Sobre Nosotros',
+                                            'links' => [
+                                                ['label' => 'Nuestra Historia', 'path' => '/nosotros'],
+                                                ['label' => 'Bolsa de Trabajo', 'path' => '/empleos'],
+                                                ['label' => 'Sostenibilidad', 'path' => '/sustentabilidad'],
+                                            ],
+                                        ],
+                                        [
+                                            'title' => 'Servicio al Cliente',
+                                            'links' => [
+                                                ['label' => 'Centro de Ayuda', 'path' => '/ayuda'],
+                                                ['label' => 'Políticas de Envío', 'path' => '/envios'],
+                                                ['label' => 'Devoluciones', 'path' => '/devoluciones'],
+                                            ],
+                                        ],
+                                    ];
+                                }
+                                foreach ($footer_cols_render as $col):
+                                    $colTitle = htmlspecialchars($col['title'] ?? '');
+                                    $links = is_array($col['links'] ?? null) ? $col['links'] : [];
+                                ?>
+                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-3" data-footer-column="1">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <div class="flex-1">
+                                            <label class="block text-xs font-semibold text-gray-600 mb-1">Título de la Columna</label>
+                                            <input type="text" class="footer-title w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: Sobre Nosotros" value="<?php echo $colTitle; ?>">
+                                        </div>
+                                        <button type="button" onclick="eliminarColumnaFooter(this)" class="mt-5 px-3 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 flex items-center gap-1">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="space-y-2" data-footer-links>
+                                        <?php if(empty($links)): ?>
+                                            <div class="grid grid-cols-12 gap-2 items-end" data-footer-link>
+                                                <div class="col-span-6">
+                                                    <label class="block text-[11px] font-semibold text-gray-600 mb-1">Texto</label>
+                                                    <input type="text" class="footer-link-label w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: Nuestra Historia">
+                                                </div>
+                                                <div class="col-span-5">
+                                                    <label class="block text-[11px] font-semibold text-gray-600 mb-1">Ruta / URL</label>
+                                                    <input type="text" class="footer-link-path w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="/nosotros">
+                                                </div>
+                                                <div class="col-span-1 flex justify-end">
+                                                    <button type="button" onclick="eliminarEnlaceFooter(this)" class="mb-1 px-2 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        <?php else: ?>
+                                            <?php foreach ($links as $lnk):
+                                                $lnkLabel = htmlspecialchars($lnk['label'] ?? '');
+                                                $lnkPath = htmlspecialchars($lnk['path'] ?? '');
+                                            ?>
+                                            <div class="grid grid-cols-12 gap-2 items-end" data-footer-link>
+                                                <div class="col-span-6">
+                                                    <label class="block text-[11px] font-semibold text-gray-600 mb-1">Texto</label>
+                                                    <input type="text" class="footer-link-label w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" value="<?php echo $lnkLabel; ?>" placeholder="Ej: Nuestra Historia">
+                                                </div>
+                                                <div class="col-span-5">
+                                                    <label class="block text-[11px] font-semibold text-gray-600 mb-1">Ruta / URL</label>
+                                                    <input type="text" class="footer-link-path w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" value="<?php echo $lnkPath; ?>" placeholder="/nosotros">
+                                                </div>
+                                                <div class="col-span-1 flex justify-end">
+                                                    <button type="button" onclick="eliminarEnlaceFooter(this)" class="mb-1 px-2 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </div>
+                                    <button type="button" onclick="agregarEnlaceFooter(this)" class="mt-1 inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-cyan-400 text-cyan-600 text-xs font-semibold hover:bg-cyan-50">
+                                        <i class="fas fa-plus"></i>
+                                        Añadir Enlace
+                                    </button>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <input type="hidden" name="footer_columns_json" id="footer_columns_json" value="<?php echo htmlspecialchars($config['footer_columns'] ?? ''); ?>">
                         </div>
 
                         <!-- Sección: Hero Principal -->
@@ -870,6 +1130,52 @@ $redes = !empty($config['redes_sociales']) ? json_decode($config['redes_sociales
 
            
 
+    <!-- ==================== SELECTOR DE ICONOS HEADER ==================== -->
+    <div id="iconSelectorModal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-40">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-hidden flex flex-col border border-slate-200">
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">apps</span>
+                    <h3 class="text-lg font-bold text-slate-800">Seleccionar icono</h3>
+                </div>
+                <button type="button" onclick="cerrarSelectorIconos()" class="p-2 rounded-full hover:bg-slate-100 text-slate-500">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="px-6 pt-3 pb-2 border-b border-slate-200">
+                <p class="text-xs text-slate-500">
+                    Estos son iconos de <strong>Material Symbols</strong>. Haz clic en uno para usarlo en el menú.
+                </p>
+            </div>
+            <div class="p-4 overflow-y-auto">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 text-sm">
+                    <?php
+                    $iconos_disponibles = [
+                        'home', 'grid_view', 'sell', 'shopping_cart',
+                        'favorite', 'package_2', 'contact_support', 'inventory_2',
+                        'local_shipping', 'support_agent', 'verified_user', 'workspace_premium',
+                        'storefront', 'category', 'info', 'help',
+                        'person', 'settings', 'receipt_long', 'payments'
+                    ];
+                    foreach ($iconos_disponibles as $ic):
+                    ?>
+                    <button type="button"
+                            class="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 hover:border-primary hover:bg-primary/5 text-slate-700 hover:text-primary transition text-left"
+                            onclick="seleccionarIconoHeader('<?php echo $ic; ?>')">
+                        <span class="material-symbols-outlined text-xl"><?php echo $ic; ?></span>
+                        <span class="text-xs font-mono"><?php echo $ic; ?></span>
+                    </button>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <div class="px-6 py-3 border-t border-slate-200 flex justify-end">
+                <button type="button" onclick="cerrarSelectorIconos()" class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== MODAL CONFIRMACIÓN ==================== -->
     <div id="modalConfirmar" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white rounded-xl p-8 w-full max-w-sm text-center shadow-2xl">
@@ -1158,6 +1464,13 @@ function submitConfigGeneral(e) {
     if (_enviando) return false;
     _enviando = true;
 
+    // Construir los JSON de Header y Footer antes de enviar
+    try {
+        construirHeaderFooterJSON();
+    } catch (err) {
+        console.error(err);
+    }
+
     const form = document.getElementById('formConfigGeneral');
     const formData = new FormData(form);
 
@@ -1177,6 +1490,199 @@ function submitConfigGeneral(e) {
     })
     .catch(() => { _enviando = false; mostrarModalError('Error de conexión con el servidor'); });
     return false;
+}
+
+// Construye los JSON de menú de header y columnas de footer y los coloca en los campos ocultos
+function construirHeaderFooterJSON() {
+    // Header Menu
+    var headerItems = [];
+    document.querySelectorAll('[data-header-item]').forEach(function(row) {
+        var labelInput = row.querySelector('.header-label');
+        var pathInput = row.querySelector('.header-path');
+        var iconInput = row.querySelector('.header-icon');
+        if (!labelInput || !pathInput) return;
+        var label = labelInput.value.trim();
+        var path = pathInput.value.trim();
+        var icon = iconInput ? iconInput.value.trim() : '';
+        if (label && path) {
+            var item = { label: label, path: path };
+            if (icon) {
+                item.icon = icon;
+            }
+            headerItems.push(item);
+        }
+    });
+    var headerField = document.getElementById('header_menu_json');
+    if (headerField) {
+        headerField.value = JSON.stringify(headerItems);
+    }
+
+    // Footer Columns
+    var columns = [];
+    document.querySelectorAll('[data-footer-column]').forEach(function(colEl) {
+        var titleInput = colEl.querySelector('.footer-title');
+        if (!titleInput) return;
+        var title = titleInput.value.trim();
+        if (!title) return;
+
+        var links = [];
+        colEl.querySelectorAll('[data-footer-link]').forEach(function(linkEl) {
+            var lblInput = linkEl.querySelector('.footer-link-label');
+            var pathInput = linkEl.querySelector('.footer-link-path');
+            if (!lblInput || !pathInput) return;
+            var l = lblInput.value.trim();
+            var p = pathInput.value.trim();
+            if (l && p) {
+                links.push({ label: l, path: p });
+            }
+        });
+
+        columns.push({ title: title, links: links });
+    });
+    var footerField = document.getElementById('footer_columns_json');
+    if (footerField) {
+        footerField.value = JSON.stringify(columns);
+    }
+}
+
+// Helpers UI Header Menu
+function agregarItemHeader() {
+    var cont = document.getElementById('header-menu-items');
+    if (!cont) return;
+    var row = document.createElement('div');
+    row.className = 'grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-slate-50 border border-slate-200 rounded-lg p-4';
+    row.setAttribute('data-header-item', '1');
+    row.innerHTML = '' +
+        '<div class="md:col-span-4">' +
+            '<label class="block text-xs font-semibold text-gray-600 mb-1">Texto visible</label>' +
+            '<input type="text" class="header-label w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: Nueva opción">' +
+        '</div>' +
+        '<div class="md:col-span-5">' +
+            '<label class="block text-xs font-semibold text-gray-600 mb-1">Ruta / URL</label>' +
+            '<input type="text" class="header-path w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="/ruta-o-url">' +
+            '<p class="text-[11px] text-gray-400 mt-1">Ej: /categorias o https://tusitio.com/pagina</p>' +
+        '</div>' +
+        '<div class="md:col-span-3 flex flex-col gap-2 mt-3 md:mt-0">' +
+            '<div>' +
+                '<label class="block text-xs font-semibold text-gray-600 mb-1">Icono (Material Symbols)</label>' +
+                '<div class="flex gap-2">' +
+                    '<input type="text" class="header-icon flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: grid_view">' +
+                    '<button type="button" onclick="abrirSelectorIconos(this)" class="px-3 py-2 rounded-lg border border-cyan-200 text-cyan-600 text-xs font-semibold hover:bg-cyan-50 flex items-center gap-1">' +
+                        '<span class="material-symbols-outlined text-sm">apps</span>' +
+                        '<span>Ver iconos</span>' +
+                    '</button>' +
+                '</div>' +
+                '<p class="text-[10px] text-gray-400 mt-1">Ejemplos: <code>grid_view</code>, <code>sell</code>, <code>favorite</code>, <code>shopping_cart</code>.</p>' +
+            '</div>' +
+            '<div class="flex md:justify-end">' +
+                '<button type="button" onclick="eliminarItemHeader(this)" class="px-3 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 flex items-center gap-1">' +
+                    '<i class="fas fa-trash"></i>' +
+                    'Quitar' +
+                '</button>' +
+            '</div>' +
+        '</div>';
+    cont.appendChild(row);
+}
+
+function eliminarItemHeader(btn) {
+    var row = btn.closest('[data-header-item]');
+    if (row) row.remove();
+}
+
+// Selector visual de iconos para el header
+var _headerIconTargetInput = null;
+
+function abrirSelectorIconos(btn) {
+    var row = btn.closest('[data-header-item]');
+    if (!row) return;
+    _headerIconTargetInput = row.querySelector('.header-icon');
+    if (!_headerIconTargetInput) return;
+    var modal = document.getElementById('iconSelectorModal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function cerrarSelectorIconos() {
+    var modal = document.getElementById('iconSelectorModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    _headerIconTargetInput = null;
+}
+
+function seleccionarIconoHeader(nombre) {
+    if (_headerIconTargetInput) {
+        _headerIconTargetInput.value = nombre;
+        _headerIconTargetInput.focus();
+    }
+    cerrarSelectorIconos();
+}
+
+// Helpers UI Footer Columns
+function agregarColumnaFooter() {
+    var cont = document.getElementById('footer-columns');
+    if (!cont) return;
+    var col = document.createElement('div');
+    col.className = 'bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-3';
+    col.setAttribute('data-footer-column', '1');
+    col.innerHTML = '' +
+        '<div class="flex items-center justify-between gap-2 mb-1">' +
+            '<div class="flex-1">' +
+                '<label class="block text-xs font-semibold text-gray-600 mb-1">Título de la Columna</label>' +
+                '<input type="text" class="footer-title w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: Nueva Columna">' +
+            '</div>' +
+            '<button type="button" onclick="eliminarColumnaFooter(this)" class="mt-5 px-3 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 flex items-center gap-1">' +
+                '<i class="fas fa-trash"></i>' +
+            '</button>' +
+        '</div>' +
+        '<div class="space-y-2" data-footer-links></div>' +
+        '<button type="button" onclick="agregarEnlaceFooter(this)" class="mt-1 inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-cyan-400 text-cyan-600 text-xs font-semibold hover:bg-cyan-50">' +
+            '<i class="fas fa-plus"></i>' +
+            'Añadir Enlace' +
+        '</button>';
+    cont.appendChild(col);
+
+    // Crear al menos un enlace vacío para esa columna
+    var addBtn = col.querySelector('button[onclick^="agregarEnlaceFooter"]');
+    if (addBtn) {
+        agregarEnlaceFooter(addBtn);
+    }
+}
+
+function eliminarColumnaFooter(btn) {
+    var col = btn.closest('[data-footer-column]');
+    if (col) col.remove();
+}
+
+function agregarEnlaceFooter(btn) {
+    var col = btn.closest('[data-footer-column]');
+    if (!col) return;
+    var cont = col.querySelector('[data-footer-links]');
+    if (!cont) return;
+    var row = document.createElement('div');
+    row.className = 'grid grid-cols-12 gap-2 items-end';
+    row.setAttribute('data-footer-link', '1');
+    row.innerHTML = '' +
+        '<div class="col-span-6">' +
+            '<label class="block text-[11px] font-semibold text-gray-600 mb-1">Texto</label>' +
+            '<input type="text" class="footer-link-label w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="Ej: Nueva página">' +
+        '</div>' +
+        '<div class="col-span-5">' +
+            '<label class="block text-[11px] font-semibold text-gray-600 mb-1">Ruta / URL</label>' +
+            '<input type="text" class="footer-link-path w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-sm" placeholder="/ruta-o-url">' +
+        '</div>' +
+        '<div class="col-span-1 flex justify-end">' +
+            '<button type="button" onclick="eliminarEnlaceFooter(this)" class="mb-1 px-2 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50">' +
+                '<i class="fas fa-times"></i>' +
+            '</button>' +
+        '</div>';
+    cont.appendChild(row);
+}
+
+function eliminarEnlaceFooter(btn) {
+    var row = btn.closest('[data-footer-link]');
+    if (row) row.remove();
 }
 
 function resetConfigGeneral() {

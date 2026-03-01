@@ -1,3 +1,22 @@
+<?php
+require_once '../core/conexion.php';
+
+// Cargar configuración general de colores
+$res_cfg_ct = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
+$cfg_ct = ($res_cfg_ct && mysqli_num_rows($res_cfg_ct) > 0) ? mysqli_fetch_assoc($res_cfg_ct) : [];
+
+function normalizar_color_contacto($valor, $defecto) {
+    if (!is_string($valor)) return $defecto;
+    $valor = trim($valor);
+    if ($valor === '') return $defecto;
+    if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $valor)) return $defecto;
+    return strtoupper($valor);
+}
+
+$ct_primary = normalizar_color_contacto($cfg_ct['color_primary'] ?? '#137fec', '#137FEC');
+$ct_bg_light = normalizar_color_contacto($cfg_ct['color_background_light'] ?? '#f6f7f8', '#F6F7F8');
+$ct_bg_dark = normalizar_color_contacto($cfg_ct['color_background_dark'] ?? '#101922', '#101922');
+?>
 <!DOCTYPE html>
 
 <html lang="es"><head>
@@ -15,9 +34,9 @@
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#137fec",
-                        "background-light": "#f6f7f8",
-                        "background-dark": "#101922",
+                        "primary": "<?php echo $ct_primary; ?>",
+                        "background-light": "<?php echo $ct_bg_light; ?>",
+                        "background-dark": "<?php echo $ct_bg_dark; ?>",
                     },
                     fontFamily: {
                         "display": ["Inter"]

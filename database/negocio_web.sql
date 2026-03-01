@@ -55,7 +55,7 @@ CREATE TABLE `carrito_detalle` (
   KEY `id_producto` (`id_producto`),
   CONSTRAINT `carrito_detalle_ibfk_1` FOREIGN KEY (`id_carrito`) REFERENCES `carritos` (`id_carrito`),
   CONSTRAINT `carrito_detalle_ibfk_2` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -133,12 +133,13 @@ CREATE TABLE `configuracion` (
   `texto_inicio` text DEFAULT NULL,
   `redes_sociales` text DEFAULT NULL,
   `moneda` varchar(10) DEFAULT 'USD',
-  `impuesto` decimal(5,2) DEFAULT 0.00,
   `slogan` varchar(255) DEFAULT NULL,
   `horario_atencion` varchar(255) DEFAULT NULL,
   `pie_pagina` text DEFAULT NULL,
   `favicon` varchar(255) DEFAULT NULL,
   `texto_banner_superior` varchar(255) DEFAULT NULL,
+  `header_menu` text DEFAULT NULL,
+  `footer_columns` text DEFAULT NULL,
   `hero_etiqueta` varchar(100) DEFAULT NULL,
   `hero_titulo` varchar(200) DEFAULT NULL,
   `hero_subtitulo` varchar(200) DEFAULT NULL,
@@ -146,6 +147,10 @@ CREATE TABLE `configuracion` (
   `hero_imagen` varchar(255) DEFAULT NULL,
   `hero_btn_primario` varchar(100) DEFAULT 'Comprar Ahora',
   `hero_btn_secundario` varchar(100) DEFAULT 'Ver Catálogo',
+  `color_primary` varchar(7) DEFAULT NULL,
+  `color_primary_dark` varchar(7) DEFAULT NULL,
+  `color_background_light` varchar(7) DEFAULT NULL,
+  `color_background_dark` varchar(7) DEFAULT NULL,
   PRIMARY KEY (`id_config`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -193,7 +198,7 @@ CREATE TABLE `direcciones_cliente` (
   PRIMARY KEY (`id_direccion`),
   KEY `id_cliente` (`id_cliente`),
   CONSTRAINT `direcciones_cliente_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `clientes` (`id_cliente`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -461,4 +466,4 @@ CREATE TABLE `usuarios` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-25 22:14:34
+-- Dump completed on 2026-02-28  9:37:59

@@ -1,50 +1,26 @@
 <?php
 require_once '../core/sesiones.php';
+require_once '../core/conexion.php';
 
 if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2)) {
     header("Location: ../index.php");
     exit();
 }
 
-/* ================================
-   PAGINACIÓN
-================================ */
-
-$porPagina = 10;
-$paginaActual = isset($_GET['pagina']) && is_numeric($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
-$offset = ($paginaActual - 1) * $porPagina;
-
-/* ================================
-   TOTAL DE PEDIDOS
-================================ */
-
-$sqlTotal = "SELECT COUNT(*) AS total FROM pedidos";
-$resultTotal = $conexion->query($sqlTotal);
-$totalPedidos = $resultTotal->fetch_assoc()['total'];
-$totalPaginas = ceil($totalPedidos / $porPagina);
+// Cargar configuración de moneda
+$res_cfg = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
+$cfg = ($res_cfg && mysqli_num_rows($res_cfg) > 0) ? mysqli_fetch_assoc($res_cfg) : [];
+$cfg_moneda_cod = $cfg['moneda'] ?? 'HNL';
+$simbolos_moneda = ['USD' => '$', 'EUR' => '€', 'MXN' => '$', 'COP' => '$', 'ARS' => '$', 'GTQ' => 'Q', 'HNL' => 'L', 'CRC' => '₡'];
+$cfg_moneda = $simbolos_moneda[$cfg_moneda_cod] ?? $cfg_moneda_cod;
 
 /* ================================
-   LISTADO DE PEDIDOS
+   MANEJO DE REQUESTS AJAX
 ================================ */
-
-$sql = "
-SELECT 
-    p.id_pedido,
-    c.nombre AS cliente,
-    p.fecha_pedido,
-    p.subtotal,
-    p.total,
-    p.estado
-FROM pedidos p
-INNER JOIN clientes c ON p.id_cliente = c.id_cliente
-ORDER BY p.fecha_pedido DESC
-LIMIT ?, ?
-";
-
-$stmt = $conexion->prepare($sql);
-$stmt->bind_param("ii", $offset, $porPagina);
-$stmt->execute();
-$resultado = $stmt->get_result();
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'])) {
+    include 'pedidos_contenido.php';
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -86,6 +62,9 @@ body { font-family: 'Inter', sans-serif; }
                 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 </style>
+<script>
+    window._cfgMoneda = '<?php echo addslashes($cfg_moneda); ?>';
+</script>
 </head>
 
 <body class="bg-slate-100 dark:bg-slate-900">
@@ -96,163 +75,155 @@ body { font-family: 'Inter', sans-serif; }
     <h2 class="text-3xl font-bold">Administración de Lista de Pedidos</h2>
 </header>
 
+<!-- FILTROS Y BÚSQUEDA -->
+<div class="bg-white dark:bg-slate-800 rounded-xl p-6 mb-8 border border-slate-200 dark:border-slate-700">
+    <div class="flex flex-col md:flex-row gap-4">
+        
+        <div class="flex-1">
+            <label class="block text-sm font-semibold mb-2">Buscar por Número de Pedido</label>
+            <input 
+                type="text" 
+                id="inputBusqueda"
+                placeholder="Ej: 123"
+                class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:border-primary"
+            />
+        </div>
+
+        <div class="flex-1">
+            <label class="block text-sm font-semibold mb-2">Filtrar por Estado</label>
+            <select 
+                id="selectEstado"
+                class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:border-primary"
+            >
+                <option value="">-- Todos los estados --</option>
+                <option value="pendiente">Pendiente</option>
+                <option value="confirmado">Confirmado</option>
+                <option value="enviado">Enviado</option>
+                <option value="entregado">Entregado</option>
+                <option value="cancelado">Cancelado</option>
+            </select>
+        </div>
+
+    </div>
+</div>
+
 <div class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden table-container border border-slate-200 dark:border-slate-700">
 
 <div class="bg-primary px-6 py-4">
     <h3 class="text-white font-bold text-lg">Lista de Pedidos</h3>
 </div>
 
-<div class="overflow-x-auto">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-<th class="px-6 py-4 text-xs font-bold uppercase">ID Pedido</th>
-<th class="px-6 py-4 text-xs font-bold uppercase">Cliente</th>
-<th class="px-6 py-4 text-xs font-bold uppercase">Fecha</th>
-<th class="px-6 py-4 text-xs font-bold uppercase">Subtotal</th>
-<th class="px-6 py-4 text-xs font-bold uppercase">Total</th>
-<th class="px-6 py-4 text-xs font-bold uppercase">Estado</th>
-<th class="px-6 py-4 text-xs font-bold uppercase text-center">Acciones</th>
-</tr>
-</thead>
-
-<tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-
-<?php if ($resultado->num_rows > 0): ?>
-
-<?php while ($pedido = $resultado->fetch_assoc()): ?>
-
-<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
-
-<td class="px-6 py-5 font-semibold">
-    #<?php echo $pedido['id_pedido']; ?>
-</td>
-
-<td class="px-6 py-5">
-    <?php echo htmlspecialchars($pedido['cliente']); ?>
-</td>
-
-<td class="px-6 py-5">
-    <?php echo date("d-m-Y", strtotime($pedido['fecha_pedido'])); ?>
-</td>
-
-<td class="px-6 py-5">
-    L <?php echo number_format($pedido['subtotal'], 2); ?>
-</td>
-
-<td class="px-6 py-5 font-bold text-green-600">
-    L <?php echo number_format($pedido['total'], 2); ?>
-</td>
-
-<td class="px-6 py-5">
-<?php
-$estado = $pedido['estado'];
-
-$colores = [
-    'pendiente' => 'bg-blue-100 text-blue-700',
-    'confirmado' => 'bg-emerald-100 text-emerald-700',
-    'enviado' => 'bg-purple-100 text-purple-700',
-    'entregado' => 'bg-green-100 text-green-700',
-    'cancelado' => 'bg-rose-100 text-rose-700'
-];
-
-$claseEstado = $colores[$estado] ?? 'bg-gray-100 text-gray-700';
-?>
-
-<span class="inline-flex px-3 py-1 rounded-full text-xs font-bold <?php echo $claseEstado; ?>">
-<?php echo ucfirst($estado); ?>
-</span>
-</td>
-
-<td class="px-6 py-5">
-<div class="flex justify-center gap-2">
-
-<button class="btn-ver-detalle w-8 h-8 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center"
-data-id="<?php echo $pedido['id_pedido']; ?>">
-<span class="material-icons-outlined text-sm">visibility</span>
-</button>
-
-<button class="btn-cambiar-estado w-8 h-8 rounded-full bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center"
-data-id="<?php echo $pedido['id_pedido']; ?>">
-<span class="material-icons-outlined text-sm">swap_horiz</span>
-</button>
-
-<button class="btn-cancelar w-8 h-8 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center"
-data-id="<?php echo $pedido['id_pedido']; ?>">
-<span class="material-icons-outlined text-sm">close</span>
-</button>
-
-</div>
-</td>
-
-</tr>
-
-<?php endwhile; ?>
-
-<?php else: ?>
-
-<tr>
-<td colspan="7" class="text-center py-10 text-gray-500">
-No hay pedidos registrados.
-</td>
-</tr>
-
-<?php endif; ?>
-
-</tbody>
-</table>
-</div>
-
-<?php
-$mostrando = min($porPagina, $totalPedidos - $offset);
-?>
-
-<div class="px-6 py-4 flex justify-between items-center bg-slate-50 dark:bg-slate-800/80">
-
-<p class="text-sm text-slate-500">
-Mostrando <?php echo $mostrando; ?> de <?php echo $totalPedidos; ?> pedidos
-</p>
-
-<div class="flex gap-2">
-
-<?php if ($paginaActual > 1): ?>
-<a href="?pagina=<?php echo $paginaActual - 1; ?>"
-class="px-3 py-1 border rounded bg-white hover:bg-slate-50">Anterior</a>
-<?php endif; ?>
-
-<?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
-<a href="?pagina=<?php echo $i; ?>"
-class="px-3 py-1 rounded <?php echo $i == $paginaActual ? 'bg-primary text-white' : 'border bg-white'; ?>">
-<?php echo $i; ?>
-</a>
-<?php endfor; ?>
-
-<?php if ($paginaActual < $totalPaginas): ?>
-<a href="?pagina=<?php echo $paginaActual + 1; ?>"
-class="px-3 py-1 border rounded bg-white hover:bg-slate-50">Siguiente</a>
-<?php endif; ?>
-
-</div>
+<div class="overflow-x-auto" id="tablasResultados">
+    <p class="text-center py-10 text-gray-500">Cargando...</p>
 </div>
 
 </div>
 
-</main>
-<!-- MODAL DETALLE PEDIDO -->
-<div id="modalDetalle" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
-    <div class="bg-white dark:bg-slate-800 w-full max-w-4xl rounded-xl p-6 relative max-h-[90vh] overflow-y-auto">
+<script>
+(function() {
+    // Ejecutar inicialización inmediatamente sin check de flag
+    console.log('Script pedidos cargado');
 
-        <button onclick="cerrarModal()" 
-        class="absolute top-3 right-3 text-gray-500 hover:text-black text-xl">
-            ✕
-        </button>
+    function inicializarPedidos() {
+        const inputBusqueda = document.getElementById('inputBusqueda');
+        const selectEstado = document.getElementById('selectEstado');
+        const tablasResultados = document.getElementById('tablasResultados');
 
-        <div id="contenidoDetalle">
-            <!-- Aquí se carga el detalle -->
-        </div>
+        if (!inputBusqueda || !selectEstado || !tablasResultados) {
+            console.log('Esperando elementos...');
+            setTimeout(inicializarPedidos, 100);
+            return;
+        }
 
-    </div>
-</div>
+        console.log('✓ Inicializando Pedidos');
+
+        // Cargar datos inmediatamente
+        cargarResultados();
+
+        // Event listeners
+        inputBusqueda.addEventListener('input', cargarResultados);
+        selectEstado.addEventListener('change', cargarResultados);
+    }
+
+    window.cargarResultados = async function(pagina = 1) {
+        const inputBusqueda = document.getElementById('inputBusqueda');
+        const selectEstado = document.getElementById('selectEstado');
+        const tablasResultados = document.getElementById('tablasResultados');
+
+        if (!inputBusqueda || !selectEstado || !tablasResultados) return;
+
+        const numero_pedido = inputBusqueda.value;
+        const estado_filtro = selectEstado.value;
+
+        const formData = new FormData();
+        formData.append('numero_pedido', numero_pedido);
+        formData.append('estado_filtro', estado_filtro);
+        formData.append('pagina', pagina);
+
+        try {
+            tablasResultados.innerHTML = '<p class="text-center py-10 text-gray-500">Cargando...</p>';
+            
+            const response = await fetch('pedidos_contenido.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Error en la respuesta');
+            }
+
+            const html = await response.text();
+            tablasResultados.innerHTML = html;
+
+        } catch (error) {
+            console.error('Error:', error);
+            tablasResultados.innerHTML = '<p class="text-center py-10 text-red-500">Error al cargar los datos</p>';
+        }
+    };
+
+    window.cargarPagina = function(pagina) {
+        const inputBusqueda = document.getElementById('inputBusqueda');
+        const selectEstado = document.getElementById('selectEstado');
+
+        if (!inputBusqueda || !selectEstado) return;
+
+        const numero_pedido = inputBusqueda.value;
+        const estado_filtro = selectEstado.value;
+
+        const formData = new FormData();
+        formData.append('numero_pedido', numero_pedido);
+        formData.append('estado_filtro', estado_filtro);
+        formData.append('pagina', pagina);
+
+        fetch('pedidos_contenido.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.text())
+        .then(html => {
+            const tablasResultados = document.getElementById('tablasResultados');
+            if (tablasResultados) {
+                tablasResultados.innerHTML = html;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const tablasResultados = document.getElementById('tablasResultados');
+            if (tablasResultados) {
+                tablasResultados.innerHTML = '<p class="text-center py-10 text-red-500">Error al cargar los datos</p>';
+            }
+        });
+    };
+
+    // Intentar inicializar ahora
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', inicializarPedidos);
+    } else {
+        setTimeout(inicializarPedidos, 50);
+    }
+})();
+</script>
+
 <script>
 document.addEventListener("click", function(e){
 
@@ -276,6 +247,7 @@ function cerrarModal(){
     document.getElementById("modalDetalle").classList.remove("flex");
 }
 </script>
+
 <script>
 let pedidoActual = null;
 
@@ -287,6 +259,39 @@ document.addEventListener("click", function(e){
 
         document.getElementById("modalEstado").classList.remove("hidden");
         document.getElementById("modalEstado").classList.add("flex");
+    }
+
+    if(e.target.closest(".btn-cancelar")){
+        const btn = e.target.closest(".btn-cancelar");
+        const id = btn.dataset.id;
+
+        if(confirm("¿Estás seguro de que deseas cancelar este pedido?")){
+            fetch("cambiar_estado.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "id=" + id + "&estado=cancelado"
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.exito){
+                    const fila = document.querySelector('button[data-id="' + id + '"]').closest('tr');
+                    const badge = fila.querySelector('span');
+                    
+                    badge.textContent = 'Cancelado';
+                    badge.className = 'inline-flex px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700';
+                    
+                    alert('Pedido cancelado exitosamente');
+                } else {
+                    alert('Error: ' + (data.error ?? 'No se pudo cancelar'));
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error de conexión');
+            });
+        }
     }
 
 });
@@ -338,6 +343,18 @@ function guardarCambioEstado(){
     });
 }
 </script>
+
+<!-- MODAL VER DETALLE -->
+<div id="modalDetalle" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-2xl relative max-h-96 overflow-y-auto">
+        <button onclick="cerrarModal()" 
+        class="absolute top-3 right-3 text-gray-500 hover:text-black text-2xl">
+            ✕
+        </button>
+        <div id="contenidoDetalle"></div>
+    </div>
+</div>
+
 <!-- MODAL CAMBIAR ESTADO -->
 <div id="modalEstado" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
     <div class="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-md relative">
@@ -363,6 +380,7 @@ function guardarCambioEstado(){
 
     </div>
 </div>
+
 <!-- MODAL IMAGEN GRANDE -->
 <div id="modalImagen"
      style="display:none;"
@@ -383,6 +401,7 @@ function guardarCambioEstado(){
 
     </div>
 </div>
+
 <script>
 function abrirImagen(ruta){
     var modal = document.getElementById("modalImagen");
@@ -400,5 +419,6 @@ function cerrarModalImagen(){
     modal.style.display = "none";
 }
 </script>
+
 </body>
 </html>

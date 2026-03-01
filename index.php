@@ -2396,5 +2396,40 @@ document.addEventListener('DOMContentLoaded', function() {
 // ========== FIN CARRITO ==========
 
 </script>
+<script>
+document.body.addEventListener("click", function (e) {
 
+    const btn = e.target.closest(".btn-ver-detalle");
+
+    if (btn) {
+
+        const id = btn.dataset.id;
+
+        fetch("client/obtener_detalle_pedido.php?id=" + id)
+            .then(res => res.text())
+            .then(data => {
+
+                const modal = document.getElementById("modalPedido");
+                const contenido = document.getElementById("contenidoModal");
+
+                if (modal && contenido) {
+                    contenido.innerHTML = data;
+                    modal.classList.remove("hidden");
+                    modal.classList.add("flex");
+                }
+
+            });
+
+    }
+
+});
+
+function cerrarModal() {
+    const modal = document.getElementById("modalPedido");
+    if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }
+}
+</script>
 </body></html>

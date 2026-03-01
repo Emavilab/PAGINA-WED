@@ -77,6 +77,20 @@
 </div>
 <div class="space-y-4">
 <div id="checkout-metodos-pago" class="flex flex-wrap gap-2 mb-6"></div>
+<div id="contenedor-comprobante" class="mt-4 hidden">
+    <label class="block text-sm font-medium mb-2">
+        Subir comprobante de transferencia
+    </label>
+    <input 
+        type="file" 
+        id="input-comprobante"
+        accept="image/png, image/jpeg, image/jpg, image/webp"
+        class="w-full rounded-lg border border-slate-300 p-2"
+    />
+    <p class="text-xs text-slate-500 mt-1">
+        Solo imágenes (JPG, PNG, WEBP). Máximo 3MB.
+    </p>
+</div>
 </section>
 </div>
 
@@ -106,7 +120,7 @@
 <span class="text-primary text-2xl font-black" id="totalPrice">264,87 €</span>
 </div>
 </div>
-<button class="w-full bg-primary hover:bg-primary/90 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2" onclick="confirmarPago()">
+<button class="w-full bg-primary hover:bg-primary/90 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2" onclick="confirmarPedido()">
 <span class="material-icons">verified_user</span>
 Confirmar y Pagar
 </button>
@@ -225,34 +239,65 @@ function obtenerDireccionSeleccionada() {
     const seleccionada = document.querySelector('input[name="saved_address"]:checked');
     return seleccionada ? seleccionada.value : null;
 }
-
+function obtenerEnvioSeleccionado() {
+    const seleccionado = document.querySelector('input[name="shipping"]:checked');
+    return seleccionado ? seleccionado.value : null;
+}
 
 /* ===============================
    CONFIRMAR PAGO
 ================================= */
-function confirmarPago() {
+async function confirmarPedido() {
 
     const direccionId = obtenerDireccionSeleccionada();
+    const envioId = obtenerEnvioSeleccionado();
+    const metodoPagoId = metodoPagoSeleccionado;
 
     if (!direccionId) {
-        alert("Selecciona una dirección antes de continuar.");
+        alert("Selecciona una dirección.");
         return;
     }
 
-    console.log("Dirección seleccionada:", direccionId);
+    if (!envioId) {
+        alert("Selecciona un método de envío.");
+        return;
+    }
 
-    // 🔥 Aquí luego haremos el fetch para crear pedido
-    // Ejemplo futuro:
-    /*
-    fetch("api/api_crear_pedido.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-            id_direccion: direccionId
-        })
-    });
-    */
+    if (!metodoPagoId) {
+        alert("Selecciona un método de pago.");
+        return;
+    }
+
+    try {
+
+        const response = await fetch("/PAGINA-WED/api/api_crear_pedido.php", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                id_direccion: direccionId,
+                id_envio: envioId,
+                id_metodo_pago: metodoPagoId
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.exito) {
+    alert("Pedido creado correctamente");
+    
+    setTimeout(() => {
+        loadHistorialPedidos();
+    }, 2000); // 2000 = 2 segundos
+    } else {
+        alert(data.error || "Error al crear pedido");
+    }
+    } catch (error) {
+        console.error(error);
+        alert("Error de conexión");
+    }
 }
 let envioSeleccionado = 0;
 
@@ -270,6 +315,7 @@ async function cargarMetodosEnvio() {
             contenedor.innerHTML = "<p>No hay métodos disponibles</p>";
             return;
         }
+    
 
         contenedor.innerHTML = "";
 
@@ -469,6 +515,14 @@ async function cargarMetodosPago() {
                 </button>
             `;
         });
+        const primerMetodo = data.metodos[0];
+        const contenedorComprobante = document.getElementById("contenedor-comprobante");
+
+        if (primerMetodo.id_metodo_pago == 19) {   // <-- ID de Transferencia
+            contenedorComprobante.classList.remove("hidden");
+        } else {
+            contenedorComprobante.classList.add("hidden");
+        }
 
     } catch (error) {
         console.error("Error cargando métodos pago:", error);
@@ -488,5 +542,15 @@ function seleccionarMetodoPago(idMetodo, boton) {
     // Activar el seleccionado
     boton.classList.remove("border", "border-slate-200", "dark:border-slate-700");
     boton.classList.add("bg-primary", "text-white");
+    
+    const contenedor = document.getElementById("contenedor-comprobante");
+
+// Aquí debes poner el ID real del método Transferencia
+// Por ejemplo si Transferencia es id 19:
+if (idMetodo == 19) {
+    contenedor.classList.remove("hidden");
+} else {
+    contenedor.classList.add("hidden");
+}
 }
 </script>

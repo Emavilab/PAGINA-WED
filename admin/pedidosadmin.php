@@ -5,204 +5,363 @@ if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] !=
     header("Location: ../index.php");
     exit();
 }
+
+/* ================================
+   PAGINACIÓN
+================================ */
+
+$porPagina = 10;
+$paginaActual = isset($_GET['pagina']) && is_numeric($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+$offset = ($paginaActual - 1) * $porPagina;
+
+/* ================================
+   TOTAL DE PEDIDOS
+================================ */
+
+$sqlTotal = "SELECT COUNT(*) AS total FROM pedidos";
+$resultTotal = $conexion->query($sqlTotal);
+$totalPedidos = $resultTotal->fetch_assoc()['total'];
+$totalPaginas = ceil($totalPedidos / $porPagina);
+
+/* ================================
+   LISTADO DE PEDIDOS
+================================ */
+
+$sql = "
+SELECT 
+    p.id_pedido,
+    c.nombre AS cliente,
+    p.fecha_pedido,
+    p.subtotal,
+    p.total,
+    p.estado
+FROM pedidos p
+INNER JOIN clientes c ON p.id_cliente = c.id_cliente
+ORDER BY p.fecha_pedido DESC
+LIMIT ?, ?
+";
+
+$stmt = $conexion->prepare($sql);
+$stmt->bind_param("ii", $offset, $porPagina);
+$stmt->execute();
+$resultado = $stmt->get_result();
 ?>
+
 <!DOCTYPE html>
-<html class="light" lang="es"><head>
+<html class="light" lang="es">
+<head>
 <meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Administración de Lista de Pedidos</title>
+
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com" rel="preconnect"/>
-<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+
 <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#D9480F", // Vibrant burnt orange from image
-                        "background-light": "#F8FAFC",
-                        "background-dark": "#0F172A",
-                    },
-                    fontFamily: {
-                        display: ["Inter", "sans-serif"],
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.5rem",
-                    },
-                },
+tailwind.config = {
+    darkMode: "class",
+    theme: {
+        extend: {
+            colors: {
+                primary: "#D9480F",
+                "background-light": "#F8FAFC",
+                "background-dark": "#0F172A",
             },
-        };
-        function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-        }
-    </script>
+            fontFamily: {
+                display: ["Inter", "sans-serif"],
+            },
+            borderRadius: {
+                DEFAULT: "0.5rem",
+            },
+        },
+    },
+};
+</script>
+
 <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .table-container {
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        }
-    </style>
+body { font-family: 'Inter', sans-serif; }
+.table-container {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1),
+                0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+</style>
+</head>
+
+<body class="bg-slate-100 dark:bg-slate-900">
 
 <main class="max-w-7xl mx-auto px-6 pb-12">
-<header class="mb-8 flex justify-between items-end">
-<div>
 
-<h2 class="text-3xl font-bold">Administración de Lista de Pedidos</h2>
-</div>
-<div class="flex gap-3">
-<button class="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 font-medium transition-colors">
-<span class="material-icons-outlined text-lg">filter_list</span>
-                    Filtrar
-                </button>
-<button class="px-4 py-2 bg-primary hover:bg-orange-700 text-white rounded-lg flex items-center gap-2 font-medium transition-colors">
-<span class="material-icons-outlined text-lg">add</span>
-                    Nuevo Pedido
-                </button>
-</div>
+<header class="mb-8 flex justify-between items-end">
+    <h2 class="text-3xl font-bold">Administración de Lista de Pedidos</h2>
 </header>
+
 <div class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden table-container border border-slate-200 dark:border-slate-700">
-<div class="bg-primary px-6 py-4 flex items-center gap-3">
-<span class="material-icons-outlined text-white">list</span>
-<h3 class="text-white font-bold text-lg">Lista de Pedidos</h3>
+
+<div class="bg-primary px-6 py-4">
+    <h3 class="text-white font-bold text-lg">Lista de Pedidos</h3>
 </div>
+
 <div class="overflow-x-auto">
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">ID Pedido</th>
-<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Cliente</th>
-<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Fecha</th>
-<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Subtotal</th>
-<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total</th>
-<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Estado</th>
-<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center">Acciones</th>
+<th class="px-6 py-4 text-xs font-bold uppercase">ID Pedido</th>
+<th class="px-6 py-4 text-xs font-bold uppercase">Cliente</th>
+<th class="px-6 py-4 text-xs font-bold uppercase">Fecha</th>
+<th class="px-6 py-4 text-xs font-bold uppercase">Subtotal</th>
+<th class="px-6 py-4 text-xs font-bold uppercase">Total</th>
+<th class="px-6 py-4 text-xs font-bold uppercase">Estado</th>
+<th class="px-6 py-4 text-xs font-bold uppercase text-center">Acciones</th>
 </tr>
 </thead>
+
 <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+
+<?php if ($resultado->num_rows > 0): ?>
+
+<?php while ($pedido = $resultado->fetch_assoc()): ?>
+
 <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
-<td class="px-6 py-5 font-semibold text-slate-700 dark:text-slate-200">#1001</td>
-<td class="px-6 py-5 text-slate-600 dark:text-slate-300">Juan Pérez</td>
-<td class="px-6 py-5 text-slate-600 dark:text-slate-300">13-02-2026</td>
-<td class="px-6 py-5 text-slate-600 dark:text-slate-300">$1,200.00</td>
-<td class="px-6 py-5 font-bold text-green-600 dark:text-green-400">$1,320.00</td>
-<td class="px-6 py-5">
-<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                    Pendiente
-                                </span>
+
+<td class="px-6 py-5 font-semibold">
+    #<?php echo $pedido['id_pedido']; ?>
 </td>
+
+<td class="px-6 py-5">
+    <?php echo htmlspecialchars($pedido['cliente']); ?>
+</td>
+
+<td class="px-6 py-5">
+    <?php echo date("d-m-Y", strtotime($pedido['fecha_pedido'])); ?>
+</td>
+
+<td class="px-6 py-5">
+    L <?php echo number_format($pedido['subtotal'], 2); ?>
+</td>
+
+<td class="px-6 py-5 font-bold text-green-600">
+    L <?php echo number_format($pedido['total'], 2); ?>
+</td>
+
+<td class="px-6 py-5">
+<?php
+$estado = $pedido['estado'];
+
+$colores = [
+    'pendiente' => 'bg-blue-100 text-blue-700',
+    'confirmado' => 'bg-emerald-100 text-emerald-700',
+    'enviado' => 'bg-purple-100 text-purple-700',
+    'entregado' => 'bg-green-100 text-green-700',
+    'cancelado' => 'bg-rose-100 text-rose-700'
+];
+
+$claseEstado = $colores[$estado] ?? 'bg-gray-100 text-gray-700';
+?>
+
+<span class="inline-flex px-3 py-1 rounded-full text-xs font-bold <?php echo $claseEstado; ?>">
+<?php echo ucfirst($estado); ?>
+</span>
+</td>
+
 <td class="px-6 py-5">
 <div class="flex justify-center gap-2">
-<button class="w-8 h-8 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-sm transition-all hover:scale-110" title="Ver Detalle">
+
+<button class="btn-ver-detalle w-8 h-8 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center"
+data-id="<?php echo $pedido['id_pedido']; ?>">
 <span class="material-icons-outlined text-sm">visibility</span>
 </button>
-<button class="w-8 h-8 rounded-full bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center shadow-sm transition-all hover:scale-110" title="Cambiar Estado">
+
+<button class="btn-cambiar-estado w-8 h-8 rounded-full bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center"
+data-id="<?php echo $pedido['id_pedido']; ?>">
 <span class="material-icons-outlined text-sm">swap_horiz</span>
 </button>
-<button class="w-8 h-8 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-sm transition-all hover:scale-110" title="Cancelar">
+
+<button class="btn-cancelar w-8 h-8 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center"
+data-id="<?php echo $pedido['id_pedido']; ?>">
 <span class="material-icons-outlined text-sm">close</span>
 </button>
+
 </div>
 </td>
+
 </tr>
-<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
-<td class="px-6 py-5 font-semibold text-slate-700 dark:text-slate-200">#1002</td>
-<td class="px-6 py-5 text-slate-600 dark:text-slate-300">María García</td>
-<td class="px-6 py-5 text-slate-600 dark:text-slate-300">12-02-2026</td>
-<td class="px-6 py-5 text-slate-600 dark:text-slate-300">$450.00</td>
-<td class="px-6 py-5 font-bold text-green-600 dark:text-green-400">$500.00</td>
-<td class="px-6 py-5">
-<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                    Confirmado
-                                </span>
-</td>
-<td class="px-6 py-5">
-<div class="flex justify-center gap-2">
-<button class="w-8 h-8 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-sm transition-all hover:scale-110">
-<span class="material-icons-outlined text-sm">visibility</span>
-</button>
-<button class="w-8 h-8 rounded-full bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center shadow-sm transition-all hover:scale-110">
-<span class="material-icons-outlined text-sm">swap_horiz</span>
-</button>
-<button class="w-8 h-8 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-sm transition-all hover:scale-110">
-<span class="material-icons-outlined text-sm">close</span>
-</button>
-</div>
+
+<?php endwhile; ?>
+
+<?php else: ?>
+
+<tr>
+<td colspan="7" class="text-center py-10 text-gray-500">
+No hay pedidos registrados.
 </td>
 </tr>
-<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
-<td class="px-6 py-5 font-semibold text-slate-700 dark:text-slate-200">#1003</td>
-<td class="px-6 py-5 text-slate-600 dark:text-slate-300">Carlos López</td>
-<td class="px-6 py-5 text-slate-600 dark:text-slate-300">11-02-2026</td>
-<td class="px-6 py-5 text-slate-600 dark:text-slate-300">$800.00</td>
-<td class="px-6 py-5 font-bold text-green-600 dark:text-green-400">$880.00</td>
-<td class="px-6 py-5">
-<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                                    Enviado
-                                </span>
-</td>
-<td class="px-6 py-5">
-<div class="flex justify-center gap-2">
-<button class="w-8 h-8 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-sm transition-all hover:scale-110">
-<span class="material-icons-outlined text-sm">visibility</span>
-</button>
-<button class="w-8 h-8 rounded-full bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center shadow-sm transition-all hover:scale-110">
-<span class="material-icons-outlined text-sm">swap_horiz</span>
-</button>
-<button class="w-8 h-8 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-sm transition-all hover:scale-110">
-<span class="material-icons-outlined text-sm">close</span>
-</button>
-</div>
-</td>
-</tr>
+
+<?php endif; ?>
+
 </tbody>
 </table>
 </div>
-<div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-<p class="text-sm text-slate-500 dark:text-slate-400">Mostrando 3 de 150 pedidos</p>
+
+<?php
+$mostrando = min($porPagina, $totalPedidos - $offset);
+?>
+
+<div class="px-6 py-4 flex justify-between items-center bg-slate-50 dark:bg-slate-800/80">
+
+<p class="text-sm text-slate-500">
+Mostrando <?php echo $mostrando; ?> de <?php echo $totalPedidos; ?> pedidos
+</p>
+
 <div class="flex gap-2">
-<button class="px-3 py-1 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 disabled:opacity-50">Anterior</button>
-<button class="px-3 py-1 bg-primary text-white rounded">1</button>
-<button class="px-3 py-1 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50">2</button>
-<button class="px-3 py-1 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50">Siguiente</button>
+
+<?php if ($paginaActual > 1): ?>
+<a href="?pagina=<?php echo $paginaActual - 1; ?>"
+class="px-3 py-1 border rounded bg-white hover:bg-slate-50">Anterior</a>
+<?php endif; ?>
+
+<?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+<a href="?pagina=<?php echo $i; ?>"
+class="px-3 py-1 rounded <?php echo $i == $paginaActual ? 'bg-primary text-white' : 'border bg-white'; ?>">
+<?php echo $i; ?>
+</a>
+<?php endfor; ?>
+
+<?php if ($paginaActual < $totalPaginas): ?>
+<a href="?pagina=<?php echo $paginaActual + 1; ?>"
+class="px-3 py-1 border rounded bg-white hover:bg-slate-50">Siguiente</a>
+<?php endif; ?>
+
 </div>
 </div>
+
 </div>
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-12">
-<div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-<p class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">Pedidos Totales</p>
-<h4 class="text-2xl font-bold">1,452</h4>
-<div class="mt-2 text-xs text-green-600 flex items-center">
-<span class="material-icons-outlined text-sm mr-1">trending_up</span>
-                    +12% este mes
-                </div>
+
+</main>
+<!-- MODAL DETALLE PEDIDO -->
+<div id="modalDetalle" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-slate-800 w-full max-w-4xl rounded-xl p-6 relative max-h-[90vh] overflow-y-auto">
+
+        <button onclick="cerrarModal()" 
+        class="absolute top-3 right-3 text-gray-500 hover:text-black text-xl">
+            ✕
+        </button>
+
+        <div id="contenidoDetalle">
+            <!-- Aquí se carga el detalle -->
+        </div>
+
+    </div>
 </div>
-<div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-<p class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">Ventas Brutas</p>
-<h4 class="text-2xl font-bold">$42,850.00</h4>
-<div class="mt-2 text-xs text-green-600 flex items-center">
-<span class="material-icons-outlined text-sm mr-1">trending_up</span>
-                    +8.5% este mes
-                </div>
+<script>
+document.addEventListener("click", function(e){
+
+    if(e.target.closest(".btn-ver-detalle")){
+        const btn = e.target.closest(".btn-ver-detalle");
+        const id = btn.dataset.id;
+
+        fetch("admin_obtener_detalle.php?id=" + id)
+        .then(res => res.text())
+        .then(data => {
+            document.getElementById("contenidoDetalle").innerHTML = data;
+            document.getElementById("modalDetalle").classList.remove("hidden");
+            document.getElementById("modalDetalle").classList.add("flex");
+        });
+    }
+
+});
+
+function cerrarModal(){
+    document.getElementById("modalDetalle").classList.add("hidden");
+    document.getElementById("modalDetalle").classList.remove("flex");
+}
+</script>
+<script>
+let pedidoActual = null;
+
+document.addEventListener("click", function(e){
+
+    if(e.target.closest(".btn-cambiar-estado")){
+        const btn = e.target.closest(".btn-cambiar-estado");
+        pedidoActual = btn.dataset.id;
+
+        document.getElementById("modalEstado").classList.remove("hidden");
+        document.getElementById("modalEstado").classList.add("flex");
+    }
+
+});
+
+function cerrarModalEstado(){
+    document.getElementById("modalEstado").classList.add("hidden");
+    document.getElementById("modalEstado").classList.remove("flex");
+}
+
+function guardarCambioEstado(){
+
+    const estado = document.getElementById("nuevoEstado").value;
+
+    fetch("cambiar_estado.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: "id=" + pedidoActual + "&estado=" + estado
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.exito){
+
+            const fila = document.querySelector(`button[data-id="${pedidoActual}"]`).closest("tr");
+            const badge = fila.querySelector("span");
+
+            const colores = {
+                pendiente: "bg-blue-100 text-blue-700",
+                confirmado: "bg-emerald-100 text-emerald-700",
+                enviado: "bg-purple-100 text-purple-700",
+                entregado: "bg-green-100 text-green-700",
+            };
+
+            badge.textContent = estado.charAt(0).toUpperCase() + estado.slice(1);
+            badge.className = "inline-flex px-3 py-1 rounded-full text-xs font-bold " + colores[estado];
+
+            cerrarModalEstado();
+
+        } else {
+            alert("Error: " + (data.error ?? "No se pudo actualizar"));
+        }
+
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Error de conexión");
+    });
+}
+</script>
+<!-- MODAL CAMBIAR ESTADO -->
+<div id="modalEstado" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-md relative">
+
+        <button onclick="cerrarModalEstado()" 
+        class="absolute top-3 right-3 text-gray-500 hover:text-black">
+            ✕
+        </button>
+
+        <h3 class="text-lg font-bold mb-4">Cambiar Estado del Pedido</h3>
+
+        <select id="nuevoEstado" class="w-full border rounded-lg p-2 mb-4">
+            <option value="pendiente">Pendiente</option>
+            <option value="confirmado">Confirmado</option>
+            <option value="enviado">Enviado</option>
+            <option value="entregado">Entregado</option>
+        </select>
+
+        <button onclick="guardarCambioEstado()" 
+        class="w-full bg-primary text-white py-2 rounded-lg hover:bg-orange-700">
+            Guardar Cambios
+        </button>
+
+    </div>
 </div>
-<div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-<p class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">Pendientes</p>
-<h4 class="text-2xl font-bold">24</h4>
-<div class="mt-2 text-xs text-orange-600 flex items-center">
-<span class="material-icons-outlined text-sm mr-1">schedule</span>
-                    Requieren atención
-                </div>
-</div>
-<div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-<p class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">Tasa de Entrega</p>
-<h4 class="text-2xl font-bold">98.2%</h4>
-<div class="mt-2 text-xs text-blue-600 flex items-center">
-<span class="material-icons-outlined text-sm mr-1">check_circle</span>
-                    Excelente desempeño
-                </div>
-</div>
-</div>
+</body>
+</html>

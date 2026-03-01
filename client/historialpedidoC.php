@@ -1,3 +1,27 @@
+<?php
+require_once '../core/sesiones.php';
+
+if (!usuarioAutenticado()) {
+    echo "<script>window.location='?modulo=login';</script>";
+    exit();
+}
+
+$usuario = obtenerDatosUsuario();
+$id_cliente = $usuario['id_cliente'];
+
+// Obtener pedidos del cliente
+$sql = "SELECT id_pedido, fecha_pedido, estado, total 
+        FROM pedidos 
+        WHERE id_cliente = ? 
+        ORDER BY fecha_pedido DESC";
+
+$stmt = $conexion->prepare($sql);
+$stmt->bind_param("i", $id_cliente);
+$stmt->execute();
+$resultado = $stmt->get_result();
+?>
+
+
 <!DOCTYPE html>
 <html class="light" lang="es"><head>
 <meta charset="utf-8"/>
@@ -69,86 +93,79 @@
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-<td class="px-6 py-5 whitespace-nowrap">
-<span class="font-bold text-slate-900 dark:text-white">#12345</span>
-</td>
-<td class="px-6 py-5 whitespace-nowrap text-slate-600 dark:text-slate-400 text-sm">
-                            12 de Octubre, 2024
-                        </td>
-<td class="px-6 py-5 whitespace-nowrap">
-<span class="px-3 py-1 rounded-full text-xs font-bold status-badge-entregado uppercase">Entregado</span>
-</td>
-<td class="px-6 py-5 whitespace-nowrap font-semibold">
-                            264,87 €
-                        </td>
-<td class="px-6 py-5 whitespace-nowrap text-right">
-<button class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-primary hover:text-white dark:bg-slate-800 dark:hover:bg-primary text-slate-700 dark:text-slate-300 rounded-lg text-sm font-bold transition-all">
-                                Ver Detalles
-                                <span class="material-icons text-sm">visibility</span>
-</button>
-</td>
-</tr>
-<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-<td class="px-6 py-5 whitespace-nowrap">
-<span class="font-bold text-slate-900 dark:text-white">#12340</span>
-</td>
-<td class="px-6 py-5 whitespace-nowrap text-slate-600 dark:text-slate-400 text-sm">
-                            05 de Octubre, 2024
-                        </td>
-<td class="px-6 py-5 whitespace-nowrap">
-<span class="px-3 py-1 rounded-full text-xs font-bold status-badge-camino uppercase">En Camino</span>
-</td>
-<td class="px-6 py-5 whitespace-nowrap font-semibold">
-                            89,00 €
-                        </td>
-<td class="px-6 py-5 whitespace-nowrap text-right">
-<button class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-primary hover:text-white dark:bg-slate-800 dark:hover:bg-primary text-slate-700 dark:text-slate-300 rounded-lg text-sm font-bold transition-all">
-                                Ver Detalles
-                                <span class="material-icons text-sm">visibility</span>
-</button>
-</td>
-</tr>
-<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-<td class="px-6 py-5 whitespace-nowrap">
-<span class="font-bold text-slate-900 dark:text-white">#12338</span>
-</td>
-<td class="px-6 py-5 whitespace-nowrap text-slate-600 dark:text-slate-400 text-sm">
-                            28 de Septiembre, 2024
-                        </td>
-<td class="px-6 py-5 whitespace-nowrap">
-<span class="px-3 py-1 rounded-full text-xs font-bold status-badge-procesando uppercase">Procesando</span>
-</td>
-<td class="px-6 py-5 whitespace-nowrap font-semibold">
-                            45,50 €
-                        </td>
-<td class="px-6 py-5 whitespace-nowrap text-right">
-<button class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-primary hover:text-white dark:bg-slate-800 dark:hover:bg-primary text-slate-700 dark:text-slate-300 rounded-lg text-sm font-bold transition-all">
-                                Ver Detalles
-                                <span class="material-icons text-sm">visibility</span>
-</button>
-</td>
-</tr>
-<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-<td class="px-6 py-5 whitespace-nowrap">
-<span class="font-bold text-slate-900 dark:text-white">#12299</span>
-</td>
-<td class="px-6 py-5 whitespace-nowrap text-slate-600 dark:text-slate-400 text-sm">
-                            15 de Agosto, 2024
-                        </td>
-<td class="px-6 py-5 whitespace-nowrap">
-<span class="px-3 py-1 rounded-full text-xs font-bold status-badge-entregado uppercase">Entregado</span>
-</td>
-<td class="px-6 py-5 whitespace-nowrap font-semibold">
-                            120,00 €
-                        </td>
-<td class="px-6 py-5 whitespace-nowrap text-right">
-<button class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-primary hover:text-white dark:bg-slate-800 dark:hover:bg-primary text-slate-700 dark:text-slate-300 rounded-lg text-sm font-bold transition-all">
-                                Ver Detalles
-                                <span class="material-icons text-sm">visibility</span>
-</button>
-</td>
-</tr>
+
+<?php if ($resultado->num_rows > 0): ?>
+    <?php while ($pedido = $resultado->fetch_assoc()): ?>
+
+    <?php
+        // Formatear fecha
+        $fecha = date("d \\d\\e F, Y", strtotime($pedido['fecha_pedido']));
+
+        // Clases según estado
+        switch ($pedido['estado']) {
+            case 'entregado':
+                $claseEstado = 'status-badge-entregado';
+                $textoEstado = 'Entregado';
+                break;
+            case 'enviado':
+                $claseEstado = 'status-badge-camino';
+                $textoEstado = 'En Camino';
+                break;
+            case 'confirmado':
+            case 'pendiente':
+                $claseEstado = 'status-badge-procesando';
+                $textoEstado = ucfirst($pedido['estado']);
+                break;
+            default:
+                $claseEstado = 'status-badge-procesando';
+                $textoEstado = ucfirst($pedido['estado']);
+        }
+    ?>
+
+    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+
+        <td class="px-6 py-5 whitespace-nowrap">
+            <span class="font-bold text-slate-900 dark:text-white">
+                #<?php echo $pedido['id_pedido']; ?>
+            </span>
+        </td>
+
+        <td class="px-6 py-5 whitespace-nowrap text-slate-600 dark:text-slate-400 text-sm">
+            <?php echo $fecha; ?>
+        </td>
+
+        <td class="px-6 py-5 whitespace-nowrap">
+            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase <?php echo $claseEstado; ?>">
+                <?php echo $textoEstado; ?>
+            </span>
+        </td>
+
+        <td class="px-6 py-5 whitespace-nowrap font-semibold">
+            L <?php echo number_format($pedido['total'], 2); ?>
+        </td>
+
+        <td class="px-6 py-5 whitespace-nowrap text-right">
+            <button 
+                class="btn-ver-detalle inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-primary hover:text-white dark:bg-slate-800 dark:hover:bg-primary text-slate-700 dark:text-slate-300 rounded-lg text-sm font-bold transition-all"
+                data-id="<?php echo $pedido['id_pedido']; ?>">
+                Ver Detalles
+                <span class="material-icons text-sm">visibility</span>
+            </button>
+        </td>
+
+    </tr>
+
+    <?php endwhile; ?>
+<?php else: ?>
+
+    <tr>
+        <td colspan="5" class="px-6 py-10 text-center text-slate-500">
+            No tienes pedidos registrados aún.
+        </td>
+    </tr>
+
+<?php endif; ?>
+
 </tbody>
 </table>
 </div>
@@ -166,5 +183,19 @@
 </div>
 </div>
 </main>
+<div id="modalPedido" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 relative">
+
+        <button onclick="cerrarModal()" 
+            class="absolute top-3 right-3 text-gray-500 hover:text-black">
+            ✕
+        </button>
+
+        <div id="contenidoModal">
+            <!-- Aquí se carga el detalle -->
+        </div>
+
+    </div>
+</div>
 
 </body></html>

@@ -12,30 +12,72 @@ if (!usuarioAutenticado()) {
 $usuario = obtenerDatosUsuario();
 $id_cliente = $usuario['id_cliente'];
 
-$input = json_decode(file_get_contents("php://input"), true);
+/* 🔥 IMPORTANTE
+   Ahora usamos $_POST en vez de JSON
+*/
 
 if (
-    !isset($input['id_direccion']) ||
-    !isset($input['id_envio']) ||
-    !isset($input['id_metodo_pago'])
+    !isset($_POST['id_direccion']) ||
+    !isset($_POST['id_envio']) ||
+    !isset($_POST['id_metodo_pago'])
 ) {
     echo json_encode(["exito" => false, "error" => "Datos incompletos"]);
     exit;
 }
 
-$id_direccion = $input['id_direccion'];
-$id_envio = $input['id_envio'];
-$id_metodo_pago = $input['id_metodo_pago'];
+$id_direccion = intval($_POST['id_direccion']);
+$id_envio = intval($_POST['id_envio']);
+$id_metodo_pago = intval($_POST['id_metodo_pago']);
+
+$nombreComprobante = null;
+
+/* ================================
+   SUBIR COMPROBANTE
+================================ */
+
+if (isset($_FILES['comprobante']) && $_FILES['comprobante']['error'] === 0) {
+
+    $archivo = $_FILES['comprobante'];
+
+    if ($archivo['size'] > 3 * 1024 * 1024) {
+        echo json_encode(["exito" => false, "error" => "El comprobante supera los 3MB"]);
+        exit;
+    }
+
+    $tiposPermitidos = ['image/jpeg','image/png','image/webp'];
+
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $tipoReal = finfo_file($finfo, $archivo['tmp_name']);
+    finfo_close($finfo);
+
+    if (!in_array($tipoReal, $tiposPermitidos)) {
+        echo json_encode(["exito" => false, "error" => "Formato no permitido"]);
+        exit;
+    }
+
+    $extension = pathinfo($archivo['name'], PATHINFO_EXTENSION);
+    $nombreComprobante = uniqid("comp_") . "." . $extension;
+
+    $rutaDestino = "../img/comprobantes/" . $nombreComprobante;
+
+    if (!move_uploaded_file($archivo['tmp_name'], $rutaDestino)) {
+        echo json_encode(["exito" => false, "error" => "Error al guardar comprobante"]);
+        exit;
+    }
+}
 
 try {
 
     $conexion->begin_transaction();
 
-    // 1️⃣ Obtener carrito activo
+    /* ================================
+       OBTENER CARRITO
+    ================================ */
+
     $stmt = $conexion->prepare("
-        SELECT c.id_carrito
-        FROM carritos c
-        WHERE c.id_cliente = ? AND c.estado = 'activo'
+        SELECT id_carrito
+        FROM carritos
+        WHERE id_cliente = ? AND estado = 'activo'
         LIMIT 1
     ");
     $stmt->bind_param("i", $id_cliente);
@@ -49,7 +91,10 @@ try {
 
     $id_carrito = $carrito['id_carrito'];
 
-    // 2️⃣ Obtener detalles del carrito
+    /* ================================
+       OBTENER DETALLES
+    ================================ */
+
     $stmt = $conexion->prepare("
         SELECT cd.*, p.stock
         FROM carrito_detalle cd
@@ -66,54 +111,60 @@ try {
 
     $subtotal = 0;
     $impuesto_total = 0;
-
     $items = [];
 
     while ($item = $detalles->fetch_assoc()) {
 
         if ($item['stock'] < $item['cantidad']) {
-            throw new Exception("Stock insuficiente para un producto");
+            throw new Exception("Stock insuficiente");
         }
 
         $subtotal += $item['subtotal'];
-        $impuesto_total += ($item['subtotal'] * 0.15); // 15% ejemplo
+        $impuesto_total += ($item['subtotal'] * 0.15);
 
         $items[] = $item;
     }
 
     $total = $subtotal + $impuesto_total;
 
-    // 3️⃣ Insertar pedido
+    /* ================================
+       INSERTAR PEDIDO
+    ================================ */
+
     $stmt = $conexion->prepare("
         INSERT INTO pedidos 
-        (subtotal, impuesto_total, total, id_cliente, id_direccion, id_envio, id_metodo_pago)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        (subtotal, impuesto_total, total, id_cliente, id_direccion, id_envio, id_metodo_pago, comprobante_pago)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ");
 
     $stmt->bind_param(
-        "dddiiii",
+        "dddiiiis",
         $subtotal,
         $impuesto_total,
         $total,
         $id_cliente,
         $id_direccion,
         $id_envio,
-        $id_metodo_pago
+        $id_metodo_pago,
+        $nombreComprobante
     );
 
     $stmt->execute();
     $id_pedido = $conexion->insert_id;
 
-    // 4️⃣ Insertar detalle pedido + descontar stock
+    /* ================================
+       INSERTAR DETALLE
+    ================================ */
+
     foreach ($items as $item) {
+
+        $monto_impuesto = $item['subtotal'] * 0.15;
 
         $stmt = $conexion->prepare("
             INSERT INTO detalle_pedido
             (cantidad, precio_unitario, subtotal, tasa_impuesto, monto_impuesto, id_pedido, id_producto)
             VALUES (?, ?, ?, 15, ?, ?, ?)
         ");
-
-        $monto_impuesto = $item['subtotal'] * 0.15;
 
         $stmt->bind_param(
             "idddii",
@@ -127,7 +178,6 @@ try {
 
         $stmt->execute();
 
-        // Descontar stock
         $stmtStock = $conexion->prepare("
             UPDATE productos
             SET stock = stock - ?
@@ -138,21 +188,9 @@ try {
         $stmtStock->execute();
     }
 
-    // 5️⃣ Insertar historial
-    $stmt = $conexion->prepare("
-        INSERT INTO historial_pedido
-        (id_pedido, estado, comentario, id_usuario)
-        VALUES (?, 'pendiente', 'Pedido creado', NULL)
-    ");
-
-    $stmt->bind_param("i", $id_pedido);
-    $stmt->execute();
-
-    // 6️⃣ Vaciar carrito
     $conexion->query("DELETE FROM carrito_detalle WHERE id_carrito = $id_carrito");
-$conexion->query("UPDATE carritos SET estado = 'comprado' WHERE id_carrito = $id_carrito");
+    $conexion->query("UPDATE carritos SET estado = 'comprado' WHERE id_carrito = $id_carrito");
 
-    // Limpiar sesión carrito si existe
     unset($_SESSION['carrito']);
 
     $conexion->commit();

@@ -252,6 +252,7 @@ async function confirmarPedido() {
     const direccionId = obtenerDireccionSeleccionada();
     const envioId = obtenerEnvioSeleccionado();
     const metodoPagoId = metodoPagoSeleccionado;
+    const inputComprobante = document.getElementById("input-comprobante");
 
     if (!direccionId) {
         alert("Selecciona una dirección.");
@@ -268,32 +269,61 @@ async function confirmarPedido() {
         return;
     }
 
+    // 🔐 Si es transferencia (ajusta el ID si es diferente)
+    if (metodoPagoId == 2) {
+
+        if (!inputComprobante || inputComprobante.files.length === 0) {
+            alert("Debes subir el comprobante de transferencia.");
+            return;
+        }
+
+        // Validación extra en frontend (opcional pero recomendado)
+        const file = inputComprobante.files[0];
+
+        if (file.size > 3 * 1024 * 1024) {
+            alert("El comprobante no puede superar los 3MB.");
+            return;
+        }
+
+        const tiposPermitidos = ["image/jpeg", "image/png", "image/webp"];
+        if (!tiposPermitidos.includes(file.type)) {
+            alert("Formato de imagen no permitido.");
+            return;
+        }
+    }
+
+    // 🔥 Crear FormData
+    const formData = new FormData();
+    formData.append("id_direccion", direccionId);
+    formData.append("id_envio", envioId);
+    formData.append("id_metodo_pago", metodoPagoId);
+
+    if (inputComprobante && inputComprobante.files.length > 0) {
+        formData.append("comprobante", inputComprobante.files[0]);
+    }
+
     try {
 
         const response = await fetch("/PAGINA-WED/api/api_crear_pedido.php", {
             method: "POST",
             credentials: "include",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                id_direccion: direccionId,
-                id_envio: envioId,
-                id_metodo_pago: metodoPagoId
-            })
+            body: formData
         });
 
         const data = await response.json();
 
         if (data.exito) {
-    alert("Pedido creado correctamente");
-    
-    setTimeout(() => {
-        loadHistorialPedidos();
-    }, 2000); // 2000 = 2 segundos
-    } else {
-        alert(data.error || "Error al crear pedido");
-    }
+
+            alert("Pedido creado correctamente");
+
+            setTimeout(() => {
+                loadHistorialPedidos();
+            }, 1500);
+
+        } else {
+            alert(data.error || "Error al crear pedido");
+        }
+
     } catch (error) {
         console.error(error);
         alert("Error de conexión");

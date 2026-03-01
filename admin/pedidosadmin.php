@@ -312,7 +312,7 @@ function guardarCambioEstado(){
 
         if(data.exito){
 
-            const fila = document.querySelector(`button[data-id="${pedidoActual}"]`).closest("tr");
+           const fila = document.querySelector('button[data-id="' + pedidoActual + '"]').closest("tr");
             const badge = fila.querySelector("span");
 
             const colores = {
@@ -363,5 +363,42 @@ function guardarCambioEstado(){
 
     </div>
 </div>
+<!-- MODAL IMAGEN GRANDE -->
+<div id="modalImagen"
+     style="display:none;"
+     class="fixed inset-0 bg-black/80 items-center justify-center z-[9999]">
+
+    <div class="relative max-w-4xl w-full p-4 flex justify-center">
+
+        <!-- Botón cerrar -->
+        <button onclick="cerrarModalImagen()"
+                class="absolute top-2 right-2 text-white text-3xl font-bold hover:text-red-400">
+            ✕
+        </button>
+
+        <!-- Imagen -->
+        <img id="imagenGrande"
+             src=""
+             class="w-full max-h-[90vh] object-contain rounded-lg shadow-lg">
+
+    </div>
+</div>
+<script>
+function abrirImagen(ruta){
+    var modal = document.getElementById("modalImagen");
+    var img = document.getElementById("imagenGrande");
+
+    img.src = ruta;
+    modal.style.display = "flex";
+}
+
+function cerrarModalImagen(){
+    var modal = document.getElementById("modalImagen");
+    var img = document.getElementById("imagenGrande");
+
+    img.src = "";
+    modal.style.display = "none";
+}
+</script>
 </body>
 </html>

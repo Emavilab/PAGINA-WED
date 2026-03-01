@@ -104,7 +104,7 @@
 <span class="text-emerald-500 font-medium">Gratis</span>
 </div>
 <div class="flex justify-between text-sm">
-<span class="opacity-70">Impuestos (IVA 21%)</span>
+<span class="opacity-70">Impuestos</span>
 <span>45,97 €</span>
 </div>
 <div class="flex justify-between items-center pt-4 border-t border-slate-200 dark:border-slate-700 mt-4">

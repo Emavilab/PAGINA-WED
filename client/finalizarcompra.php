@@ -1,3 +1,27 @@
+<?php
+require_once '../core/conexion.php';
+
+// Cargar configuración general de colores
+$res_cfg_login = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
+$cfg_login = ($res_cfg_login && mysqli_num_rows($res_cfg_login) > 0) ? mysqli_fetch_assoc($res_cfg_login) : [];
+
+function normalizar_color_login($valor, $defecto) {
+    if (!is_string($valor)) return $defecto;
+    $valor = trim($valor);
+    if ($valor === '') return $defecto;
+    if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $valor)) return $defecto;
+    return strtoupper($valor);
+}
+
+$login_primary = normalizar_color_login($cfg_login['color_primary'] ?? '#137fec', '#137FEC');
+$login_bg_light = normalizar_color_login($cfg_login['color_background_light'] ?? '#f6f7f8', '#F6F7F8');
+$login_bg_dark = normalizar_color_login($cfg_login['color_background_dark'] ?? '#15191d', '#15191D');
+
+// Configuración de moneda
+$cfg_moneda_cod = $cfg_login['moneda'] ?? 'HNL';
+$simbolos_moneda = ['USD' => '$', 'EUR' => '€', 'MXN' => '$', 'COP' => '$', 'ARS' => '$', 'GTQ' => 'Q', 'HNL' => 'L', 'CRC' => '₡'];
+$cfg_moneda = $simbolos_moneda[$cfg_moneda_cod] ?? $cfg_moneda_cod;
+?>
 <!DOCTYPE html>
 <html class="light" lang="es"><head>
 <meta charset="utf-8"/>
@@ -45,8 +69,12 @@
             display: none;
         }
     </style>
+<script>
+    window._cfgMoneda = '<?php echo addslashes($cfg_moneda); ?>';
+</script>
 </head>
 
+<body class="bg-white dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display transition-colors duration-300 relative min-h-screen">
 <main class="max-w-7xl mx-auto px-4 pb-20">
 <div class="flex flex-col lg:flex-row gap-8">
 <div class="flex-1 space-y-6">
@@ -96,6 +124,14 @@
 
 <aside class="lg:w-[400px]">
 <div class="sticky-summary space-y-4">
+<!-- RESUMEN DE DIRECCIÓN SELECCIONADA -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+<h2 class="text-lg font-bold mb-4">📍 Dirección de Envío</h2>
+<div id="direccionDisplay" class="text-sm space-y-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+    <p class="text-slate-500">Selecciona una dirección arriba para ver los detalles</p>
+</div>
+</div>
+
 <div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
 <h2 class="text-lg font-bold mb-6">Resumen del Pedido</h2>
 <div class="space-y-4 mb-6" id="orderSummary">
@@ -105,19 +141,19 @@
 <div class="space-y-3 mb-6">
 <div class="flex justify-between text-sm">
 <span class="opacity-70">Subtotal</span>
-<span id="subtotal">218,90 €</span>
+<span><span id="subtotal">218,90</span> <span id="monedaSubtotal" class="text-slate-600 dark:text-slate-400">L</span></span>
 </div>
 <div class="flex justify-between text-sm">
 <span class="opacity-70">Envío</span>
 <span class="text-emerald-500 font-medium" id="shippingCost">Gratis</span>
 </div>
 <div class="flex justify-between text-sm">
-<span class="opacity-70">Impuestos (IVA 21%)</span>
-<span id="taxes">45,97 €</span>
+<span class="opacity-70">Impuestos</span>
+<span><span id="taxes">45,97</span> <span id="monedaTaxes" class="text-slate-600 dark:text-slate-400">L</span></span>
 </div>
 <div class="flex justify-between text-lg font-bold border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
 <span>Total Final</span>
-<span class="text-primary text-2xl font-black" id="totalPrice">264,87 €</span>
+<span class="text-primary text-2xl font-black"><span id="totalPrice">264,87</span> <span id="monedaTotal" class="text-primary">L</span></span>
 </div>
 </div>
 <button class="w-full bg-primary hover:bg-primary/90 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2" onclick="confirmarPedido()">
@@ -135,13 +171,7 @@ Al confirmar el pedido, aceptas nuestras Políticas de Privacidad y Términos de
 </p>
 </div>
 </div>
-<div class="bg-primary/5 border border-primary/20 p-4 rounded-xl flex items-start gap-3">
-<span class="material-icons text-primary">redeem</span>
-<div>
-<h4 class="text-xs font-bold uppercase tracking-wider text-primary">Promoción Aplicada</h4>
-<p class="text-xs opacity-80">Has obtenido envío gratuito por una compra superior a 150 €.</p>
-</div>
-</div>
+
 </div>
 </aside>
 </div>
@@ -153,6 +183,12 @@ Al confirmar el pedido, aceptas nuestras Políticas de Privacidad y Términos de
 ================================= */
 function initCheckout() {
     console.log("Inicializando checkout...");
+    
+    // Actualizar símbolos de moneda
+    const moneda = window._cfgMoneda || 'L';
+    const elementos = document.querySelectorAll('#monedaSubtotal, #monedaTaxes, #monedaTotal');
+    elementos.forEach(el => el.textContent = moneda);
+    
     cargarDireccionesCheckout();
     cargarMetodosEnvio(); 
     cargarResumenPedido();
@@ -188,7 +224,7 @@ async function cargarDireccionesCheckout() {
         data.direcciones.forEach((dir, index) => {
 
             contenedor.innerHTML += `
-                <label class="relative group">
+                <label class="relative group" onclick="mostrarDireccionSeleccionada('${dir.direccion}', '${dir.ciudad}', '${dir.codigo_postal}', '${dir.telefono}', '${dir.referencia}')">  
                     <input 
                         class="peer hidden" 
                         name="saved_address" 
@@ -226,6 +262,12 @@ async function cargarDireccionesCheckout() {
             `;
         });
 
+        // Mostrar la primera dirección por defecto
+        if(data.direcciones.length > 0) {
+            const primera = data.direcciones[0];
+            mostrarDireccionSeleccionada(primera.direccion, primera.ciudad, primera.codigo_postal, primera.telefono, primera.referencia);
+        }
+
     } catch (error) {
         console.error("Error cargando direcciones checkout:", error);
     }
@@ -239,6 +281,42 @@ function obtenerDireccionSeleccionada() {
     const seleccionada = document.querySelector('input[name="saved_address"]:checked');
     return seleccionada ? seleccionada.value : null;
 }
+
+/* ===============================
+   MOSTRAR DIRECCIÓN EN RESUMEN
+================================= */
+function mostrarDireccionSeleccionada(direccion, ciudad, codigoPostal, telefono, referencia) {
+    const display = document.getElementById('direccionDisplay');
+    if (!display) return;
+    
+    display.innerHTML = `
+        <div class="space-y-2">
+            <div>
+                <p class="text-xs text-slate-500">Referencia</p>
+                <p class="font-semibold text-slate-900 dark:text-white">${referencia || 'No especificada'}</p>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500">Dirección</p>
+                <p class="font-semibold text-slate-900 dark:text-white">${direccion}</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <p class="text-xs text-slate-500">Ciudad</p>
+                    <p class="font-semibold text-slate-900 dark:text-white">${ciudad}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500">Código Postal</p>
+                    <p class="font-semibold text-slate-900 dark:text-white">${codigoPostal || '-'}</p>
+                </div>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500">Teléfono</p>
+                <p class="font-semibold text-slate-900 dark:text-white">${telefono || '-'}</p>
+            </div>
+        </div>
+    `;
+}
+
 function obtenerEnvioSeleccionado() {
     const seleccionado = document.querySelector('input[name="shipping"]:checked');
     return seleccionado ? seleccionado.value : null;
@@ -249,50 +327,87 @@ function obtenerEnvioSeleccionado() {
 ================================= */
 async function confirmarPedido() {
 
+    console.log('Iniciando validaciones de pedido...');
+
+    // ✓ 1. Validar que haya carrito
+    const resumenPedido = document.getElementById('orderSummary');
+    if (!resumenPedido || resumenPedido.innerHTML.trim() === '' || resumenPedido.textContent.includes('vacío')) {
+        alert("⚠️ Tu carrito está vacío. Agrega productos antes de continuar.");
+        return;
+    }
+
+    // ✓ 2. Validar dirección
     const direccionId = obtenerDireccionSeleccionada();
-    const envioId = obtenerEnvioSeleccionado();
-    const metodoPagoId = metodoPagoSeleccionado;
-    const inputComprobante = document.getElementById("input-comprobante");
-
     if (!direccionId) {
-        alert("Selecciona una dirección.");
+        alert("⚠️ Debes seleccionar una dirección de envío.");
         return;
     }
 
+    const direccionDisplay = document.getElementById('direccionDisplay');
+    if (!direccionDisplay || direccionDisplay.textContent.includes('Selecciona una dirección')) {
+        alert("⚠️ Debes seleccionar una dirección válida.");
+        return;
+    }
+
+    // ✓ 3. Validar método de envío
+    const envioId = obtenerEnvioSeleccionado();
     if (!envioId) {
-        alert("Selecciona un método de envío.");
+        alert("⚠️ Debes seleccionar un método de envío.");
         return;
     }
 
+    // ✓ 4. Validar método de pago
+    const metodoPagoId = metodoPagoSeleccionado;
     if (!metodoPagoId) {
-        alert("Selecciona un método de pago.");
+        alert("⚠️ Debes seleccionar un método de pago.");
         return;
     }
 
-    // 🔐 Si es transferencia (ajusta el ID si es diferente)
-    if (metodoPagoId == 2) {
+    // ✓ 5. Validar totales sean positivos
+    const subtotalEl = document.getElementById('subtotal');
+    const totalEl = document.getElementById('totalPrice');
+    
+    if (!subtotalEl || !totalEl) {
+        alert("⚠️ Error al calcular los totales. Recarga la página.");
+        return;
+    }
+
+    const subtotal = parseFloat(subtotalEl.textContent.replace(/[^0-9.]/g, ''));
+    const total = parseFloat(totalEl.textContent.replace(/[^0-9.]/g, ''));
+
+    if (isNaN(subtotal) || isNaN(total) || subtotal <= 0 || total <= 0) {
+        alert("⚠️ Los montos del pedido no son válidos. Recarga la página.");
+        return;
+    }
+
+    // ✓ 6. Si es transferencia, validar comprobante
+    const inputComprobante = document.getElementById("input-comprobante");
+    if (metodoPagoId == 18) {
 
         if (!inputComprobante || inputComprobante.files.length === 0) {
-            alert("Debes subir el comprobante de transferencia.");
+            alert("⚠️ Debes subir el comprobante de transferencia.");
             return;
         }
 
-        // Validación extra en frontend (opcional pero recomendado)
         const file = inputComprobante.files[0];
 
+        // Validar tamaño
         if (file.size > 3 * 1024 * 1024) {
-            alert("El comprobante no puede superar los 3MB.");
+            alert("⚠️ El comprobante no puede superar los 3MB. Archivo actual: " + (file.size / (1024 * 1024)).toFixed(2) + "MB");
             return;
         }
 
+        // Validar tipo
         const tiposPermitidos = ["image/jpeg", "image/png", "image/webp"];
         if (!tiposPermitidos.includes(file.type)) {
-            alert("Formato de imagen no permitido.");
+            alert("⚠️ Formato de imagen no permitido. Solo JPG, PNG o WEBP.");
             return;
         }
     }
 
-    // 🔥 Crear FormData
+    // ✓ Todas las validaciones pasaron - Crear pedido
+    console.log('✓ Validaciones completadas. Creando pedido...');
+
     const formData = new FormData();
     formData.append("id_direccion", direccionId);
     formData.append("id_envio", envioId);
@@ -304,7 +419,7 @@ async function confirmarPedido() {
 
     try {
 
-        const response = await fetch("/PAGINA-WED/api/api_crear_pedido.php", {
+        const response = await fetch("api/api_crear_pedido.php", {
             method: "POST",
             credentials: "include",
             body: formData
@@ -314,19 +429,20 @@ async function confirmarPedido() {
 
         if (data.exito) {
 
-            alert("Pedido creado correctamente");
+            alert("✓ Pedido creado correctamente");
 
             setTimeout(() => {
                 loadHistorialPedidos();
             }, 1500);
 
         } else {
-            alert(data.error || "Error al crear pedido");
+            alert("❌ Error al crear pedido: " + (data.error || "Intenta de nuevo"));
+            console.error('Error del servidor:', data);
         }
 
     } catch (error) {
         console.error(error);
-        alert("Error de conexión");
+        alert("❌ Error de conexión. Verifica tu conexión a internet.");
     }
 }
 let envioSeleccionado = 0;
@@ -381,7 +497,7 @@ async function cargarMetodosEnvio() {
                     </span>
 
                     <span class="mt-auto font-bold ${metodo.costo == 0 ? 'text-emerald-500' : ''}">
-                        ${metodo.costo == 0 ? 'Gratis' : metodo.costo + ' €'}
+                        ${metodo.costo == 0 ? 'Gratis' : window._cfgMoneda + ' ' + metodo.costo}
                     </span>
 
                 </label>
@@ -403,10 +519,10 @@ function actualizarTotalConEnvio(subtotal, impuestos) {
     const total = subtotal + impuestos + envioSeleccionado;
 
     document.getElementById("shippingCost").innerText =
-        envioSeleccionado === 0 ? "Gratis" : envioSeleccionado.toFixed(2) + " €";
+        envioSeleccionado === 0 ? "Gratis" : window._cfgMoneda + ' ' + envioSeleccionado.toFixed(2);
 
     document.getElementById("totalPrice").innerText =
-        total.toFixed(2) + " €";
+        window._cfgMoneda + ' ' + total.toFixed(2);
 }
 
 /* ===============================
@@ -448,7 +564,7 @@ async function cargarResumenPedido() {
 
                     <div class="flex-1">
                         <h4 class="text-sm font-semibold">${item.nombre}</h4>
-                        <p class="text-sm font-bold mt-1">${item.precio_unitario.toFixed(2)} €</p>
+                        <p class="text-sm font-bold mt-1">${window._cfgMoneda} ${item.precio_unitario.toFixed(2)}</p>
 
                         <div class="flex items-center gap-2 mt-2 text-xs">
                             <button onclick="cambiarCantidad(${item.id_carrito_detalle}, ${item.cantidad - 1})"
@@ -470,19 +586,19 @@ async function cargarResumenPedido() {
 
         //  ACTUALIZAR TOTALES DESDE BACKEND
 document.getElementById("subtotal").innerText =
-    carrito.subtotal.toFixed(2) + " €";
+    window._cfgMoneda + ' ' + carrito.subtotal.toFixed(2);
 
 document.getElementById("taxes").innerText =
-    carrito.impuesto_total.toFixed(2) + " €";
+    window._cfgMoneda + ' ' + carrito.impuesto_total.toFixed(2);
 
 // Recalcular total con envío seleccionado
 actualizarTotalConEnvio(carrito.subtotal, carrito.impuesto_total);
         //  Actualizar totales reales desde backend
         document.getElementById("subtotal").innerText =
-            carrito.subtotal.toFixed(2) + " €";
+            window._cfgMoneda + ' ' + carrito.subtotal.toFixed(2);
 
         document.getElementById("taxes").innerText =
-            carrito.impuesto_total.toFixed(2) + " €";
+            window._cfgMoneda + ' ' + carrito.impuesto_total.toFixed(2);
 
         actualizarTotalConEnvio(carrito.subtotal, carrito.impuesto_total);
 
@@ -577,10 +693,25 @@ function seleccionarMetodoPago(idMetodo, boton) {
 
 // Aquí debes poner el ID real del método Transferencia
 // Por ejemplo si Transferencia es id 19:
-if (idMetodo == 19) {
+if (idMetodo == 18) {
     contenedor.classList.remove("hidden");
 } else {
     contenedor.classList.add("hidden");
 }
 }
+
+/* ===============================
+   INICIALIZAR AL CARGAR
+================================= */
+(function() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCheckout);
+    } else {
+        setTimeout(initCheckout, 100);
+    }
+})();
+</script>
+</main>
+</body>
+</html>
 </script>

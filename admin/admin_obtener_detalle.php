@@ -20,10 +20,16 @@ SELECT
     p.*,
     c.nombre AS cliente,
     m.nombre AS metodo_envio,
-    m.costo AS costo_envio
+    m.costo AS costo_envio,
+    dc.direccion,
+    dc.ciudad,
+    dc.codigo_postal,
+    dc.telefono,
+    dc.referencia
 FROM pedidos p
 INNER JOIN clientes c ON p.id_cliente = c.id_cliente
 LEFT JOIN metodos_envio m ON p.id_envio = m.id_envio
+LEFT JOIN direcciones_cliente dc ON p.id_direccion = dc.id_direccion
 WHERE p.id_pedido = ?
 ";
 
@@ -73,6 +79,33 @@ Pedido #<?php echo $pedido['id_pedido']; ?>
 <p><strong>Impuesto:</strong> L <?php echo number_format($pedido['impuesto_total'],2); ?></p>
 </div>
 
+</div>
+
+<!-- SECCIÓN DE DIRECCIÓN -->
+<div class="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg mb-6">
+<h3 class="font-bold text-sm mb-3 uppercase">📍 Dirección de Envío</h3>
+<div class="grid grid-cols-2 gap-4 text-sm">
+    <div>
+        <p class="text-slate-600 dark:text-slate-300">Referencia</p>
+        <p class="font-semibold"><?php echo htmlspecialchars($pedido['referencia'] ?? 'No especificada'); ?></p>
+    </div>
+    <div>
+        <p class="text-slate-600 dark:text-slate-300">Dirección</p>
+        <p class="font-semibold"><?php echo htmlspecialchars($pedido['direccion'] ?? 'No especificada'); ?></p>
+    </div>
+    <div>
+        <p class="text-slate-600 dark:text-slate-300">Ciudad</p>
+        <p class="font-semibold"><?php echo htmlspecialchars($pedido['ciudad'] ?? 'No especificada'); ?></p>
+    </div>
+    <div>
+        <p class="text-slate-600 dark:text-slate-300">Código Postal</p>
+        <p class="font-semibold"><?php echo htmlspecialchars($pedido['codigo_postal'] ?? 'No especificado'); ?></p>
+    </div>
+    <div>
+        <p class="text-slate-600 dark:text-slate-300">Teléfono</p>
+        <p class="font-semibold"><?php echo htmlspecialchars($pedido['telefono'] ?? 'No especificado'); ?></p>
+    </div>
+</div>
 </div>
 
 <table class="w-full border text-sm">

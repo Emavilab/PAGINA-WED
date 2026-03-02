@@ -2621,5 +2621,28 @@ function cerrarModal() {
         modal.classList.remove("flex");
     }
 }
+
+// === MANEJADOR DE ANCHORS/HASHES ===
+function procesarHash(hash) {
+    // Mapear anchors a funciones
+    const hashMap = {
+        '#productos': loadProductos,
+        '#ofertas': loadOfertas,
+        '#categorias': loadCategoriasPanel,
+        '#': loadHome,
+        '': loadHome
+    };
+    
+    const handler = hashMap[hash];
+    if (handler && typeof handler === 'function') {
+        setTimeout(() => handler(), 100);
+    }
+}
+
+// Procesar hash SOLO cuando cambia (al hacer clic en un enlace)
+window.addEventListener('hashchange', function() {
+    const hash = window.location.hash || '#';
+    procesarHash(hash);
+});
 </script>
 </body></html>

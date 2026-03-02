@@ -1084,8 +1084,15 @@ function cargarBannerCards() {
             var html = '';
             data.forEach(function(b) {
                 var imgSrc = b.imagen ? 'img/banners/' + b.imagen : 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&q=80';
-                html += '<div class="relative h-64 lg:h-80 rounded-2xl overflow-hidden group cursor-pointer"' +
-                    (b.enlace ? ' onclick="window.location.href=\'' + b.enlace + '\''+'"' : '') + '>' +
+                var onclickAttr = '';
+                if (b.enlace) {
+                    if (b.enlace.startsWith('#')) {
+                        onclickAttr = ' onclick="procesarHash(\'' + b.enlace.replace(/'/g, "\\'") + '\')"';
+                    } else {
+                        onclickAttr = ' onclick="window.location.href=\'' + b.enlace.replace(/'/g, "\\'") + '\'"';
+                    }
+                }
+                html += '<div class="relative h-64 lg:h-80 rounded-2xl overflow-hidden group cursor-pointer"' + onclickAttr + '>' +
                     '<img alt="' + (b.titulo || 'Banner') + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="' + imgSrc + '"/>' +
                     '<div class="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex items-center p-8">' +
                         '<div class="text-white">' +

@@ -31,7 +31,7 @@ $stmtCli->bind_param("i", $_SESSION['id_usuario']);
 $stmtCli->execute();
 $resCli = $stmtCli->get_result()->fetch_assoc();
 if (!$resCli) {
-    echo json_encode(['exito' => false, 'error' => 'Cliente no encontrado']);
+    echo json_encode(['exito' => false, 'error' => 'Debes iniciar sesión para usar la lista de deseos']);
     exit();
 }
 $id_cliente = (int)$resCli['id_cliente'];

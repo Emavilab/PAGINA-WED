@@ -584,14 +584,20 @@ function confirmarEliminar(){
         }
     }, 1500);
 
-}else{
-    alert(data.message);
+} else if (data.message && data.message.toLowerCase().includes("autenticaci")) {
+    // Mensaje de autenticación
+    cerrarModal();
+    CustomModal.show('info', 'Autenticación Requerida', data.message, function() {
+        window.location.href = "?modulo=login";
+    });
+} else {
+    CustomModal.show('error', 'Error', data.message || 'Error al eliminar cliente');
 }
 
     })
     .catch(err => {
         console.error(err);
-        alert("Error al eliminar cliente");
+        CustomModal.show('error', 'Error', 'Error al eliminar cliente');
     });
 
 }
@@ -614,6 +620,66 @@ function closeSuccessModal() {
     modal.classList.add("hidden");
     modal.classList.remove("flex");
 }
+
+// CustomModal fallback si no está definido en Dashboard
+if (typeof CustomModal === 'undefined') {
+    const CustomModal = {
+        show: function(type, title, message, callback) {
+            let modal = document.getElementById('customModalClientes');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'customModalClientes';
+                modal.innerHTML = `
+                    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+                        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full mx-4">
+                            <div class="p-6">
+                                <div class="flex items-start gap-4">
+                                    <div id="modalIcon" class="flex-shrink-0"></div>
+                                    <div class="flex-1">
+                                        <h3 id="modalTitle" class="text-lg font-bold text-slate-900 mb-2"></h3>
+                                        <p id="modalMessage" class="text-sm text-slate-600"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="modalButtons" class="flex gap-3 p-6 bg-slate-50 border-t border-slate-100 rounded-b-xl"></div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            const iconMap = {
+                'success': '<span style="font-size: 2rem; color: #10b981;">✓</span>',
+                'error': '<span style="font-size: 2rem; color: #ef4444;">✕</span>',
+                'info': '<span style="font-size: 2rem; color: #3b82f6;">ℹ</span>'
+            };
+
+            document.getElementById('modalIcon').innerHTML = iconMap[type] || iconMap['info'];
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+
+            const buttonsDiv = document.getElementById('modalButtons');
+            buttonsDiv.innerHTML = '';
+
+            const okBtn = document.createElement('button');
+            if (type === 'info') {
+                okBtn.className = 'w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors';
+            } else if (type === 'error') {
+                okBtn.className = 'w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition-colors';
+            } else {
+                okBtn.className = 'w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition-colors';
+            }
+            okBtn.textContent = 'Aceptar';
+            okBtn.onclick = () => {
+                modal.remove();
+                if (callback) callback();
+            };
+            buttonsDiv.appendChild(okBtn);
+        }
+    };
+    window.CustomModal = CustomModal;
+}
+
 </script>
 </div> <!-- FIN MODAL ELIMINAR -->
 <!-- MODAL ÉXITO -->

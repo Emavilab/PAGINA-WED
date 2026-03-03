@@ -7,7 +7,12 @@ if (!usuarioAutenticado()) {
 }
 
 $usuario = obtenerDatosUsuario();
-$id_cliente = $usuario['id_cliente'];
+$id_cliente = $usuario['id_cliente'] ?? null;
+
+if (!$id_cliente) {
+    echo "<script>window.location='?modulo=login';</script>";
+    exit();
+}
 
 // Obtener pedidos del cliente
 $sql = "SELECT id_pedido, fecha_pedido, estado, total 

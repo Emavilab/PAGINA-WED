@@ -25,7 +25,7 @@ $stmtCliente->close();
 if (!$cliente) {
     echo json_encode([
         "success" => false,
-        "message" => "Cliente no encontrado"
+        "message" => "Debes iniciar sesión para eliminar una dirección"
     ]);
     exit();
 }

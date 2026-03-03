@@ -25,7 +25,7 @@ try {
     if (!$usuario || !isset($usuario['id_cliente'])) {
         echo json_encode([
             'success' => false,
-            'message' => 'Cliente no encontrado'
+            'message' => 'Debes iniciar sesión para crear una dirección'
         ]);
         exit;
     }

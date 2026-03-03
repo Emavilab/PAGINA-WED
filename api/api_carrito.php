@@ -22,7 +22,7 @@ $stmtCli->execute();
 $resCli = $stmtCli->get_result()->fetch_assoc();
 
 if (!$resCli) {
-    echo json_encode(['exito' => false, 'error' => 'Cliente no encontrado']);
+    echo json_encode(['exito' => false, 'error' => 'Debes iniciar sesión para usar el carrito']);
     exit();
 }
 $id_cliente = (int)$resCli['id_cliente'];

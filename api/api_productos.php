@@ -68,6 +68,19 @@ if ($metodo === 'GET') {
             $productos[] = $fila;
         }
 
+        // Construir URLs absolutas para las imágenes
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $script_path = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+        $baseUrl = rtrim($protocol . $host . $script_path, '/') . '/../';
+        
+        foreach ($productos as &$producto) {
+            if (!empty($producto['imagen_principal'])) {
+                // Codificar la URL para espacios y caracteres especiales
+                $producto['imagen_principal'] = $baseUrl . str_replace(' ', '%20', $producto['imagen_principal']);
+            }
+        }
+
         // Conteos
         $conteos = ['total' => 0, 'disponible' => 0, 'agotado' => 0, 'oferta' => 0];
         $rc = $conexion->query("SELECT
@@ -117,7 +130,15 @@ if ($metodo === 'GET') {
         $stmtImg->execute();
         $resImg = $stmtImg->get_result();
         $imagenes = [];
+        
+        // Construir URL base para imágenes
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $script_path = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+        $baseUrl = rtrim($protocol . $host . $script_path, '/') . '/../';
+        
         while ($img = $resImg->fetch_assoc()) {
+            $img['ruta_imagen'] = $baseUrl . str_replace(' ', '%20', $img['ruta_imagen']);
             $imagenes[] = $img;
         }
         $producto['imagenes'] = $imagenes;
@@ -323,32 +344,72 @@ if ($metodo === 'POST') {
             exit();
         }
 
-        // Eliminar imágenes del servidor
-        $stmtImg = $conexion->prepare("SELECT ruta_imagen FROM producto_imagenes WHERE id_producto = ?");
-        $stmtImg->bind_param("i", $id);
-        $stmtImg->execute();
-        $resImg = $stmtImg->get_result();
-        while ($img = $resImg->fetch_assoc()) {
-            $rutaCompleta = __DIR__ . '/../' . $img['ruta_imagen'];
-            if (file_exists($rutaCompleta)) {
-                unlink($rutaCompleta);
+        try {
+            // Desactivar temporal de foreign key checks para permitir eliminación en cascada
+            $conexion->query("SET FOREIGN_KEY_CHECKS=0");
+
+            // Eliminar del carrito_detalle
+            $stmtCarrito = $conexion->prepare("DELETE FROM carrito_detalle WHERE id_producto = ?");
+            if ($stmtCarrito) {
+                $stmtCarrito->bind_param("i", $id);
+                $stmtCarrito->execute();
             }
-        }
 
-        // Eliminar registros de imágenes
-        $conexion->prepare("DELETE FROM producto_imagenes WHERE id_producto = ?")->bind_param("i", $id);
-        $stmtDelImg = $conexion->prepare("DELETE FROM producto_imagenes WHERE id_producto = ?");
-        $stmtDelImg->bind_param("i", $id);
-        $stmtDelImg->execute();
+            // Eliminar del detalle_pedido
+            $stmtDetallePedido = $conexion->prepare("DELETE FROM detalle_pedido WHERE id_producto = ?");
+            if ($stmtDetallePedido) {
+                $stmtDetallePedido->bind_param("i", $id);
+                $stmtDetallePedido->execute();
+            }
 
-        // Eliminar producto
-        $stmt = $conexion->prepare("DELETE FROM productos WHERE id_producto = ?");
-        $stmt->bind_param("i", $id);
+            // Eliminar del lista_deseos
+            $stmtDeseos = $conexion->prepare("DELETE FROM lista_deseos WHERE id_producto = ?");
+            if ($stmtDeseos) {
+                $stmtDeseos->bind_param("i", $id);
+                $stmtDeseos->execute();
+            }
 
-        if ($stmt->execute()) {
-            echo json_encode(['exito' => true, 'mensaje' => 'Producto eliminado exitosamente']);
-        } else {
-            echo json_encode(['exito' => false, 'error' => 'Error al eliminar: ' . $conexion->error]);
+            // Eliminar imágenes del servidor
+            $stmtImg = $conexion->prepare("SELECT ruta_imagen FROM producto_imagenes WHERE id_producto = ?");
+            if ($stmtImg) {
+                $stmtImg->bind_param("i", $id);
+                $stmtImg->execute();
+                $resImg = $stmtImg->get_result();
+                while ($img = $resImg->fetch_assoc()) {
+                    $rutaCompleta = __DIR__ . '/../' . str_replace('/', DIRECTORY_SEPARATOR, $img['ruta_imagen']);
+                    if (file_exists($rutaCompleta)) {
+                        @unlink($rutaCompleta);
+                    }
+                }
+            }
+
+            // Eliminar registros de imágenes
+            $stmtDelImg = $conexion->prepare("DELETE FROM producto_imagenes WHERE id_producto = ?");
+            if ($stmtDelImg) {
+                $stmtDelImg->bind_param("i", $id);
+                $stmtDelImg->execute();
+            }
+
+            // Eliminar producto
+            $stmt = $conexion->prepare("DELETE FROM productos WHERE id_producto = ?");
+            if ($stmt) {
+                $stmt->bind_param("i", $id);
+                if ($stmt->execute()) {
+                    // Reactivar foreign key checks
+                    $conexion->query("SET FOREIGN_KEY_CHECKS=1");
+                    echo json_encode(['exito' => true, 'mensaje' => 'Producto eliminado exitosamente']);
+                } else {
+                    $conexion->query("SET FOREIGN_KEY_CHECKS=1");
+                    echo json_encode(['exito' => false, 'error' => 'Error al eliminar producto: ' . $stmt->error]);
+                }
+            } else {
+                $conexion->query("SET FOREIGN_KEY_CHECKS=1");
+                echo json_encode(['exito' => false, 'error' => 'Error al preparar eliminación: ' . $conexion->error]);
+            }
+        } catch (Exception $e) {
+            // Reactivar foreign key checks en caso de excepción
+            $conexion->query("SET FOREIGN_KEY_CHECKS=1");
+            echo json_encode(['exito' => false, 'error' => 'Error al eliminar: ' . $e->getMessage()]);
         }
         exit();
     }
@@ -362,19 +423,30 @@ if ($metodo === 'POST') {
         }
 
         $stmt = $conexion->prepare("SELECT ruta_imagen FROM producto_imagenes WHERE id_imagen = ?");
+        if (!$stmt) {
+            echo json_encode(['exito' => false, 'error' => 'Error en consulta: ' . $conexion->error]);
+            exit();
+        }
         $stmt->bind_param("i", $id_imagen);
         $stmt->execute();
         $img = $stmt->get_result()->fetch_assoc();
 
         if ($img) {
-            $rutaCompleta = __DIR__ . '/../' . $img['ruta_imagen'];
+            $rutaCompleta = __DIR__ . '/../' . str_replace('/', DIRECTORY_SEPARATOR, $img['ruta_imagen']);
             if (file_exists($rutaCompleta)) {
-                unlink($rutaCompleta);
+                @unlink($rutaCompleta);
             }
             $stmtDel = $conexion->prepare("DELETE FROM producto_imagenes WHERE id_imagen = ?");
+            if (!$stmtDel) {
+                echo json_encode(['exito' => false, 'error' => 'Error en consulta de eliminación: ' . $conexion->error]);
+                exit();
+            }
             $stmtDel->bind_param("i", $id_imagen);
-            $stmtDel->execute();
-            echo json_encode(['exito' => true, 'mensaje' => 'Imagen eliminada']);
+            if ($stmtDel->execute()) {
+                echo json_encode(['exito' => true, 'mensaje' => 'Imagen eliminada']);
+            } else {
+                echo json_encode(['exito' => false, 'error' => 'Error al eliminar imagen: ' . $stmtDel->error]);
+            }
         } else {
             echo json_encode(['exito' => false, 'error' => 'Imagen no encontrada']);
         }

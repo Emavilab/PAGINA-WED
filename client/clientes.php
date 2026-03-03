@@ -561,7 +561,7 @@ function confirmarEliminar(){
 
     const id = document.getElementById("delete_id").value;
 
-    fetch("clientes_eliminar.php", {
+    fetch("../client/clientes_eliminar.php", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify({id:id})
@@ -575,7 +575,13 @@ function confirmarEliminar(){
     showSuccessModal("Cliente eliminado correctamente");
 
     setTimeout(() => {
-        window.location.reload();
+        if (data.redirect) {
+            // Si hay redirect, enviar al usuario eliminado a index
+            window.location.href = data.redirect;
+        } else {
+            // Si es admin eliminando a otro, solo recargar
+            window.location.reload();
+        }
     }, 1500);
 
 }else{

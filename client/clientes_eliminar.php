@@ -18,8 +18,9 @@ if ($id_usuario <= 0) {
     exit();
 }
 
-// El usuario solo puede eliminar su propia cuenta
-if ($id_usuario !== $_SESSION['id_usuario']) {
+// Verificar permisos: solo puede eliminarse a sí mismo o si es admin
+$es_admin = isset($_SESSION['id_rol']) && $_SESSION['id_rol'] == 1;
+if ($id_usuario !== $_SESSION['id_usuario'] && !$es_admin) {
     echo json_encode(["success" => false, "message" => "No tienes permisos para eliminar esta cuenta"]);
     exit();
 }
@@ -121,10 +122,17 @@ try {
     // Confirmar transacción
     $conexion->commit();
     
-    // Destruir sesión
-    session_destroy();
+    // Solo destruir sesión si se elimina a sí mismo, no si un admin elimina a otro
+    $destruir_sesion = ($id_usuario === $_SESSION['id_usuario']);
+    if ($destruir_sesion) {
+        session_destroy();
+    }
     
-    echo json_encode(["success" => true, "message" => "Cliente eliminado correctamente", "redirect" => "/index.php"]);
+    echo json_encode([
+        "success" => true, 
+        "message" => "Cliente eliminado correctamente", 
+        "redirect" => $destruir_sesion ? "/index.php" : null
+    ]);
     
 } catch (Exception $e) {
     // Reactivar foreign key checks en caso de error

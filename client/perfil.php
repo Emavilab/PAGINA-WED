@@ -9,6 +9,13 @@ if (!usuarioAutenticado()) {
 }
 
 $usuario = obtenerDatosUsuario();
+
+// Validar que el cliente exista
+if (!isset($usuario['id_cliente']) || !$usuario['id_cliente']) {
+    http_response_code(401);
+    echo "<script>window.location='?modulo=login';</script>";
+    exit();
+}
 ?>
 <main class="flex-grow max-w-7xl mx-auto px-4 py-8 md:py-12 w-full">
 <div class="mb-10">
@@ -695,7 +702,12 @@ function eliminarCuenta() {
                 window.location.href = '/PAGINA WED/index.php';
             }, 500);
         } else {
-            alert('Error: ' + (data.mensaje || 'Error desconocido'));
+            const mensaje = data.mensaje || 'Error desconocido';
+            if (typeof showAuthModal !== 'undefined' && mensaje.toLowerCase().includes('autenticaci')) {
+                showAuthModal(mensaje);
+            } else {
+                alert('Error: ' + mensaje);
+            }
             if (data.debug) {
                 console.log('Error pasos:', data.debug);
             }

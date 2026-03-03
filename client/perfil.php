@@ -667,29 +667,43 @@ function setupContraseñaForm() {
 // ===============================
 
 function eliminarCuenta() {
-    CustomModal.show('warning', 'Confirmar eliminación', '¿Estás completamente seguro? Esta acción no se puede deshacer.', (confirmed) => {
-        if (!confirmed) return;
+    if (!confirm('¿Estás completamente seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.')) {
+        return;
+    }
+    
+    if (!confirm('Se eliminarán TODOS tus datos (pedidos, direcciones, carrito, etc). ¿Continuar?')) {
+        return;
+    }
+    
+    fetch('api/api_eliminar_cuenta.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Respuesta del servidor:', data);
+        if (data.debug) {
+            console.log('Debug steps:', data.debug);
+        }
         
-        CustomModal.show('warning', 'Segunda confirmación', 'Se eliminarán todos tus datos. ¿Continuar?', (confirmed2) => {
-            if (!confirmed2) return;
-            
-            fetch('api/api_eliminar_cuenta.php', {
-                method: 'POST'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.exito) {
-                    CustomModal.show('success', 'Éxito', data.mensaje, () => {
-                        window.location.href = data.redirect;
-                    });
-                } else {
-                    CustomModal.show('error', 'Error', data.mensaje);
-                }
-            })
-            .catch(() => {
-                CustomModal.show('error', 'Error', 'Error al eliminar la cuenta');
-            });
-        });
+        if (data.exito) {
+            alert(data.mensaje);
+            // Redirigir después de un pequeño delay para asegurar que el servidor procese
+            setTimeout(() => {
+                window.location.href = '/PAGINA WED/index.php';
+            }, 500);
+        } else {
+            alert('Error: ' + (data.mensaje || 'Error desconocido'));
+            if (data.debug) {
+                console.log('Error pasos:', data.debug);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error de conexión: ' + error.message);
     });
 }
 document.addEventListener("click", function(e) {

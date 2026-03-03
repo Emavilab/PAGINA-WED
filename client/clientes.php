@@ -561,7 +561,7 @@ function confirmarEliminar(){
 
     const id = document.getElementById("delete_id").value;
 
-    fetch("/PAGINA%20WED/client/clientes_eliminar.php", {
+    fetch("clientes_eliminar.php", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify({id:id})
@@ -585,6 +585,7 @@ function confirmarEliminar(){
     })
     .catch(err => {
         console.error(err);
+        alert("Error al eliminar cliente");
     });
 
 }

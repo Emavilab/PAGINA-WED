@@ -2348,8 +2348,8 @@ function cargarCarrito() {
                 renderizarCarrito(data.carrito);
             } else {
                 // No autenticado o error
-                const cont = document.getElementById('cartItemsContainer');
-                cont.innerHTML = '<div class="text-center py-12"><span class="material-symbols-outlined text-5xl text-slate-200">person_off</span><p class="text-slate-400 mt-3">Inicia sesión para usar el carrito</p></div>';
+                cerrarCarrito();
+                showAuthModal("Debes iniciar sesión para usar el carrito");
                 actualizarBadge(0);
             }
         })
@@ -2420,6 +2420,12 @@ function renderizarCarrito(data) {
 }
 
 function agregarAlCarritoDesdeCard(btn, idProducto) {
+    // Verificar autenticación primero
+    if (!window._usuarioAutenticado) {
+        showAuthModal("Debes iniciar sesión para agregar productos al carrito");
+        return;
+    }
+    
     // Buscar la tarjeta del producto y dentro de ella el input de cantidad
     const card = btn.closest('.product-card') || btn.closest('[data-product-id]') || btn.closest('section');
     const cantInput = card ? card.querySelector('.card-qty, input[type="number"]') : null;
@@ -2428,6 +2434,12 @@ function agregarAlCarritoDesdeCard(btn, idProducto) {
 }
 
 function agregarAlCarritoDesdePreview() {
+    // Verificar autenticación primero
+    if (!window._usuarioAutenticado) {
+        showAuthModal("Debes iniciar sesión para agregar productos al carrito");
+        return;
+    }
+    
     const prevQtyEl = document.getElementById('prevCantidadInput');
     const cantidad = prevQtyEl ? parseInt(prevQtyEl.value) || 1 : 1;
     if (!_prevProductoActual || !_prevProductoActual.id_producto) {
@@ -2439,9 +2451,7 @@ function agregarAlCarritoDesdePreview() {
 
 function agregarAlCarrito(idProducto, cantidad, btnElement) {
     if (!window._usuarioAutenticado) {
-        CustomModal.show('confirm', 'Inicia sesión', 'Necesitas iniciar sesión para agregar productos al carrito. ¿Ir a iniciar sesión?', function(ok) {
-            if (ok) loadLogin();
-        });
+        showAuthModal("Debes iniciar sesión para agregar productos al carrito");
         return;
     }
     if (btnElement) {
@@ -2466,11 +2476,16 @@ function agregarAlCarrito(idProducto, cantidad, btnElement) {
                     cargarCarrito();
                 }
             } else {
-                CustomModal.show('error', 'Carrito', data.error || 'Error al agregar producto');
+                // Verificar si es error de autenticación
+                if (data.error && data.error.toLowerCase().includes('autenticaci')) {
+                    showAuthModal(data.error);
+                } else {
+                    showAuthModal(data.error || 'Debes iniciar sesión para usar esta función');
+                }
             }
         })
         .catch(() => {
-            CustomModal.show('error', 'Carrito', 'Error de conexión');
+            showAuthModal('Debes iniciar sesión para agregar productos al carrito');
         })
         .finally(() => {
             if (btnElement) {
@@ -2490,7 +2505,7 @@ function actualizarCantidadCarrito(idDetalle, nuevaCantidad) {
         .then(r => r.json())
         .then(data => {
             if (data.exito) cargarCarrito();
-            else CustomModal.show('error', 'Carrito', data.error || 'Error al actualizar');
+            else showAuthModal(data.error || 'Debes iniciar sesión para usar esta función');
         })
         .catch(() => {});
 }
@@ -2542,9 +2557,7 @@ function mostrarToastCarrito(mensaje) {
 // Toggle / agregar producto a Lista de Deseos (requiere autenticación)
 function toggleWishlist(btn, idProducto) {
     if (!window._usuarioAutenticado) {
-        CustomModal.show('confirm', 'Inicia sesión', 'Necesitas iniciar sesión para usar la lista de deseos. ¿Ir a iniciar sesión?', function(ok) {
-            if (ok) loadLogin();
-        });
+        showAuthModal("Debes iniciar sesión para usar la lista de deseos");
         return;
     }
 
@@ -2571,12 +2584,12 @@ function toggleWishlist(btn, idProducto) {
                     try { btn.classList.add('text-red-500'); } catch(e) {}
                 }
             } else {
-                // Mostrar error retornado por la API
-                CustomModal.show('error', 'Lista de deseos', data.error || 'Error al agregar el producto');
+                // Mostrar modal de autenticación
+                showAuthModal(data.error || 'Debes iniciar sesión para usar esta función');
             }
         })
         .catch(err => {
-            CustomModal.show('error', 'Lista de deseos', err.message || 'Error de conexión');
+            showAuthModal(err.message || 'Debes iniciar sesión para usar esta función');
         })
         .finally(() => { try { btn.disabled = false; } catch(e) {} });
 }
@@ -2651,5 +2664,48 @@ window.addEventListener('hashchange', function() {
     const hash = window.location.hash || '#';
     procesarHash(hash);
 });
+
+// === MODAL DE AUTENTICACIÓN ===
+function showAuthModal(message = "Debes iniciar sesión para continuar") {
+    const modal = document.getElementById("modalAuth");
+    if (modal) {
+        const messageElement = modal.querySelector("#authMessage");
+        if (messageElement) {
+            messageElement.innerText = message;
+        }
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+    }
+}
+
+function closeAuthModal() {
+    const modal = document.getElementById("modalAuth");
+    if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }
+}
+
+function irAlLogin() {
+    closeAuthModal();
+    loadLogin();
+}
 </script>
+
+<!-- MODAL AUTENTICACIÓN -->
+<div id="modalAuth" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[10000]" onclick="if(event.target === this) closeAuthModal()">
+    <div class="bg-white dark:bg-slate-900 rounded-lg p-8 w-full max-w-sm text-center shadow-xl">
+        <p id="authMessage" class="text-slate-700 dark:text-slate-300 mb-6 text-lg">
+            Debes iniciar sesión para continuar
+        </p>
+
+        <div class="flex items-center justify-center gap-2">
+            <span class="text-slate-600 dark:text-slate-400">¿Quieres iniciar sesión?</span>
+            <button onclick="irAlLogin()" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-semibold cursor-pointer underline transition">
+                Aquí
+            </button>
+        </div>
+    </div>
+</div>
+
 </body></html>

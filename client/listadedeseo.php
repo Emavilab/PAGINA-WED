@@ -2,14 +2,15 @@
 require_once __DIR__ . '/../core/sesiones.php';
 $usuarioAutenticado = usuarioAutenticado();
 ?>
+
 <?php
 require_once '../core/conexion.php';
 
 // Cargar configuración general de colores
-$res_cfg_reg = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
-$cfg_reg = ($res_cfg_reg && mysqli_num_rows($res_cfg_reg) > 0) ? mysqli_fetch_assoc($res_cfg_reg) : [];
+$res_cfg_of = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
+$cfg_of = ($res_cfg_of && mysqli_num_rows($res_cfg_of) > 0) ? mysqli_fetch_assoc($res_cfg_of) : [];
 
-function normalizar_color_registro($valor, $defecto) {
+function normalizar_color_ofertas($valor, $defecto) {
     if (!is_string($valor)) return $defecto;
     $valor = trim($valor);
     if ($valor === '') return $defecto;
@@ -17,9 +18,9 @@ function normalizar_color_registro($valor, $defecto) {
     return strtoupper($valor);
 }
 
-$reg_primary = normalizar_color_registro($cfg_reg['color_primary'] ?? '#135bec', '#135BEC');
-$reg_bg_light = normalizar_color_registro($cfg_reg['color_background_light'] ?? '#f6f6f8', '#F6F6F8');
-$reg_bg_dark = normalizar_color_registro($cfg_reg['color_background_dark'] ?? '#101622', '#101622');
+$of_primary = normalizar_color_ofertas($cfg_of['color_primary'] ?? '#137fec', '#137FEC');
+$of_bg_light = normalizar_color_ofertas($cfg_of['color_background_light'] ?? '#f6f7f8', '#F6F7F8');
+$of_bg_dark = normalizar_color_ofertas($cfg_of['color_background_dark'] ?? '#101922', '#101922');
 ?>
 <!DOCTYPE html>
 <html class="light" lang="es"><head>
@@ -36,9 +37,9 @@ $reg_bg_dark = normalizar_color_registro($cfg_reg['color_background_dark'] ?? '#
             theme: {
                 extend: {
                     colors: {
-                        primary: "<?php echo $login_primary; ?>",
-                        "background-light": "<?php echo $login_bg_light; ?>",
-                        "background-dark": "<?php echo $login_bg_dark; ?>
+                        primary: "<?php echo $of_primary; ?>",
+                        "background-light": "<?php echo $of_bg_light; ?>",
+                        "background-dark": "<?php echo $of_bg_dark; ?>"
                     },
                     fontFamily: {
                         "display": ["Inter"]

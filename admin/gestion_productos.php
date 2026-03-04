@@ -364,7 +364,7 @@
             var ofertaBadge = p.en_oferta == 1
                 ? ' <span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-semibold ml-1">OFERTA</span>' : '';
 
-            var imgSrc = p.imagen_principal ? '../' + esc(p.imagen_principal) : '';
+            var imgSrc = p.imagen_principal ? esc(p.imagen_principal) : '';
             var imgHtml = imgSrc
                 ? '<img src="' + imgSrc + '" class="w-10 h-10 rounded-lg object-cover border border-gray-200">'
                 : '<div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center"><i class="fas fa-image text-gray-300"></i></div>';
@@ -539,7 +539,7 @@
                     var galeriaHtml = '';
                     p.imagenes.forEach(function(img) {
                         galeriaHtml += '<div class="relative group" id="prod-img-exist-' + img.id_imagen + '">' +
-                            '<img src="../' + esc(img.ruta_imagen) + '" class="w-20 h-20 object-cover rounded-lg border border-gray-200">' +
+                            '<img src="' + esc(img.ruta_imagen) + '" class="w-20 h-20 object-cover rounded-lg border border-gray-200">' +
                             '<button type="button" onclick="window.eliminarImagenExistente(' + img.id_imagen + ')" ' +
                             'class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow">' +
                             '<i class="fas fa-times"></i></button></div>';

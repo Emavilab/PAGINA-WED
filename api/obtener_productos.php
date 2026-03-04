@@ -38,5 +38,23 @@ if ($result) {
     }
 }
 
+// Construir URLs absolutas para las imágenes
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+// Obtener el path del directorio sin el nombre del archivo
+$script_path = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+$baseUrl = rtrim($protocol . $host . $script_path, '/') . '/../';
+
+foreach ($productos as &$prod) {
+    if (!empty($prod['imagen_principal'])) {
+        $prod['imagen_principal'] = $baseUrl . str_replace(' ', '%20', $prod['imagen_principal']);
+    }
+    if (!empty($prod['imagenes'])) {
+        foreach ($prod['imagenes'] as &$img) {
+            $img = $baseUrl . str_replace(' ', '%20', $img);
+        }
+    }
+}
+
 echo json_encode($productos, JSON_UNESCAPED_UNICODE);
 ?>

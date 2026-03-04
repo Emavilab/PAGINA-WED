@@ -11,7 +11,11 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 
 $id_pedido = intval($_GET['id']);
 $usuario = obtenerDatosUsuario();
-$id_cliente = $usuario['id_cliente'];
+$id_cliente = $usuario['id_cliente'] ?? null;
+
+if (!$id_cliente) {
+    exit("Debes iniciar sesión para ver tus pedidos");
+}
 
 /* ================================
    OBTENER PEDIDO + MÉTODO ENVÍO

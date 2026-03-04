@@ -1,6 +1,21 @@
 <?php
+require_once 'sesiones.php';
 require_once 'conexion.php';
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
+
+// Verificar autenticación y permisos
+if (!usuarioAutenticado()) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'No autorizado: debe iniciar sesión']);
+    exit();
+}
+
+// Solo admin (rol 1) y vendedor (rol 2) pueden acceder
+if ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Permisos insuficientes']);
+    exit();
+}
 
 function responder($success, $message) {
     echo json_encode(['success' => $success, 'message' => $message]);
@@ -480,78 +495,201 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 // Eliminar Marca
 if (isset($_GET['eliminar_marca'])) {
     $id = intval($_GET['eliminar_marca']);
-    // Eliminar logo del disco si existe
-    $res_logo = mysqli_query($conexion, "SELECT logo FROM marcas WHERE id_marca = $id");
-    if ($row_logo = mysqli_fetch_assoc($res_logo)) {
-        $carpeta = __DIR__ . '/../img/marcas/';
-        if (!empty($row_logo['logo']) && file_exists($carpeta . $row_logo['logo'])) {
-            unlink($carpeta . $row_logo['logo']);
-        }
+    if ($id <= 0) {
+        responder(false, 'ID de marca inválido');
     }
-    $sql = "DELETE FROM marcas WHERE id_marca = $id";
-    if (mysqli_query($conexion, $sql)) {
-        responder(true, 'Marca eliminada exitosamente');
-    } else {
-        responder(false, 'Error al eliminar marca: ' . mysqli_error($conexion));
+    
+    try {
+        // Verificar si hay productos asociados a esta marca
+        $stmtCheck = $conexion->prepare("SELECT COUNT(*) as count FROM productos WHERE id_marca = ?");
+        $stmtCheck->bind_param("i", $id);
+        $stmtCheck->execute();
+        $resCheck = $stmtCheck->get_result();
+        $rowCheck = $resCheck->fetch_assoc();
+        
+        if ($rowCheck['count'] > 0) {
+            responder(false, 'No se puede eliminar esta marca porque tiene ' . $rowCheck['count'] . ' producto(s) asociado(s). Primero debes eliminar o reasignar los productos.');
+        }
+        
+        // Desactivar foreign key checks temporalmente
+        mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=0");
+        
+        // Obtener logo para eliminarlo del disco
+        $stmt = $conexion->prepare("SELECT logo FROM marcas WHERE id_marca = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $res_logo = $stmt->get_result();
+        
+        // Eliminar logo del disco si existe
+        if ($row_logo = $res_logo->fetch_assoc()) {
+            $carpeta = __DIR__ . '/../img/marcas/';
+            if (!empty($row_logo['logo']) && file_exists($carpeta . $row_logo['logo'])) {
+                @unlink($carpeta . $row_logo['logo']);
+            }
+        }
+        
+        // Eliminar marca
+        $stmtDel = $conexion->prepare("DELETE FROM marcas WHERE id_marca = ?");
+        $stmtDel->bind_param("i", $id);
+        
+        if ($stmtDel->execute()) {
+            // Reactivar foreign key checks
+            mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=1");
+            responder(true, 'Marca eliminada exitosamente');
+        } else {
+            // Reactivar foreign key checks
+            mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=1");
+            responder(false, 'Error al eliminar marca: ' . $stmtDel->error);
+        }
+    } catch (Exception $e) {
+        // Reactivar foreign key checks en caso de error
+        mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=1");
+        responder(false, 'Error: ' . $e->getMessage());
     }
 }
 
 // Eliminar Envío
 if (isset($_GET['eliminar_envio'])) {
     $id = intval($_GET['eliminar_envio']);
-    $sql = "DELETE FROM metodos_envio WHERE id_envio = $id";
-    if (mysqli_query($conexion, $sql)) {
-        responder(true, 'Método de envío eliminado exitosamente');
-    } else {
-        responder(false, 'Error al eliminar método de envío: ' . mysqli_error($conexion));
+    if ($id <= 0) {
+        responder(false, 'ID de método de envío inválido');
+    }
+    
+    try {
+        // Verificar si hay pedidos asociados a este método de envío
+        $stmtCheck = $conexion->prepare("SELECT COUNT(*) as count FROM pedidos WHERE id_metodo_envio = ?");
+        $stmtCheck->bind_param("i", $id);
+        $stmtCheck->execute();
+        $resCheck = $stmtCheck->get_result();
+        $rowCheck = $resCheck->fetch_assoc();
+        
+        if ($rowCheck['count'] > 0) {
+            responder(false, 'No se puede eliminar este método de envío porque tiene ' . $rowCheck['count'] . ' pedido(s) asociado(s). Primero debes cambiar el método de envío de esos pedidos.');
+        }
+        
+        // Desactivar foreign key checks temporalmente
+        mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=0");
+        
+        // Eliminar método de envío
+        $stmt = $conexion->prepare("DELETE FROM metodos_envio WHERE id_envio = ?");
+        $stmt->bind_param("i", $id);
+        
+        if ($stmt->execute()) {
+            // Reactivar foreign key checks
+            mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=1");
+            responder(true, 'Método de envío eliminado exitosamente');
+        } else {
+            // Reactivar foreign key checks
+            mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=1");
+            responder(false, 'Error al eliminar método de envío: ' . $stmt->error);
+        }
+    } catch (Exception $e) {
+        // Reactivar foreign key checks en caso de error
+        mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=1");
+        responder(false, 'Error: ' . $e->getMessage());
     }
 }
 
 // Eliminar Pago
 if (isset($_GET['eliminar_pago'])) {
     $id = intval($_GET['eliminar_pago']);
-    $sql = "DELETE FROM metodos_pago WHERE id_metodo_pago = $id";
-    if (mysqli_query($conexion, $sql)) {
-        responder(true, 'Método de pago eliminado exitosamente');
-    } else {
-        responder(false, 'Error al eliminar método de pago: ' . mysqli_error($conexion));
+    if ($id <= 0) {
+        responder(false, 'ID de método de pago inválido');
+    }
+    
+    try {
+        // Verificar si hay pedidos asociados a este método de pago
+        $stmtCheck = $conexion->prepare("SELECT COUNT(*) as count FROM pedidos WHERE id_metodo_pago = ?");
+        $stmtCheck->bind_param("i", $id);
+        $stmtCheck->execute();
+        $resCheck = $stmtCheck->get_result();
+        $rowCheck = $resCheck->fetch_assoc();
+        
+        if ($rowCheck['count'] > 0) {
+            responder(false, 'No se puede eliminar este método de pago porque tiene ' . $rowCheck['count'] . ' pedido(s) asociado(s). Primero debes cambiar el método de pago de esos pedidos.');
+        }
+        
+        // Desactivar foreign key checks temporalmente
+        mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=0");
+        
+        // Eliminar método de pago
+        $stmt = $conexion->prepare("DELETE FROM metodos_pago WHERE id_metodo_pago = ?");
+        $stmt->bind_param("i", $id);
+        
+        if ($stmt->execute()) {
+            // Reactivar foreign key checks
+            mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=1");
+            responder(true, 'Método de pago eliminado exitosamente');
+        } else {
+            // Reactivar foreign key checks
+            mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=1");
+            responder(false, 'Error al eliminar método de pago: ' . $stmt->error);
+        }
+    } catch (Exception $e) {
+        // Reactivar foreign key checks en caso de error
+        mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=1");
+        responder(false, 'Error: ' . $e->getMessage());
     }
 }
 
 // Eliminar Banner
 if (isset($_GET['eliminar_banner'])) {
     $id = intval($_GET['eliminar_banner']);
+    if ($id <= 0) {
+        responder(false, 'ID de banner inválido');
+    }
+    
     // Eliminar imagen del disco
-    $res_img = mysqli_query($conexion, "SELECT imagen FROM banners WHERE id_banner = $id");
-    if ($row_img = mysqli_fetch_assoc($res_img)) {
+    $stmt = $conexion->prepare("SELECT imagen FROM banners WHERE id_banner = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $res_img = $stmt->get_result();
+    
+    if ($row_img = $res_img->fetch_assoc()) {
         $carpeta = __DIR__ . '/../img/banners/';
         if (!empty($row_img['imagen']) && file_exists($carpeta . $row_img['imagen'])) {
-            unlink($carpeta . $row_img['imagen']);
+            @unlink($carpeta . $row_img['imagen']);
         }
     }
-    $sql = "DELETE FROM banners WHERE id_banner = $id";
-    if (mysqli_query($conexion, $sql)) {
+    
+    $stmtDel = $conexion->prepare("DELETE FROM banners WHERE id_banner = ?");
+    $stmtDel->bind_param("i", $id);
+    
+    if ($stmtDel->execute()) {
         responder(true, 'Banner eliminado exitosamente');
     } else {
-        responder(false, 'Error al eliminar banner: ' . mysqli_error($conexion));
+        responder(false, 'Error al eliminar banner: ' . $stmtDel->error);
     }
 }
 
 // Eliminar Hero Slide
 if (isset($_GET['eliminar_hero_slide'])) {
     $id = intval($_GET['eliminar_hero_slide']);
-    $res_img = mysqli_query($conexion, "SELECT imagen FROM hero_slides WHERE id_slide = $id");
-    if ($row_img = mysqli_fetch_assoc($res_img)) {
+    if ($id <= 0) {
+        responder(false, 'ID de slide inválido');
+    }
+    
+    // Obtener imagen del slide
+    $stmt = $conexion->prepare("SELECT imagen FROM hero_slides WHERE id_slide = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $res_img = $stmt->get_result();
+    
+    if ($row_img = $res_img->fetch_assoc()) {
         $carpeta = __DIR__ . '/../img/slides/';
         if (!empty($row_img['imagen']) && file_exists($carpeta . $row_img['imagen'])) {
-            unlink($carpeta . $row_img['imagen']);
+            @unlink($carpeta . $row_img['imagen']);
         }
     }
-    $sql = "DELETE FROM hero_slides WHERE id_slide = $id";
-    if (mysqli_query($conexion, $sql)) {
+    
+    // Eliminar slide
+    $stmtDel = $conexion->prepare("DELETE FROM hero_slides WHERE id_slide = ?");
+    $stmtDel->bind_param("i", $id);
+    
+    if ($stmtDel->execute()) {
         responder(true, 'Slide eliminado exitosamente');
     } else {
-        responder(false, 'Error al eliminar slide: ' . mysqli_error($conexion));
+        responder(false, 'Error al eliminar slide: ' . $stmtDel->error);
     }
 }
 ?>

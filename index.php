@@ -1790,6 +1790,111 @@ function loadContactanos() {
     }, 100);
 }
 
+// Cargar todos los productos disponibles
+function loadProductos() {
+    document.getElementById('mainContent').innerHTML = '<div class="flex justify-center items-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div></div>';
+    fetch('api/obtener_productos.php')
+        .then(r => r.json())
+        .then(productos => {
+            window._productosData = productos;
+
+            let html = '<section class="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">' +
+                '<div class="flex items-center justify-between mb-8 border-l-4 border-primary pl-4">' +
+                    '<div><h2 class="text-2xl font-bold text-slate-900 dark:text-white">Todos los Productos</h2>' +
+                    '<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">' + productos.length + ' productos disponibles</p></div>' +
+                    '<button onclick="loadHome()" class="text-primary hover:underline font-semibold flex items-center gap-1 bg-none border-none cursor-pointer text-sm">' +
+                        '<span class="material-symbols-outlined text-lg">arrow_back</span> Inicio</button>' +
+                '</div>';
+
+            // Modal de vista previa
+            html += '<div id="modalVistaPrevia" class="fixed inset-0 z-[9999] hidden">' +
+                '<div class="absolute inset-0 bg-black/60 modal-blur" onclick="cerrarVistaPrevia()"></div>' +
+                '<div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">' +
+                    '<div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto pointer-events-auto relative">' +
+                        '<button onclick="cerrarVistaPrevia()" class="absolute top-4 right-4 z-10 w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-600 hover:text-red-500 hover:bg-red-50 transition-colors"><span class="material-symbols-outlined">close</span></button>' +
+                        '<div class="flex flex-col md:flex-row">' +
+                            '<div class="md:w-1/2 p-6"><div class="relative aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700 mb-4"><img id="prevImgPrincipal" src="" alt="" class="w-full h-full object-cover"/>' +
+                                '<button id="prevBtnLeft" onclick="cambiarImgPrevia(-1)" class="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md"><span class="material-symbols-outlined text-sm">arrow_back_ios_new</span></button>' +
+                                '<button id="prevBtnRight" onclick="cambiarImgPrevia(1)" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md"><span class="material-symbols-outlined text-sm">arrow_forward_ios</span></button>' +
+                            '</div><div id="prevMiniaturas" class="flex gap-2 overflow-x-auto pb-2"></div></div>' +
+                            '<div class="md:w-1/2 p-6 md:pl-2 flex flex-col justify-center">' +
+                                '<span id="prevCategoria" class="text-xs text-primary font-semibold uppercase tracking-wider mb-2"></span>' +
+                                '<h2 id="prevNombre" class="text-2xl font-bold text-slate-900 dark:text-white mb-3"></h2>' +
+                                '<p id="prevMarca" class="text-sm text-slate-400 mb-3"></p>' +
+                                '<p id="prevDescripcion" class="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed"></p>' +
+                                '<div class="flex items-center gap-3 mb-4"><span id="prevPrecio" class="text-3xl font-bold text-slate-900 dark:text-white"></span><span id="prevPrecioOriginal" class="text-lg text-slate-400 line-through hidden"></span><span id="prevBadgeOferta" class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded hidden">OFERTA</span></div>' +
+                                '<div class="flex items-center gap-2 mb-6"><span id="prevStockIcon" class="material-symbols-outlined text-lg"></span><span id="prevStock" class="text-sm font-medium"></span></div>' +
+                                '<div class="flex items-center gap-3 mb-4">' +
+                                    '<span class="text-sm font-medium text-slate-700 dark:text-slate-300">Cantidad:</span>' +
+                                    '<div class="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">' +
+                                        '<button onclick="prevCantidad(-1)" class="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-lg font-bold">−</button>' +
+                                        '<input id="prevCantidadInput" type="number" value="1" min="1" class="w-12 h-9 text-center border-x border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-bold text-slate-900 dark:text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" onchange="validarPrevCantidad()"/>' +
+                                        '<button onclick="prevCantidad(1)" class="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-lg font-bold">+</button>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<button onclick="agregarAlCarritoDesdePreview()" class="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-lg flex items-center justify-center gap-2 font-bold transition-colors"><span class="material-symbols-outlined">shopping_cart</span> Agregar al Carrito</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+
+            html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">';
+
+            if (productos.length === 0) {
+                html += '<div class="col-span-full text-center py-16"><span class="material-symbols-outlined text-6xl text-slate-300">inventory_2</span><p class="text-slate-500 mt-4 text-lg">No hay productos disponibles.</p></div>';
+            } else {
+                productos.forEach(function(prod, index) {
+                    const imgSrc = prod.imagen_principal || 'https://via.placeholder.com/300x300?text=Sin+Imagen';
+                    const precioOriginal = parseFloat(prod.precio).toFixed(2);
+                    const enOferta = prod.en_oferta == 1 && prod.precio_descuento;
+                    const precioFinal = enOferta ? parseFloat(prod.precio_descuento).toFixed(2) : precioOriginal;
+
+                    html += '<div class="product-card group bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700 hover:shadow-xl transition-all duration-300">' +
+                        '<div class="relative aspect-square overflow-hidden bg-slate-100 dark:bg-slate-700">' +
+                            '<img alt="' + prod.nombre + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src="' + imgSrc + '" onerror="this.src=\'https://via.placeholder.com/300x300?text=Sin+Imagen\'"/>' +
+                            '<div class="product-actions absolute inset-0 bg-black/5 flex items-center justify-center gap-3 opacity-0 translate-y-4 transition-all duration-300">' +
+                                '<button onclick="toggleWishlist(this,' + prod.id_producto + ')" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-primary shadow-lg transition-colors" title="Lista de deseos"><span class="material-symbols-outlined">favorite</span></button>' +
+                                '<button onclick="abrirVistaPrevia(' + index + ')" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-primary shadow-lg transition-colors" title="Vista previa"><span class="material-symbols-outlined">visibility</span></button>' +
+                            '</div>' +
+                            (enOferta ? '<div class="absolute top-3 left-3"><span class="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Oferta</span></div>' : '') +
+                        '</div>' +
+                        '<div class="p-5">' +
+                            '<h3 class="font-bold text-slate-900 dark:text-white mb-1 group-hover:text-primary transition-colors truncate">' + prod.nombre + '</h3>' +
+                            '<p class="text-slate-500 dark:text-slate-400 text-sm mb-4 line-clamp-2">' + (prod.descripcion || '') + '</p>' +
+                            '<div class="flex items-center gap-2 mb-3">' +
+                                '<span class="text-xs text-slate-500 dark:text-slate-400">Cant:</span>' +
+                                '<div class="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">' +
+                                    '<button onclick="cardCantidad(this,-1)" class="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm font-bold">−</button>' +
+                                    '<input type="number" value="1" min="1" class="card-qty w-10 h-7 text-center border-x border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"/>' +
+                                    '<button onclick="cardCantidad(this,1)" class="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm font-bold">+</button>' +
+                                '</div>' +
+                            '</div>' +
+                            '<div class="flex items-center justify-between gap-4">' +
+                                '<div class="flex flex-col">' +
+                                    '<span class="text-xl font-bold text-slate-900 dark:text-white">' + window._cfgMoneda + ' ' + precioFinal + '</span>' +
+                                    (enOferta ? '<span class="text-xs text-slate-400 line-through">' + window._cfgMoneda + ' ' + precioOriginal + '</span>' : '') +
+                                '</div>' +
+                                '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
+                                    '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                });
+            }
+
+            html += '</div></section>';
+            document.getElementById('mainContent').innerHTML = html;
+            window.scrollTo(0, 0);
+            // Guardar en historial
+            AppRouter.push('productos', {});
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            document.getElementById('mainContent').innerHTML = '<div class="text-center py-20 text-red-500"><span class="material-symbols-outlined text-5xl">error</span><p class="mt-2">Error al cargar productos</p></div>';
+        });
+}
+
 function loadOfertas() {
     document.getElementById('mainContent').innerHTML = '<div class="flex justify-center items-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div></div>';
     fetch('api/obtener_productos.php')
@@ -2694,6 +2799,9 @@ window.addEventListener('popstate', function(event) {
                 break;
             case 'productos_marca':
                 loadProductosPorMarca(params.id, params.nombre);
+                break;
+            case 'productos':
+                loadProductos();
                 break;
             case 'busqueda':
                 // Para búsqueda, simplemente recarga el home ya que el término se perdería

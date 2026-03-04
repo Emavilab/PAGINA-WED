@@ -83,7 +83,7 @@ $of_bg_dark = normalizar_color_ofertas($cfg_of['color_background_dark'] ?? '#101
         <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">favorite_border</span>
         <h2 class="text-xl font-bold mb-2">Tu lista está vacía</h2>
         <p class="text-slate-500 mb-8">¡Explora nuestra tienda y guarda tus productos favoritos!</p>
-        <button onclick="window.location.href='../index.php'" class="px-8 py-3 bg-primary text-white rounded-xl font-bold">Empezar a comprar</button>
+        <button onclick="if (typeof loadProductos === 'function') { loadProductos(); } else { window.location.href='../index.php'; }" class="px-8 py-3 bg-primary text-white rounded-xl font-bold">Empezar a comprar</button>
     </div>
 
     <div id="wishlist-need-login" class="hidden mt-12 text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700">

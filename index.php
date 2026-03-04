@@ -50,6 +50,15 @@ $cfg_color_primary = normalizar_color_publico($cfg['color_primary'] ?? '#137fec'
 $cfg_color_primary_dark = normalizar_color_publico($cfg['color_primary_dark'] ?? '#0d66c2', '#0D66C2');
 $cfg_color_bg_light = normalizar_color_publico($cfg['color_background_light'] ?? '#f6f7f8', '#F6F7F8');
 $cfg_color_bg_dark = normalizar_color_publico($cfg['color_background_dark'] ?? '#101922', '#101922');
+
+// Cargar marcas destacadas activas
+$res_marcas = mysqli_query($conexion, "SELECT id_marca, nombre, logo FROM marcas WHERE estado = 'activo' ORDER BY id_marca DESC");
+$marcas_destacadas = [];
+if($res_marcas && mysqli_num_rows($res_marcas) > 0) {
+    while($marca = mysqli_fetch_assoc($res_marcas)) {
+        $marcas_destacadas[] = $marca;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es"><head>
@@ -364,6 +373,56 @@ foreach ($menu_items as $item) {
     </div>
 </div>
 </section>
+
+<!-- ==================== MARCAS DESTACADAS ==================== -->
+<?php if(!empty($marcas_destacadas)): ?>
+<section class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-100 dark:border-slate-800">
+    <div class="mb-10 border-l-4 border-primary pl-4">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Marcas Destacadas</h2>
+    </div>
+    
+    <div class="relative">
+        <style>
+            .marcas-wrapper {
+                overflow-x: auto;
+                scroll-behavior: smooth;
+                scrollbar-width: none;
+            }
+            .marcas-wrapper::-webkit-scrollbar {
+                display: none;
+            }
+        </style>
+        
+        <div class="marcas-wrapper" id="marcas-wrapper">
+            <div id="marcas-carrusel" class="flex gap-6 pb-4 w-max">
+                <?php foreach($marcas_destacadas as $marca): ?>
+                <div class="flex-shrink-0 snap-center cursor-pointer" onclick="loadProductosPorMarca(<?php echo $marca['id_marca']; ?>, '<?php echo htmlspecialchars(addslashes($marca['nombre'])); ?>')">
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-200 dark:border-slate-700 p-8 w-64 h-48 flex items-center justify-center group hover:scale-105 transform">
+                        <?php if(!empty($marca['logo'])): ?>
+                            <img src="img/marcas/<?php echo htmlspecialchars($marca['logo']); ?>" alt="<?php echo htmlspecialchars($marca['nombre']); ?>" class="max-w-full max-h-full object-contain" title="<?php echo htmlspecialchars($marca['nombre']); ?>">
+                        <?php else: ?>
+                            <div class="text-center">
+                                <span class="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600 mb-2">image</span>
+                                <p class="text-xs text-slate-500 font-semibold"><?php echo htmlspecialchars($marca['nombre']); ?></p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        
+        <!-- Botones de navegación -->
+        <button onclick="scrollMarcasManual(-1)" class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 bg-primary hover:bg-primary-dark text-white rounded-full p-2 shadow-lg z-10 hidden sm:flex transition-all">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <button onclick="scrollMarcasManual(1)" class="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 bg-primary hover:bg-primary-dark text-white rounded-full p-2 shadow-lg z-10 hidden sm:flex transition-all">
+            <span class="material-symbols-outlined">arrow_forward</span>
+        </button>
+    </div>
+</section>
+<?php endif; ?>
+
 <section class="bg-background-light dark:bg-slate-900/50 py-12">
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
 <div class="flex items-center gap-4">
@@ -886,6 +945,176 @@ function loadProductosPorCategoria(idCategoria, nombreCategoria) {
         });
 }
 
+/* ========== PRODUCTOS POR MARCA ========== */
+function loadProductosPorMarca(idMarca, nombreMarca) {
+    document.getElementById('mainContent').innerHTML = '<div class="flex justify-center items-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div></div>';
+    
+    Promise.all([
+        fetch('api/obtener_productos.php').then(r => r.json()),
+        fetch('api/obtener_categorias.php?todas=1').then(r => r.json())
+    ]).then(function([productos, categorias]) {
+        // Filtrar productos por marca
+        const productosMarca = productos.filter(p => parseInt(p.id_marca) === parseInt(idMarca));
+        
+        // Obtener solo las categorías relacionadas a los productos de esta marca
+        const categoriasIds = new Set(productosMarca.map(p => parseInt(p.id_categoria)));
+        const categoriasRelacionadas = categorias.filter(cat => categoriasIds.has(parseInt(cat.id_categoria)));
+        
+        // Debug - to help verify the filtering
+        console.log('Marca ID:', idMarca);
+        console.log('Productos de la marca:', productosMarca.length);
+        console.log('IDs de categorías en productos:', Array.from(categoriasIds));
+        console.log('Todas las categorías:', categorias.length);
+        console.log('Categorías relacionadas:', categoriasRelacionadas.length);
+        console.log('Detalle categorías relacionadas:', categoriasRelacionadas);
+        
+        window._productosData = productosMarca;
+        window._categoriasDisponibles = categoriasRelacionadas;
+        window._marcaActual = { id: idMarca, nombre: nombreMarca };
+
+        let html = '<section class="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">' +
+            '<div class="flex items-center justify-between mb-8 border-l-4 border-primary pl-4">' +
+                '<div><h2 class="text-2xl font-bold text-slate-900 dark:text-white">Productos de ' + nombreMarca + '</h2>' +
+                '<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">' + productosMarca.length + ' productos</p></div>' +
+                '<button onclick="loadHome()" class="text-primary hover:underline font-semibold flex items-center gap-1 bg-none border-none cursor-pointer text-sm">' +
+                    '<span class="material-symbols-outlined text-lg">arrow_back</span> Inicio</button>' +
+            '</div>';
+
+            // Filtros por categoría (solo las relacionadas a esta marca)
+            html += '<div class="mb-8 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">' +
+                '<h3 class="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">' +
+                    '<span class="material-symbols-outlined">filter_list</span> Filtrar por categoría' +
+                '</h3>' +
+                '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">' +
+                    '<button onclick="filtrarMarcaPorCategoria(null)" class="px-3 py-2 rounded-lg text-sm font-semibold transition-all bg-primary text-white hover:bg-primary-dark">Todos</button>';
+
+            // Renderizar solo las categorías relacionadas (sin fallback)
+            categoriasRelacionadas.forEach(cat => {
+                html += '<button onclick="filtrarMarcaPorCategoria(' + cat.id_categoria + ')" class="px-3 py-2 rounded-lg text-sm font-semibold transition-all bg-white dark:bg-slate-700 text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 hover:border-primary dark:hover:border-primary">' + cat.nombre + '</button>';
+            });
+
+            html += '</div></div>';
+
+            // Modal de vista previa
+            html += '<div id="modalVistaPrevia" class="fixed inset-0 z-[9999] hidden">' +
+                '<div class="absolute inset-0 bg-black/60 modal-blur" onclick="cerrarVistaPrevia()"></div>' +
+                '<div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">' +
+                    '<div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto pointer-events-auto relative">' +
+                        '<button onclick="cerrarVistaPrevia()" class="absolute top-4 right-4 z-10 w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-600 hover:text-red-500 hover:bg-red-50 transition-colors"><span class="material-symbols-outlined">close</span></button>' +
+                        '<div class="flex flex-col md:flex-row">' +
+                            '<div class="md:w-1/2 p-6"><div class="relative aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700 mb-4"><img id="prevImgPrincipal" src="" alt="" class="w-full h-full object-cover"/>' +
+                                '<button id="prevBtnLeft" onclick="cambiarImgPrevia(-1)" class="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md"><span class="material-symbols-outlined text-sm">arrow_back_ios_new</span></button>' +
+                                '<button id="prevBtnRight" onclick="cambiarImgPrevia(1)" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md"><span class="material-symbols-outlined text-sm">arrow_forward_ios</span></button>' +
+                            '</div><div id="prevMiniaturas" class="flex gap-2 overflow-x-auto pb-2"></div></div>' +
+                            '<div class="md:w-1/2 p-6 md:pl-2 flex flex-col justify-center">' +
+                                '<span id="prevCategoria" class="text-xs text-primary font-semibold uppercase tracking-wider mb-2"></span>' +
+                                '<h2 id="prevNombre" class="text-2xl font-bold text-slate-900 dark:text-white mb-3"></h2>' +
+                                '<p id="prevMarca" class="text-sm text-slate-400 mb-3"></p>' +
+                                '<p id="prevDescripcion" class="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed"></p>' +
+                                '<div class="flex items-center gap-3 mb-4"><span id="prevPrecio" class="text-3xl font-bold text-slate-900 dark:text-white"></span><span id="prevPrecioOriginal" class="text-lg text-slate-400 line-through hidden"></span><span id="prevBadgeOferta" class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded hidden">OFERTA</span></div>' +
+                                '<div class="flex items-center gap-2 mb-6"><span id="prevStockIcon" class="material-symbols-outlined text-lg"></span><span id="prevStock" class="text-sm font-medium"></span></div>' +
+                                '<div class="flex items-center gap-3 mb-4">' +
+                                    '<span class="text-sm font-medium text-slate-700 dark:text-slate-300">Cantidad:</span>' +
+                                    '<div class="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">' +
+                                        '<button onclick="prevCantidad(-1)" class="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-lg font-bold">−</button>' +
+                                        '<input id="prevCantidadInput" type="number" value="1" min="1" class="w-12 h-9 text-center border-x border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-bold text-slate-900 dark:text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" onchange="validarPrevCantidad()"/>' +
+                                        '<button onclick="prevCantidad(1)" class="w-9 h-9 flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-lg font-bold">+</button>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<button onclick="agregarAlCarritoDesdePreview()" class="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-lg flex items-center justify-center gap-2 font-bold transition-colors"><span class="material-symbols-outlined">shopping_cart</span> Agregar al Carrito</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+
+            html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8" id="grid-productos-marca">';
+
+            if (productosMarca.length === 0) {
+                html += '<div class="col-span-full text-center py-16"><span class="material-symbols-outlined text-6xl text-slate-300">inventory_2</span><p class="text-slate-500 mt-4 text-lg">No hay productos de esta marca.</p></div>';
+            } else {
+                html += renderizarProductosMarca(productosMarca);
+            }
+
+            html += '</div></section>';
+            document.getElementById('mainContent').innerHTML = html;
+            window.scrollTo(0, 0);
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            document.getElementById('mainContent').innerHTML = '<div class="text-center py-20 text-red-500"><span class="material-symbols-outlined text-5xl">error</span><p class="mt-2">Error al cargar productos</p></div>';
+        });
+}
+
+function renderizarProductosMarca(productosAMostrar) {
+    let html = '';
+    productosAMostrar.forEach(function(prod, index) {
+        const imgSrc = prod.imagen_principal || 'https://via.placeholder.com/300x300?text=Sin+Imagen';
+        const precioOriginal = parseFloat(prod.precio).toFixed(2);
+        const enOferta = prod.en_oferta == 1 && prod.precio_descuento;
+        const precioFinal = enOferta ? parseFloat(prod.precio_descuento).toFixed(2) : precioOriginal;
+
+        html += '<div class="product-card group bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700 hover:shadow-xl transition-all duration-300">' +
+            '<div class="relative aspect-square overflow-hidden bg-slate-100 dark:bg-slate-700">' +
+                '<img alt="' + prod.nombre + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src="' + imgSrc + '" onerror="this.src=\'https://via.placeholder.com/300x300?text=Sin+Imagen\'"/>' +
+                '<div class="product-actions absolute inset-0 bg-black/5 flex items-center justify-center gap-3 opacity-0 translate-y-4 transition-all duration-300">' +
+                    '<button onclick="toggleWishlist(this,' + prod.id_producto + ')" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-primary shadow-lg transition-colors" title="Lista de deseos"><span class="material-symbols-outlined">favorite</span></button>' +
+                    '<button onclick="abrirVistaPrevia(' + index + ')" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-700 hover:text-primary shadow-lg transition-colors" title="Vista previa"><span class="material-symbols-outlined">visibility</span></button>' +
+                '</div>' +
+                (enOferta ? '<div class="absolute top-3 left-3"><span class="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Oferta</span></div>' : '') +
+            '</div>' +
+            '<div class="p-5">' +
+                '<h3 class="font-bold text-slate-900 dark:text-white mb-1 group-hover:text-primary transition-colors truncate">' + prod.nombre + '</h3>' +
+                '<p class="text-slate-500 dark:text-slate-400 text-sm mb-4 line-clamp-2">' + (prod.descripcion || '') + '</p>' +
+                '<div class="flex items-center gap-2 mb-3">' +
+                    '<span class="text-xs text-slate-500 dark:text-slate-400">Cant:</span>' +
+                    '<div class="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">' +
+                        '<button onclick="cardCantidad(this,-1)" class="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm font-bold">−</button>' +
+                        '<input type="number" value="1" min="1" class="card-qty w-10 h-7 text-center border-x border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"/>' +
+                        '<button onclick="cardCantidad(this,1)" class="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm font-bold">+</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="flex items-center justify-between gap-4">' +
+                    '<div class="flex flex-col">' +
+                        '<span class="text-xl font-bold text-slate-900 dark:text-white">' + window._cfgMoneda + ' ' + precioFinal + '</span>' +
+                        (enOferta ? '<span class="text-xs text-slate-400 line-through">' + window._cfgMoneda + ' ' + precioOriginal + '</span>' : '') +
+                    '</div>' +
+                    '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
+                        '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    });
+    return html;
+}
+
+function filtrarMarcaPorCategoria(idCategoria) {
+    const todosProd = window._productosData;
+    let productosFiltrados;
+    
+    // Actualizar botones activos
+    const botones = document.querySelectorAll('[onclick^="filtrarMarcaPorCategoria"]');
+    botones.forEach(btn => {
+        btn.classList.remove('bg-primary', 'text-white', 'hover:bg-primary-dark');
+        btn.classList.add('bg-white', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-white', 'border', 'border-slate-200', 'dark:border-slate-600', 'hover:border-primary', 'dark:hover:border-primary');
+    });
+    event.target.classList.remove('bg-white', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-white', 'border', 'border-slate-200', 'dark:border-slate-600');
+    event.target.classList.add('bg-primary', 'text-white', 'hover:bg-primary-dark');
+    
+    if (idCategoria === null) {
+        productosFiltrados = todosProd;
+    } else {
+        productosFiltrados = todosProd.filter(p => parseInt(p.id_categoria) === parseInt(idCategoria));
+    }
+    
+    const grid = document.getElementById('grid-productos-marca');
+    if (productosFiltrados.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center py-16"><span class="material-symbols-outlined text-6xl text-slate-300">inventory_2</span><p class="text-slate-500 mt-4 text-lg">No hay productos en esta categoría.</p></div>';
+    } else {
+        grid.innerHTML = renderizarProductosMarca(productosFiltrados);
+    }
+}
+
 // Cargar categorías al iniciar
 cargarCategorias();
 
@@ -1066,6 +1295,66 @@ function heroResetTimer() {
     if (_heroTimer) clearInterval(_heroTimer);
     heroAutoPlay();
 }
+
+/* ========== CARRUSEL DE MARCAS ========== */
+var _marcasAutoScrollTimer = null;
+
+function scrollMarcasManual(direction) {
+    const wrapper = document.getElementById('marcas-wrapper');
+    if (!wrapper) return;
+    
+    // Calcular ancho de desplazamiento (3 tarjetas: 256px + gap 24px cada una)
+    const scrollAmount = (256 + 24) * 3; // Aproximadamente 840px
+    
+    wrapper.scrollBy({
+        left: direction * scrollAmount,
+        behavior: 'smooth'
+    });
+    
+    // Pausar el autoplay
+    pausarAutoPlayMarcas();
+    
+    // Reanudar después de 3 segundos
+    setTimeout(iniciarAutoPlayMarcas, 3000);
+}
+
+function iniciarAutoPlayMarcas() {
+    const wrapper = document.getElementById('marcas-wrapper');
+    if (!wrapper) return;
+    
+    pausarAutoPlayMarcas();
+    
+    _marcasAutoScrollTimer = setInterval(function() {
+        const scrollAmount = (256 + 24) * 2; // Desplazar 2 tarjetas cada 3 segundos
+        const maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
+        
+        if (wrapper.scrollLeft >= maxScroll - 10) {
+            // Si llegamos al final, volver al inicio
+            wrapper.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+            wrapper.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+    }, 3000); // Cada 3 segundos
+}
+
+function pausarAutoPlayMarcas() {
+    if (_marcasAutoScrollTimer) {
+        clearInterval(_marcasAutoScrollTimer);
+        _marcasAutoScrollTimer = null;
+    }
+}
+
+// Agregar listeners para pausar al pasar mouse
+document.addEventListener('DOMContentLoaded', function() {
+    const wrapper = document.getElementById('marcas-wrapper');
+    if (wrapper) {
+        wrapper.addEventListener('mouseenter', pausarAutoPlayMarcas);
+        wrapper.addEventListener('mouseleave', iniciarAutoPlayMarcas);
+        
+        // Iniciar autoplay cuando cargue la página
+        setTimeout(iniciarAutoPlayMarcas, 500);
+    }
+});
 
 function cargarBannerCards() {
     fetch('api/obtener_banners.php')

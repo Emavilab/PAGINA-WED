@@ -47,6 +47,9 @@ $color_primary = normalizar_color($config['color_primary'] ?? '#137fec', '#137FE
 $color_primary_dark = normalizar_color($config['color_primary_dark'] ?? '#0d66c2', '#0D66C2');
 $color_bg_light = normalizar_color($config['color_background_light'] ?? '#f6f7f8', '#F6F7F8');
 $color_bg_dark = normalizar_color($config['color_background_dark'] ?? '#101922', '#101922');
+
+// Variable global de moneda
+$moneda_global = $config['moneda'] ?? 'USD';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -260,7 +263,7 @@ $color_bg_dark = normalizar_color($config['color_background_dark'] ?? '#101922',
                                 <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
                                     <td class="px-6 py-4 text-sm text-gray-700">#<?php echo $env['id_envio']; ?></td>
                                     <td class="px-6 py-4 text-sm text-gray-700 font-semibold"><?php echo htmlspecialchars($env['nombre']); ?></td>
-                                    <td class="px-6 py-4 text-sm text-green-600 font-bold">$<?php echo number_format($env['costo'], 2); ?></td>
+                                    <td class="px-6 py-4 text-sm text-green-600 font-bold"><?php echo htmlspecialchars($moneda_global); ?> <?php echo number_format($env['costo'], 2); ?></td>
                                     <td class="px-6 py-4 text-sm text-gray-600"><?php echo htmlspecialchars($env['tiempo_estimado']); ?></td>
                                     <td class="px-6 py-4 text-sm">
                                         <span class="px-3 py-1 rounded-full text-xs font-bold <?php echo ($env['estado'] == 'activo') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'; ?>">
@@ -438,7 +441,7 @@ $color_bg_dark = normalizar_color($config['color_background_dark'] ?? '#101922',
                                 <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
                                     <td class="px-6 py-4 text-sm text-gray-700">#<?php echo $dep['id_departamento']; ?></td>
                                     <td class="px-6 py-4 text-sm text-gray-700 font-semibold"><?php echo htmlspecialchars($dep['nombre_departamento']); ?></td>
-                                    <td class="px-6 py-4 text-sm text-green-600 font-bold">$<?php echo number_format((float)$dep['costo_envio'], 2); ?></td>
+                                    <td class="px-6 py-4 text-sm text-green-600 font-bold"><?php echo htmlspecialchars($moneda_global); ?> <?php echo number_format((float)$dep['costo_envio'], 2); ?></td>
                                     <td class="px-6 py-4 text-sm text-center">
                                         <div class="flex justify-center gap-2">
                                             <button onclick='editarDepartamentoEnvio(<?php echo json_encode($dep); ?>)' class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded shadow" title="Editar">

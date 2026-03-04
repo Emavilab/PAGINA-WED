@@ -561,11 +561,7 @@ function confirmarEliminar(){
 
     const id = document.getElementById("delete_id").value;
 
-<<<<<<< HEAD
     fetch("/PAGINA-WED/client/clientes_eliminar.php", {
-=======
-    fetch("../client/clientes_eliminar.php", {
->>>>>>> 6e9611b5eabbbf86633436d47c5c95e13abe50b1
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify({id:id})

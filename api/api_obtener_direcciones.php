@@ -18,9 +18,11 @@ if (!$usuario || !isset($usuario['id_cliente'])) {
 
 $id_cliente = $usuario['id_cliente'];
 
-$query = "SELECT * FROM direcciones_cliente 
-          WHERE id_cliente = ? 
-          ORDER BY fecha_creacion DESC";
+$query = "SELECT d.*, dep.nombre_departamento, dep.costo_envio 
+          FROM direcciones_cliente d 
+          LEFT JOIN departamentos_envio dep ON d.id_departamento = dep.id_departamento 
+          WHERE d.id_cliente = ? 
+          ORDER BY d.id_direccion DESC";
 
 $stmt = $conexion->prepare($query);
 $stmt->bind_param("i", $id_cliente);

@@ -165,6 +165,13 @@ class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed borde
             </div>
 
             <div>
+                <label class="text-sm font-semibold">Departamento <span class="text-red-500">*</span></label>
+                <select name="id_departamento" id="departamento" required class="w-full border rounded-lg px-4 py-2">
+                    <option value="">Seleccione departamento</option>
+                </select>
+            </div>
+
+            <div>
                 <label class="text-sm font-semibold">Código Postal</label>
                 <input type="text" name="codigo_postal" class="w-full border rounded-lg px-4 py-2">
             </div>
@@ -210,6 +217,13 @@ class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed borde
             <div>
                 <label class="text-sm font-semibold">Ciudad</label>
                 <input type="text" name="ciudad" id="edit-ciudad" required class="w-full border rounded-lg px-4 py-2">
+            </div>
+
+            <div>
+                <label class="text-sm font-semibold">Departamento <span class="text-red-500">*</span></label>
+                <select name="id_departamento" id="edit-id_departamento" required class="w-full border rounded-lg px-4 py-2">
+                    <option value="">Seleccione departamento</option>
+                </select>
             </div>
 
             <div>
@@ -328,7 +342,7 @@ function cerrarModalDireccion() {
     modal.classList.add('hidden');
     modal.classList.remove('flex');
 }
-function abrirEditarDireccion(id, direccion, ciudad, cp, telefono, referencia) {
+function abrirEditarDireccion(id, direccion, ciudad, cp, telefono, referencia, id_departamento) {
 
     document.getElementById("edit-id").value = id;
     document.getElementById("edit-direccion").value = direccion;
@@ -336,6 +350,8 @@ function abrirEditarDireccion(id, direccion, ciudad, cp, telefono, referencia) {
     document.getElementById("edit-cp").value = cp;
     document.getElementById("edit-telefono").value = telefono;
     document.getElementById("edit-referencia").value = referencia;
+    const selDep = document.getElementById("edit-id_departamento");
+    if (selDep && id_departamento) selDep.value = id_departamento;
 
     const modal = document.getElementById("modal-editar-direccion");
     modal.classList.remove("hidden");
@@ -386,11 +402,28 @@ async function confirmarEliminarDireccion() {
 // ===============================
 // INICIALIZADOR DE LA VISTA (SPA)
 // ===============================
+async function cargarDepartamentosPerfil() {
+    try {
+        const response = await fetch("api/api_obtener_departamentos.php", { credentials: "include" });
+        const data = await response.json();
+        if (!data.success || !data.departamentos || !data.departamentos.length) return;
+        const optionsHtml = '<option value="">Seleccione departamento</option>' +
+            data.departamentos.map(d => `<option value="${d.id_departamento}">${d.nombre_departamento}</option>`).join('');
+        const selNuevo = document.getElementById("departamento");
+        const selEdit = document.getElementById("edit-id_departamento");
+        if (selNuevo) selNuevo.innerHTML = optionsHtml;
+        if (selEdit) selEdit.innerHTML = optionsHtml;
+    } catch (err) {
+        console.error("Error cargando departamentos:", err);
+    }
+}
+
 function iniciarPerfil() {
 
     initTabs();
     setupPerfilForm();
     setupContraseñaForm();
+    cargarDepartamentosPerfil();
     cargarDirecciones();
 
 
@@ -546,6 +579,10 @@ async function cargarDirecciones() {
                     </p>
 
                     <p class="text-sm text-slate-600 dark:text-slate-400">
+                        Departamento: ${dir.nombre_departamento || '-'}
+                    </p>
+
+                    <p class="text-sm text-slate-600 dark:text-slate-400">
                         CP: ${dir.codigo_postal || '-'}
                     </p>
 
@@ -567,7 +604,8 @@ async function cargarDirecciones() {
                             data-ciudad="${dir.ciudad}"
                             data-cp="${dir.codigo_postal || ''}"
                             data-telefono="${dir.telefono || ''}"
-                            data-referencia="${dir.referencia || ''}">
+                            data-referencia="${dir.referencia || ''}"
+                            data-id-departamento="${dir.id_departamento || ''}">
                             Editar
                         </button>
 
@@ -730,7 +768,8 @@ document.addEventListener("click", function(e) {
             btnEditar.dataset.ciudad,
             btnEditar.dataset.cp,
             btnEditar.dataset.telefono,
-            btnEditar.dataset.referencia
+            btnEditar.dataset.referencia,
+            btnEditar.dataset.idDepartamento || ''
         );
     }
 

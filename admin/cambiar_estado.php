@@ -18,7 +18,7 @@ if (!isset($_POST['id'], $_POST['estado'])) {
 $id = intval($_POST['id']);
 $estado = $_POST['estado'];
 
-$estadosValidos = ['pendiente','confirmado','enviado','entregado'];
+$estadosValidos = ['pendiente','confirmado','enviado','entregado','cancelado'];
 
 if (!in_array($estado, $estadosValidos)) {
     echo json_encode(["exito" => false, "error" => "Estado inválido"]);

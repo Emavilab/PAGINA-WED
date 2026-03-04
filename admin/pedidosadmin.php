@@ -261,39 +261,6 @@ document.addEventListener("click", function(e){
         document.getElementById("modalEstado").classList.add("flex");
     }
 
-    if(e.target.closest(".btn-cancelar")){
-        const btn = e.target.closest(".btn-cancelar");
-        const id = btn.dataset.id;
-
-        if(confirm("¿Estás seguro de que deseas cancelar este pedido?")){
-            fetch("cambiar_estado.php", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: "id=" + id + "&estado=cancelado"
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.exito){
-                    const fila = document.querySelector('button[data-id="' + id + '"]').closest('tr');
-                    const badge = fila.querySelector('span');
-                    
-                    badge.textContent = 'Cancelado';
-                    badge.className = 'inline-flex px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700';
-                    
-                    alert('Pedido cancelado exitosamente');
-                } else {
-                    alert('Error: ' + (data.error ?? 'No se pudo cancelar'));
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert('Error de conexión');
-            });
-        }
-    }
-
 });
 
 function cerrarModalEstado(){
@@ -325,6 +292,7 @@ function guardarCambioEstado(){
                 confirmado: "bg-emerald-100 text-emerald-700",
                 enviado: "bg-purple-100 text-purple-700",
                 entregado: "bg-green-100 text-green-700",
+                cancelado: "bg-red-100 text-red-700",
             };
 
             badge.textContent = estado.charAt(0).toUpperCase() + estado.slice(1);

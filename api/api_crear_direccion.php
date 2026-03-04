@@ -33,11 +33,12 @@ try {
     $id_cliente = $usuario['id_cliente'];
 
     // Obtener datos del POST
-    $direccion      = trim($_POST['direccion'] ?? '');
-    $ciudad         = trim($_POST['ciudad'] ?? '');
-    $codigo_postal  = trim($_POST['codigo_postal'] ?? '');
-    $telefono       = trim($_POST['telefono'] ?? '');
-    $referencia     = trim($_POST['referencia'] ?? '');
+    $direccion       = trim($_POST['direccion'] ?? '');
+    $ciudad          = trim($_POST['ciudad'] ?? '');
+    $codigo_postal   = trim($_POST['codigo_postal'] ?? '');
+    $telefono        = trim($_POST['telefono'] ?? '');
+    $referencia      = trim($_POST['referencia'] ?? '');
+    $id_departamento = isset($_POST['id_departamento']) ? (int) $_POST['id_departamento'] : 0;
 
     // Validación básica
     if (empty($direccion) || empty($ciudad)) {
@@ -47,11 +48,33 @@ try {
         ]);
         exit;
     }
+    if ($id_departamento <= 0) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'El departamento es obligatorio'
+        ]);
+        exit;
+    }
+
+    // Validar que id_departamento exista en departamentos_envio
+    $stmtDep = $conexion->prepare("SELECT id_departamento FROM departamentos_envio WHERE id_departamento = ?");
+    $stmtDep->bind_param("i", $id_departamento);
+    $stmtDep->execute();
+    $resDep = $stmtDep->get_result();
+    if ($resDep->num_rows === 0) {
+        $stmtDep->close();
+        echo json_encode([
+            'success' => false,
+            'message' => 'Departamento no válido'
+        ]);
+        exit;
+    }
+    $stmtDep->close();
 
     // Insertar en base de datos
     $query = "INSERT INTO direcciones_cliente 
-              (id_cliente, direccion, ciudad, codigo_postal, telefono, referencia)
-              VALUES (?, ?, ?, ?, ?, ?)";
+              (id_cliente, direccion, ciudad, codigo_postal, telefono, referencia, id_departamento)
+              VALUES (?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conexion->prepare($query);
 
@@ -60,13 +83,14 @@ try {
     }
 
     $stmt->bind_param(
-        "isssss",
+        "isssssi",
         $id_cliente,
         $direccion,
         $ciudad,
         $codigo_postal,
         $telefono,
-        $referencia
+        $referencia,
+        $id_departamento
     );
 
     if (!$stmt->execute()) {

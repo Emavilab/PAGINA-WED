@@ -47,6 +47,9 @@ if ($result->num_rows === 0) {
 
 $pedido = $result->fetch_assoc();
 
+// El cliente puede cancelar solo si está pendiente y han pasado menos de 3 horas
+$puedeCancelar = ($pedido['estado'] === 'pendiente' && (time() - strtotime($pedido['fecha_pedido']) <= 10800));
+
 /* ================================
    OBTENER PRODUCTOS DEL PEDIDO
 ================================ */
@@ -138,3 +141,11 @@ $total = $pedido['total'];
     </div>
 
 </div>
+
+<?php if ($puedeCancelar): ?>
+<div class="mt-6 pt-4 border-t border-slate-200">
+    <button type="button" class="btn-cancelar-pedido w-full py-3 px-4 rounded-lg font-bold text-white bg-red-500 hover:bg-red-600 transition-colors" data-id="<?php echo (int)$pedido['id_pedido']; ?>">
+        Cancelar Pedido
+    </button>
+</div>
+<?php endif; ?>

@@ -133,8 +133,8 @@ try {
 
     $stmt = $conexion->prepare("
         INSERT INTO pedidos 
-        (subtotal, impuesto_total, total, id_cliente, id_direccion, id_envio, id_metodo_pago, comprobante_pago)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        (subtotal, impuesto_total, total, id_cliente, id_direccion, id_envio, id_metodo_pago, comprobante_pago, fecha_pedido)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
     ");
 
     $stmt->bind_param(

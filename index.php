@@ -2632,6 +2632,35 @@ document.body.addEventListener("click", function (e) {
 
     }
 
+    const btnCancelar = e.target.closest(".btn-cancelar-pedido");
+    if (btnCancelar) {
+        const idPedido = btnCancelar.dataset.id;
+        if (!idPedido) return;
+        if (!confirm("¿Estás seguro que deseas cancelar este pedido?")) return;
+
+        const formData = new FormData();
+        formData.append("id_pedido", idPedido);
+
+        fetch("api/api_cancelar_pedido.php", {
+            method: "POST",
+            credentials: "include",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.exito) {
+                if (typeof cerrarModal === "function") cerrarModal();
+                if (typeof loadHistorialPedidos === "function") loadHistorialPedidos();
+                alert(data.mensaje || "Pedido cancelado correctamente");
+            } else {
+                alert(data.error || "No se pudo cancelar el pedido");
+            }
+        })
+        .catch(function () {
+            alert("Error de conexión. Intenta de nuevo.");
+        });
+    }
+
 });
 
 function cerrarModal() {

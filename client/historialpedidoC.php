@@ -72,6 +72,8 @@ $resultado = $stmt->get_result();
         .dark .status-badge-camino { background-color: rgba(30, 58, 138, 0.3); color: #60a5fa; }
         .status-badge-procesando { background-color: #fef3c7; color: #b45309; }
         .dark .status-badge-procesando { background-color: rgba(180, 83, 9, 0.3); color: #fbbf24; }
+        .status-badge-cancelado { background-color: #fee2e2; color: #b91c1c; }
+        .dark .status-badge-cancelado { background-color: rgba(185, 28, 28, 0.3); color: #fca5a5; }
     </style>
 <main class="flex-grow max-w-7xl mx-auto px-4 py-8 md:py-12 w-full">
 <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
@@ -106,6 +108,12 @@ $resultado = $stmt->get_result();
         // Formatear fecha
         $fecha = date("d \\d\\e F, Y", strtotime($pedido['fecha_pedido']));
 
+        // Puede cancelar solo si está pendiente y han pasado menos de 3 horas (10800 segundos)
+        $deadlineTs = strtotime($pedido['fecha_pedido']) + 10800;
+        $puedeCancelar = ($pedido['estado'] === 'pendiente' && (time() - strtotime($pedido['fecha_pedido']) <= 10800));
+        $esPendiente = ($pedido['estado'] === 'pendiente');
+        $restanteInicial = $esPendiente ? max(0, $deadlineTs - time()) : 0;
+
         // Clases según estado
         switch ($pedido['estado']) {
             case 'entregado':
@@ -121,13 +129,17 @@ $resultado = $stmt->get_result();
                 $claseEstado = 'status-badge-procesando';
                 $textoEstado = ucfirst($pedido['estado']);
                 break;
+            case 'cancelado':
+                $claseEstado = 'status-badge-cancelado';
+                $textoEstado = 'Cancelado';
+                break;
             default:
                 $claseEstado = 'status-badge-procesando';
                 $textoEstado = ucfirst($pedido['estado']);
         }
     ?>
 
-    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors" <?php if ($esPendiente): ?> data-deadline="<?php echo date('c', $deadlineTs); ?>"<?php endif; ?>>
 
         <td class="px-6 py-5 whitespace-nowrap">
             <span class="font-bold text-slate-900 dark:text-white">
@@ -139,10 +151,20 @@ $resultado = $stmt->get_result();
             <?php echo $fecha; ?>
         </td>
 
-        <td class="px-6 py-5 whitespace-nowrap">
+        <td class="px-6 py-5">
             <span class="px-3 py-1 rounded-full text-xs font-bold uppercase <?php echo $claseEstado; ?>">
                 <?php echo $textoEstado; ?>
             </span>
+            <?php if ($esPendiente): ?>
+            <div class="countdown-cell mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                <?php if ($puedeCancelar): ?>
+                <span class="countdown-wrapper">Tiempo restante para cancelar: <strong class="countdown-display"><?php echo gmdate('H:i:s', $restanteInicial); ?></strong></span>
+                <span class="expirado-message hidden">Tiempo de cancelación expirado</span>
+                <?php else: ?>
+                <span class="expirado-message">Tiempo de cancelación expirado</span>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
         </td>
 
         <td class="px-6 py-5 whitespace-nowrap font-semibold">
@@ -150,12 +172,23 @@ $resultado = $stmt->get_result();
         </td>
 
         <td class="px-6 py-5 whitespace-nowrap text-right">
-            <button 
-                class="btn-ver-detalle inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-primary hover:text-white dark:bg-slate-800 dark:hover:bg-primary text-slate-700 dark:text-slate-300 rounded-lg text-sm font-bold transition-all"
-                data-id="<?php echo $pedido['id_pedido']; ?>">
-                Ver Detalles
-                <span class="material-icons text-sm">visibility</span>
-            </button>
+            <div class="flex flex-wrap justify-end gap-2">
+                <button 
+                    class="btn-ver-detalle inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-primary hover:text-white dark:bg-slate-800 dark:hover:bg-primary text-slate-700 dark:text-slate-300 rounded-lg text-sm font-bold transition-all"
+                    data-id="<?php echo $pedido['id_pedido']; ?>">
+                    Ver Detalles
+                    <span class="material-icons text-sm">visibility</span>
+                </button>
+                <?php if ($puedeCancelar): ?>
+                <button 
+                    type="button"
+                    class="btn-cancelar-pedido inline-flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-500 dark:bg-red-900/30 dark:hover:bg-red-500 text-red-600 hover:text-white dark:text-red-400 dark:hover:text-white rounded-lg text-sm font-bold transition-all border border-red-200 dark:border-red-800"
+                    data-id="<?php echo (int)$pedido['id_pedido']; ?>">
+                    Cancelar Pedido
+                    <span class="material-icons text-sm">close</span>
+                </button>
+                <?php endif; ?>
+            </div>
         </td>
 
     </tr>
@@ -188,6 +221,45 @@ $resultado = $stmt->get_result();
 </div>
 </div>
 </main>
+
+<script>
+(function() {
+    function formatRestante(segundos) {
+        if (segundos <= 0) return '00:00:00';
+        var h = Math.floor(segundos / 3600);
+        var m = Math.floor((segundos % 3600) / 60);
+        var s = Math.floor(segundos % 60);
+        return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }
+    function actualizarCountdowns() {
+        var ahora = Math.floor(Date.now() / 1000);
+        document.querySelectorAll('tr[data-deadline]').forEach(function(tr) {
+            var deadline = new Date(tr.getAttribute('data-deadline')).getTime() / 1000;
+            var restante = Math.max(0, Math.floor(deadline - ahora));
+            var cell = tr.querySelector('.countdown-cell');
+            if (!cell) return;
+            var wrapper = cell.querySelector('.countdown-wrapper');
+            var display = cell.querySelector('.countdown-display');
+            var expirado = cell.querySelector('.expirado-message');
+            var btn = tr.querySelector('.btn-cancelar-pedido');
+            if (restante <= 0) {
+                if (wrapper) wrapper.classList.add('hidden');
+                if (display) display.textContent = '00:00:00';
+                if (expirado) { expirado.classList.remove('hidden'); expirado.textContent = 'Tiempo de cancelación expirado'; }
+                if (btn) btn.classList.add('hidden');
+            } else {
+                if (wrapper) wrapper.classList.remove('hidden');
+                if (display) display.textContent = formatRestante(restante);
+                if (expirado) expirado.classList.add('hidden');
+                if (btn) btn.classList.remove('hidden');
+            }
+        });
+    }
+    actualizarCountdowns();
+    setInterval(actualizarCountdowns, 1000);
+})();
+</script>
+
 <div id="modalPedido" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 relative">
 

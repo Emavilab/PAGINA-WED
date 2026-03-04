@@ -10,6 +10,7 @@ require_once '../core/conexion.php';
 $resultado_marcas = mysqli_query($conexion, "SELECT * FROM marcas ORDER BY id_marca DESC");
 $res_envio = mysqli_query($conexion, "SELECT * FROM metodos_envio ORDER BY id_envio DESC");
 $res_pagos = mysqli_query($conexion, "SELECT * FROM metodos_pago ORDER BY id_metodo_pago DESC");
+$res_deps_envio = mysqli_query($conexion, "SELECT * FROM departamentos_envio ORDER BY nombre_departamento ASC");
 
 // Cargar configuración general
 $res_config = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
@@ -81,6 +82,9 @@ $color_bg_dark = normalizar_color($config['color_background_dark'] ?? '#101922',
                 </button>
                 <button onclick="mostrarTab('metodos-pago')" class="tab-btn bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold transition">
                     <i class="fas fa-credit-card mr-2"></i> Métodos de Pago
+                </button>
+                <button onclick="mostrarTab('departamentos-envio')" class="tab-btn bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold transition">
+                    <i class="fas fa-map-marker-alt mr-2"></i> Departamentos Envío
                 </button>
                 <button onclick="mostrarTab('general')" class="tab-btn bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold transition">
                     <i class="fas fa-sliders-h mr-2"></i> Configuración General
@@ -370,6 +374,83 @@ $color_bg_dark = normalizar_color($config['color_background_dark'] ?? '#101922',
                                 <tr>
                                     <td colspan="5" class="px-6 py-10 text-center text-gray-500">
                                         <i class="fas fa-info-circle mr-2"></i> No hay métodos de pago registrados.
+                                    </td>
+                                </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== DEPARTAMENTOS ENVÍO ==================== -->
+            <div id="tab-departamentos-envio" class="tab-content hidden">
+                <div id="formulario-departamento-envio" class="hidden bg-white rounded-lg shadow-lg p-8 mb-8">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">
+                        <i class="fas fa-edit text-cyan-600"></i> <span id="titulo-departamento-envio">Editar costo de envío</span>
+                    </h2>
+                    <form id="formDepartamentoEnvio" class="grid grid-cols-1 md:grid-cols-2 gap-6" onsubmit="return submitDepartamentoEnvio(event)">
+                        <input type="hidden" name="accion" value="guardar_departamento_envio">
+                        <input type="hidden" name="id_departamento" id="id_departamento_envio">
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-building text-cyan-500"></i> Departamento
+                            </label>
+                            <input type="text" id="nombre_departamento_envio" readonly class="w-full px-4 py-2 border border-gray-200 bg-gray-50 rounded-lg outline-none" placeholder="Departamento">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-coins text-cyan-500"></i> Costo de Envío
+                            </label>
+                            <input type="number" name="costo_envio" id="costo_departamento_envio" step="0.01" min="0" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="0.00">
+                        </div>
+
+                        <div class="md:col-span-2 flex gap-4">
+                            <button type="submit" class="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md">
+                                <i class="fas fa-save mr-2"></i> Guardar
+                            </button>
+                            <button type="button" onclick="document.getElementById('formulario-departamento-envio').classList.add('hidden')" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md">
+                                <i class="fas fa-times mr-2"></i> Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-12">
+                    <div class="bg-gradient-to-r from-cyan-600 to-cyan-800 text-white p-4">
+                        <h2 class="text-xl font-bold"><i class="fas fa-list mr-2"></i> Costos de Envío por Departamento</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-gray-100 border-b-2 border-gray-300">
+                                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
+                                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Departamento</th>
+                                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Costo de Envío</th>
+                                    <th class="px-6 py-3 text-center text-sm font-semibold text-gray-700">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if($res_deps_envio && mysqli_num_rows($res_deps_envio) > 0):
+                                    while($dep = mysqli_fetch_assoc($res_deps_envio)): ?>
+                                <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
+                                    <td class="px-6 py-4 text-sm text-gray-700">#<?php echo $dep['id_departamento']; ?></td>
+                                    <td class="px-6 py-4 text-sm text-gray-700 font-semibold"><?php echo htmlspecialchars($dep['nombre_departamento']); ?></td>
+                                    <td class="px-6 py-4 text-sm text-green-600 font-bold">$<?php echo number_format((float)$dep['costo_envio'], 2); ?></td>
+                                    <td class="px-6 py-4 text-sm text-center">
+                                        <div class="flex justify-center gap-2">
+                                            <button onclick='editarDepartamentoEnvio(<?php echo json_encode($dep); ?>)' class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded shadow" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endwhile; else: ?>
+                                <tr>
+                                    <td colspan="4" class="px-6 py-10 text-center text-gray-500">
+                                        <i class="fas fa-info-circle mr-2"></i> No hay departamentos registrados.
                                     </td>
                                 </tr>
                                 <?php endif; ?>
@@ -1253,6 +1334,7 @@ window.mostrarTab = function(tabId) {
         if (btn.textContent.includes('Marcas')) btnTabId = 'marcas';
         else if (btn.textContent.includes('Envío')) btnTabId = 'metodos-envio';
         else if (btn.textContent.includes('Pago')) btnTabId = 'metodos-pago';
+        else if (btn.textContent.includes('Departamentos')) btnTabId = 'departamentos-envio';
         else if (btn.textContent.includes('General')) btnTabId = 'general';
         else if (btn.textContent.includes('Banners')) btnTabId = 'banners';
         else if (btn.textContent.includes('Hero')) btnTabId = 'hero-slides';
@@ -1434,6 +1516,16 @@ function editarPago(datos) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ==================== DEPARTAMENTOS ENVÍO ====================
+function editarDepartamentoEnvio(datos) {
+    document.getElementById('formulario-departamento-envio').classList.remove('hidden');
+    document.getElementById('id_departamento_envio').value = datos.id_departamento;
+    document.getElementById('nombre_departamento_envio').value = datos.nombre_departamento;
+    document.getElementById('costo_departamento_envio').value = datos.costo_envio;
+    document.getElementById('titulo-departamento-envio').innerText = 'Editando: ' + datos.nombre_departamento;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 // ==================== RESTAURAR TAB AL CARGAR ====================
 (function() {
     const tabGuardado = sessionStorage.getItem('configTabActivo');
@@ -1467,6 +1559,17 @@ function submitPago(e) {
     const nombre = document.getElementById('nombre_pago').value.trim();
     if (!nombre) { mostrarModalError('El nombre del método de pago es requerido'); return false; }
     enviarFormulario('formPago');
+    return false;
+}
+
+function submitDepartamentoEnvio(e) {
+    e.preventDefault();
+    const costo = document.getElementById('costo_departamento_envio').value;
+    if (costo === '' || isNaN(costo) || Number(costo) < 0) {
+        mostrarModalError('El costo debe ser un valor válido');
+        return false;
+    }
+    enviarFormulario('formDepartamentoEnvio');
     return false;
 }
 

@@ -154,6 +154,53 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
+    // --- LÓGICA PARA COSTO DE ENVÍO POR DEPARTAMENTO ---
+    if ($accion == 'guardar_departamento_envio') {
+        $id_departamento = isset($_POST['id_departamento']) ? intval($_POST['id_departamento']) : 0;
+        $costo_envio_raw = $_POST['costo_envio'] ?? '';
+
+        if ($id_departamento <= 0) {
+            responder(false, 'Departamento inválido');
+        }
+
+        if ($costo_envio_raw === '' || !is_numeric($costo_envio_raw)) {
+            responder(false, 'El costo debe ser un valor válido');
+        }
+
+        $costo_envio = (float) $costo_envio_raw;
+        if ($costo_envio < 0) {
+            responder(false, 'El costo no puede ser negativo');
+        }
+
+        // Validar existencia del departamento
+        $stmtCheck = $conexion->prepare("SELECT id_departamento FROM departamentos_envio WHERE id_departamento = ? LIMIT 1");
+        if (!$stmtCheck) {
+            responder(false, 'Error al preparar validación: ' . mysqli_error($conexion));
+        }
+        $stmtCheck->bind_param("i", $id_departamento);
+        $stmtCheck->execute();
+        $res = $stmtCheck->get_result();
+        if (!$res || $res->num_rows === 0) {
+            $stmtCheck->close();
+            responder(false, 'El departamento no existe');
+        }
+        $stmtCheck->close();
+
+        // Actualizar costo
+        $stmtUp = $conexion->prepare("UPDATE departamentos_envio SET costo_envio = ? WHERE id_departamento = ?");
+        if (!$stmtUp) {
+            responder(false, 'Error al preparar actualización: ' . mysqli_error($conexion));
+        }
+        $stmtUp->bind_param("di", $costo_envio, $id_departamento);
+        if ($stmtUp->execute()) {
+            $stmtUp->close();
+            responder(true, 'Costo de envío actualizado correctamente');
+        }
+        $err = $stmtUp->error;
+        $stmtUp->close();
+        responder(false, 'Error al actualizar: ' . $err);
+    }
+
     // --- LÓGICA PARA CONFIGURACIÓN GENERAL ---
     if ($accion == 'guardar_config_general') {
         $nombre_negocio = mysqli_real_escape_string($conexion, $_POST['nombre_negocio'] ?? '');
@@ -557,7 +604,7 @@ if (isset($_GET['eliminar_envio'])) {
     
     try {
         // Verificar si hay pedidos asociados a este método de envío
-        $stmtCheck = $conexion->prepare("SELECT COUNT(*) as count FROM pedidos WHERE id_metodo_envio = ?");
+        $stmtCheck = $conexion->prepare("SELECT COUNT(*) as count FROM pedidos WHERE id_envio = ?");
         $stmtCheck->bind_param("i", $id);
         $stmtCheck->execute();
         $resCheck = $stmtCheck->get_result();

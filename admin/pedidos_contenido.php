@@ -149,11 +149,6 @@ data-id="<?php echo $pedido['id_pedido']; ?>">
 <span class="material-icons-outlined text-sm">swap_horiz</span>
 </button>
 
-<button class="btn-cancelar w-8 h-8 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center"
-data-id="<?php echo $pedido['id_pedido']; ?>">
-<span class="material-icons-outlined text-sm">close</span>
-</button>
-
 </div>
 </td>
 

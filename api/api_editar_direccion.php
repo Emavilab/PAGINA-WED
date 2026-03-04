@@ -40,6 +40,7 @@ $ciudad = trim($_POST['ciudad'] ?? '');
 $codigo_postal = trim($_POST['codigo_postal'] ?? '');
 $telefono = trim($_POST['telefono'] ?? '');
 $referencia = trim($_POST['referencia'] ?? '');
+$id_departamento = isset($_POST['id_departamento']) ? (int) $_POST['id_departamento'] : 0;
 
 if (!$id_direccion || !$direccion || !$ciudad) {
     echo json_encode([
@@ -48,24 +49,47 @@ if (!$id_direccion || !$direccion || !$ciudad) {
     ]);
     exit();
 }
+if ($id_departamento <= 0) {
+    echo json_encode([
+        "success" => false,
+        "message" => "El departamento es obligatorio"
+    ]);
+    exit();
+}
+
+// Validar que id_departamento exista en departamentos_envio
+$stmtDep = $conexion->prepare("SELECT id_departamento FROM departamentos_envio WHERE id_departamento = ?");
+$stmtDep->bind_param("i", $id_departamento);
+$stmtDep->execute();
+$resDep = $stmtDep->get_result();
+if ($resDep->num_rows === 0) {
+    $stmtDep->close();
+    echo json_encode([
+        "success" => false,
+        "message" => "Departamento no válido"
+    ]);
+    exit();
+}
+$stmtDep->close();
 
 try {
 
     $stmt = $conexion->prepare("
         UPDATE direcciones_cliente
-        SET direccion = ?, ciudad = ?, codigo_postal = ?, telefono = ?, referencia = ?
+        SET direccion = ?, ciudad = ?, codigo_postal = ?, telefono = ?, referencia = ?, id_departamento = ?
         WHERE id_direccion = ? AND id_cliente = ?
     ");
 
     $stmt->bind_param(
-        "sssssii",
+        "sssssiii",
         $direccion,
         $ciudad,
         $codigo_postal,
         $telefono,
         $referencia,
+        $id_departamento,
         $id_direccion,
-        $id_cliente   // 🔥 AHORA SÍ CORRECTO
+        $id_cliente
     );
 
     $stmt->execute();

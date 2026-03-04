@@ -39,7 +39,7 @@ $cfg_moneda = $simbolos_moneda[$cfg_moneda_cod] ?? $cfg_moneda_cod;
                     colors: {
                         primary: "<?php echo $login_primary; ?>",
                         "background-light": "<?php echo $login_bg_light; ?>",
-                        "background-dark": "<?php echo $login_bg_dark; ?>
+                        "background-dark": "<?php echo $login_bg_dark; ?>"
                     },
                     fontFamily: {
                         "display": ["Inter"]
@@ -62,11 +62,17 @@ $cfg_moneda = $simbolos_moneda[$cfg_moneda_cod] ?? $cfg_moneda_cod;
             position: sticky;
             top: 8rem;
         }
-        #use-new-address:checked ~ #new-address-form {
-            display: grid;
+        .new-address-form-wrapper {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            pointer-events: none;
+            transition: max-height 0.35s ease-out, opacity 0.3s ease-out;
         }
-        #new-address-form {
-            display: none;
+        .new-address-form-wrapper.new-address-form-visible {
+            max-height: 640px;
+            opacity: 1;
+            pointer-events: auto;
         }
     </style>
 <script>
@@ -86,6 +92,63 @@ $cfg_moneda = $simbolos_moneda[$cfg_moneda_cod] ?? $cfg_moneda_cod;
 <div class="mb-8">
 <label class="block text-sm font-semibold mb-4 text-slate-600 dark:text-slate-400 uppercase tracking-wider">Seleccionar dirección guardada</label>
 <div id="checkout-direcciones" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+</div>
+
+<div class="mt-6">
+    <input type="checkbox" id="use-new-address" name="use-new-address" class="sr-only peer" aria-label="Agregar nueva dirección">
+    <label for="use-new-address" class="inline-flex items-center gap-1.5 text-sm font-medium text-primary cursor-pointer hover:opacity-80 transition-opacity duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded">
+        <span aria-hidden="true">+</span>
+        Agregar nueva dirección
+    </label>
+</div>
+
+<div id="new-address-form-wrapper" class="new-address-form-wrapper mt-6">
+<form id="new-address-form" class="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors duration-200">
+    <div class="md:col-span-2">
+        <label for="new-direccion" class="block text-sm font-semibold mb-1 text-slate-700 dark:text-slate-300">Dirección <span class="text-red-500">*</span></label>
+        <input type="text" id="new-direccion" name="direccion" required maxlength="255" placeholder="Calle, número, colonia"
+            class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 focus:ring-2 focus:ring-primary focus:border-primary">
+        <p id="err-new-direccion" class="mt-1 text-xs text-red-500 hidden"></p>
+    </div>
+    <div>
+        <label for="new-ciudad" class="block text-sm font-semibold mb-1 text-slate-700 dark:text-slate-300">Ciudad <span class="text-red-500">*</span></label>
+        <input type="text" id="new-ciudad" name="ciudad" required maxlength="100" placeholder="Ciudad"
+            class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 focus:ring-2 focus:ring-primary focus:border-primary">
+        <p id="err-new-ciudad" class="mt-1 text-xs text-red-500 hidden"></p>
+    </div>
+    <div>
+        <label for="new-id_departamento" class="block text-sm font-semibold mb-1 text-slate-700 dark:text-slate-300">Departamento <span class="text-red-500">*</span></label>
+        <select name="id_departamento" id="new-id_departamento" required
+            class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 focus:ring-2 focus:ring-primary focus:border-primary">
+            <option value="">Seleccione departamento</option>
+        </select>
+        <p id="err-new-departamento" class="mt-1 text-xs text-red-500 hidden"></p>
+    </div>
+    <div>
+        <label for="new-codigo_postal" class="block text-sm font-semibold mb-1 text-slate-700 dark:text-slate-300">Código postal</label>
+        <input type="text" id="new-codigo_postal" name="codigo_postal" maxlength="20" placeholder="Opcional"
+            class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 focus:ring-2 focus:ring-primary focus:border-primary">
+    </div>
+    <div>
+        <label for="new-telefono" class="block text-sm font-semibold mb-1 text-slate-700 dark:text-slate-300">Teléfono</label>
+        <input type="text" id="new-telefono" name="telefono" maxlength="20" placeholder="Opcional"
+            class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 focus:ring-2 focus:ring-primary focus:border-primary">
+        <p id="err-new-telefono" class="mt-1 text-xs text-red-500 hidden"></p>
+    </div>
+    <div class="md:col-span-2">
+        <label for="new-referencia" class="block text-sm font-semibold mb-1 text-slate-700 dark:text-slate-300">Referencia</label>
+        <input type="text" id="new-referencia" name="referencia" maxlength="255" placeholder="Ej. Casa blanca, 2 cuadras al norte"
+            class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 focus:ring-2 focus:ring-primary focus:border-primary">
+    </div>
+    <div id="new-address-msg" class="md:col-span-2 hidden text-sm rounded-lg px-3 py-2"></div>
+    <div class="md:col-span-2 flex justify-end">
+        <button type="submit" id="btn-guardar-direccion" class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-colors flex items-center gap-2">
+            <span class="material-icons text-lg">save</span>
+            Guardar dirección
+        </button>
+    </div>
+</form>
+</div>
 </div>
 </section>
 
@@ -156,6 +219,14 @@ $cfg_moneda = $simbolos_moneda[$cfg_moneda_cod] ?? $cfg_moneda_cod;
 <span class="text-primary text-2xl font-black"><span id="totalPrice">264,87</span> <span id="monedaTotal" class="text-primary">L</span></span>
 </div>
 </div>
+
+<div class="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 flex items-start gap-3">
+    <span class="material-icons text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5">info</span>
+    <p class="text-sm text-amber-800 dark:text-amber-200">
+        Tienes hasta 3 horas después de realizar tu pedido para cancelarlo desde la sección <strong>Mis Pedidos</strong>.
+    </p>
+</div>
+
 <button class="w-full bg-primary hover:bg-primary/90 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2" onclick="confirmarPedido()">
 <span class="material-icons">verified_user</span>
 Confirmar y Pagar
@@ -189,12 +260,37 @@ function initCheckout() {
     const elementos = document.querySelectorAll('#monedaSubtotal, #monedaTaxes, #monedaTotal');
     elementos.forEach(el => el.textContent = moneda);
     
+    cargarDepartamentosCheckout();
+    cargarMetodosEnvio();
     cargarDireccionesCheckout();
-    cargarMetodosEnvio(); 
     cargarResumenPedido();
     cargarMetodosPago();
+    initNuevaDireccionToggle();
+    bindNewAddressForm();
 }
 
+
+/* ===============================
+   CARGAR DEPARTAMENTOS (SELECT)
+================================= */
+async function cargarDepartamentosCheckout() {
+    const select = document.getElementById("new-id_departamento");
+    if (!select) return;
+    try {
+        const response = await fetch("api/api_obtener_departamentos.php", { credentials: "include" });
+        const data = await response.json();
+        if (!data.success || !data.departamentos || !data.departamentos.length) return;
+        select.innerHTML = '<option value="">Seleccione departamento</option>';
+        data.departamentos.forEach(function (dep) {
+            const opt = document.createElement("option");
+            opt.value = dep.id_departamento;
+            opt.textContent = dep.nombre_departamento;
+            select.appendChild(opt);
+        });
+    } catch (err) {
+        console.error("Error cargando departamentos:", err);
+    }
+}
 
 /* ===============================
    CARGAR DIRECCIONES
@@ -222,9 +318,16 @@ async function cargarDireccionesCheckout() {
         contenedor.innerHTML = "";
 
         data.direcciones.forEach((dir, index) => {
+            const costoEnvio = dir.costo_envio != null ? parseFloat(dir.costo_envio) : 0;
+            const nombreDep = (dir.nombre_departamento || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const ref = (dir.referencia || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const direccionEsc = (dir.direccion || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const ciudadEsc = (dir.ciudad || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const cpEsc = (dir.codigo_postal || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const telEsc = (dir.telefono || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
             contenedor.innerHTML += `
-                <label class="relative group" onclick="mostrarDireccionSeleccionada('${dir.direccion}', '${dir.ciudad}', '${dir.codigo_postal}', '${dir.telefono}', '${dir.referencia}')">  
+                <label class="relative group" onclick="mostrarDireccionSeleccionada('${direccionEsc}', '${ciudadEsc}', '${cpEsc}', '${telEsc}', '${ref}', '${nombreDep}', ${costoEnvio})">  
                     <input 
                         class="peer hidden" 
                         name="saved_address" 
@@ -250,7 +353,7 @@ async function cargarDireccionesCheckout() {
 
                         <p class="text-sm opacity-70 leading-relaxed">
                             ${dir.direccion}<br/>
-                            ${dir.ciudad}
+                            ${dir.ciudad}${dir.nombre_departamento ? ', ' + dir.nombre_departamento : ''}
                         </p>
 
                         <p class="text-xs mt-2 font-medium">
@@ -263,9 +366,13 @@ async function cargarDireccionesCheckout() {
         });
 
         // Mostrar la primera dirección por defecto
-        if(data.direcciones.length > 0) {
+        if (data.direcciones.length > 0) {
             const primera = data.direcciones[0];
-            mostrarDireccionSeleccionada(primera.direccion, primera.ciudad, primera.codigo_postal, primera.telefono, primera.referencia);
+            const costoEnvio = primera.costo_envio != null ? parseFloat(primera.costo_envio) : 0;
+            mostrarDireccionSeleccionada(
+                primera.direccion, primera.ciudad, primera.codigo_postal || '', primera.telefono || '',
+                primera.referencia || '', primera.nombre_departamento || '', costoEnvio
+            );
         }
 
     } catch (error) {
@@ -283,12 +390,166 @@ function obtenerDireccionSeleccionada() {
 }
 
 /* ===============================
+   NUEVA DIRECCIÓN: TOGGLE (MOSTRAR/OCULTAR)
+================================= */
+function showNewAddressForm() {
+    const wrapper = document.getElementById('new-address-form-wrapper');
+    const checkbox = document.getElementById('use-new-address');
+    if (wrapper) wrapper.classList.add('new-address-form-visible');
+    if (checkbox) checkbox.checked = true;
+    const radios = document.querySelectorAll('input[name="saved_address"]');
+    radios.forEach(r => { r.checked = false; });
+}
+
+function hideNewAddressForm() {
+    const wrapper = document.getElementById('new-address-form-wrapper');
+    const checkbox = document.getElementById('use-new-address');
+    const msgEl = document.getElementById('new-address-msg');
+    if (wrapper) wrapper.classList.remove('new-address-form-visible');
+    if (checkbox) checkbox.checked = false;
+    if (msgEl) { msgEl.classList.add('hidden'); msgEl.textContent = ''; }
+}
+
+function initNuevaDireccionToggle() {
+    const checkbox = document.getElementById('use-new-address');
+    const wrapper = document.getElementById('new-address-form-wrapper');
+    if (!checkbox || !wrapper) return;
+
+    // Estado inicial: formulario oculto
+    wrapper.classList.remove('new-address-form-visible');
+
+    checkbox.addEventListener('change', function () {
+        if (this.checked) {
+            wrapper.classList.add('new-address-form-visible');
+            const radios = document.querySelectorAll('input[name="saved_address"]');
+            radios.forEach(r => { r.checked = false; });
+        } else {
+            wrapper.classList.remove('new-address-form-visible');
+        }
+    });
+}
+
+/* ===============================
+   NUEVA DIRECCIÓN: VALIDACIÓN Y GUARDAR
+================================= */
+function validarTelefono(tel) {
+    if (!tel || !tel.trim()) return true;
+    return /^[\d\s\-\+\(\)]{8,20}$/.test(tel.trim());
+}
+
+function validarFormNuevaDireccion() {
+    const direccion = (document.getElementById('new-direccion')?.value || '').trim();
+    const ciudad = (document.getElementById('new-ciudad')?.value || '').trim();
+    const telefono = (document.getElementById('new-telefono')?.value || '').trim();
+    const idDepartamento = (document.getElementById('new-id_departamento')?.value || '').trim();
+
+    const errDir = document.getElementById('err-new-direccion');
+    const errCiudad = document.getElementById('err-new-ciudad');
+    const errTel = document.getElementById('err-new-telefono');
+    const errDep = document.getElementById('err-new-departamento');
+
+    errDir.classList.add('hidden');
+    errDir.textContent = '';
+    errCiudad.classList.add('hidden');
+    errCiudad.textContent = '';
+    errTel.classList.add('hidden');
+    errTel.textContent = '';
+    if (errDep) { errDep.classList.add('hidden'); errDep.textContent = ''; }
+
+    let valido = true;
+
+    if (!direccion) {
+        errDir.textContent = 'La dirección es obligatoria.';
+        errDir.classList.remove('hidden');
+        valido = false;
+    }
+    if (!ciudad) {
+        errCiudad.textContent = 'La ciudad es obligatoria.';
+        errCiudad.classList.remove('hidden');
+        valido = false;
+    }
+    if (!idDepartamento || parseInt(idDepartamento, 10) <= 0) {
+        if (errDep) {
+            errDep.textContent = 'El departamento es obligatorio.';
+            errDep.classList.remove('hidden');
+        }
+        valido = false;
+    }
+    if (!validarTelefono(telefono)) {
+        errTel.textContent = 'Teléfono no válido (8-20 dígitos o símbolos + - ( )).';
+        errTel.classList.remove('hidden');
+        valido = false;
+    }
+
+    return valido;
+}
+
+async function guardarNuevaDireccion(e) {
+    e.preventDefault();
+
+    const msgEl = document.getElementById('new-address-msg');
+    const btn = document.getElementById('btn-guardar-direccion');
+    msgEl.classList.add('hidden');
+    msgEl.textContent = '';
+
+    if (!validarFormNuevaDireccion()) return;
+
+    const form = document.getElementById('new-address-form');
+    const formData = new FormData(form);
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-icons text-lg animate-spin">hourglass_empty</span> Guardando...';
+
+    try {
+        const response = await fetch('api/api_crear_direccion.php', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            msgEl.textContent = data.message || 'Dirección guardada correctamente.';
+            msgEl.className = 'md:col-span-2 text-sm rounded-lg px-3 py-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300';
+            msgEl.classList.remove('hidden');
+
+            form.reset();
+            hideNewAddressForm();
+            await cargarDireccionesCheckout();
+        } else {
+            msgEl.textContent = data.message || 'Error al guardar la dirección.';
+            msgEl.className = 'md:col-span-2 text-sm rounded-lg px-3 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300';
+            msgEl.classList.remove('hidden');
+        }
+    } catch (err) {
+        console.error('Error guardar nueva dirección:', err);
+        msgEl.textContent = 'Error de conexión. Intenta de nuevo.';
+        msgEl.className = 'md:col-span-2 text-sm rounded-lg px-3 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300';
+        msgEl.classList.remove('hidden');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-icons text-lg">save</span> Guardar dirección';
+    }
+}
+
+function bindNewAddressForm() {
+    const form = document.getElementById('new-address-form');
+    if (form) form.addEventListener('submit', guardarNuevaDireccion);
+}
+
+/* ===============================
    MOSTRAR DIRECCIÓN EN RESUMEN
 ================================= */
-function mostrarDireccionSeleccionada(direccion, ciudad, codigoPostal, telefono, referencia) {
+function mostrarDireccionSeleccionada(direccion, ciudad, codigoPostal, telefono, referencia, nombreDepartamento, costoEnvio) {
     const display = document.getElementById('direccionDisplay');
     if (!display) return;
-    
+
+    if (typeof costoEnvio === 'number' && !isNaN(costoEnvio)) {
+        envioSeleccionado = costoEnvio;
+        cargarResumenPedido();
+    }
+
     display.innerHTML = `
         <div class="space-y-2">
             <div>
@@ -303,6 +564,10 @@ function mostrarDireccionSeleccionada(direccion, ciudad, codigoPostal, telefono,
                 <div>
                     <p class="text-xs text-slate-500">Ciudad</p>
                     <p class="font-semibold text-slate-900 dark:text-white">${ciudad}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500">Departamento</p>
+                    <p class="font-semibold text-slate-900 dark:text-white">${nombreDepartamento || '-'}</p>
                 </div>
                 <div>
                     <p class="text-xs text-slate-500">Código Postal</p>
@@ -661,45 +926,39 @@ async function cargarMetodosPago() {
                 </button>
             `;
         });
-        const primerMetodo = data.metodos[0];
-        const contenedorComprobante = document.getElementById("contenedor-comprobante");
-
-        if (primerMetodo.id_metodo_pago == 19) {   // <-- ID de Transferencia
-            contenedorComprobante.classList.remove("hidden");
-        } else {
-            contenedorComprobante.classList.add("hidden");
-        }
-
     } catch (error) {
         console.error("Error cargando métodos pago:", error);
     }
 }
 function seleccionarMetodoPago(idMetodo, boton) {
 
-    metodoPagoSeleccionado = idMetodo;
+metodoPagoSeleccionado = idMetodo;
 
-    // Quitar estilos activos
-    const botones = document.querySelectorAll("#checkout-metodos-pago button");
-    botones.forEach(btn => {
-        btn.classList.remove("bg-primary", "text-white");
-        btn.classList.add("border", "border-slate-200", "dark:border-slate-700");
-    });
+// Quitar estilos activos
+const botones = document.querySelectorAll("#checkout-metodos-pago button");
+botones.forEach(btn => {
+    btn.classList.remove("bg-primary", "text-white");
+    btn.classList.add("border", "border-slate-200", "dark:border-slate-700");
+});
 
-    // Activar el seleccionado
-    boton.classList.remove("border", "border-slate-200", "dark:border-slate-700");
-    boton.classList.add("bg-primary", "text-white");
-    
-    const contenedor = document.getElementById("contenedor-comprobante");
+// Activar el seleccionado
+boton.classList.remove("border", "border-slate-200", "dark:border-slate-700");
+boton.classList.add("bg-primary", "text-white");
 
-// Aquí debes poner el ID real del método Transferencia
-// Por ejemplo si Transferencia es id 19:
-if (idMetodo == 18) {
+const contenedor = document.getElementById("contenedor-comprobante");
+const input = document.getElementById("input-comprobante");
+
+if (idMetodo == 20) {
     contenedor.classList.remove("hidden");
 } else {
     contenedor.classList.add("hidden");
-}
-}
 
+    // Limpia el comprobante si cambia de método
+    if (input) {
+        input.value = "";
+    }
+}
+}
 /* ===============================
    INICIALIZAR AL CARGAR
 ================================= */

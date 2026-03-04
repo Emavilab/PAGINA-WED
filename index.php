@@ -129,8 +129,8 @@ if($res_marcas && mysqli_num_rows($res_marcas) > 0) {
 <span class="text-2xl font-bold tracking-tight text-primary"><?php echo $cfg_nombre; ?></span>
 </div>
 <div class="hidden md:flex flex-1 max-w-xl relative">
-<input class="w-full pl-4 pr-12 py-2.5 rounded-full border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary dark:bg-slate-800 dark:border-slate-700 transition-all text-sm" placeholder="Buscar productos, marcas o departamentos..." type="text"/>
-<button class="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-white p-1.5 rounded-full hover:bg-primary-dark transition-colors">
+<input id="searchInput" class="w-full pl-4 pr-12 py-2.5 rounded-full border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary dark:bg-slate-800 dark:border-slate-700 transition-all text-sm" placeholder="Buscar productos, marcas o departamentos..." type="text" onkeyup="if(event.key==='Enter'){realizarBusqueda();}"/>
+<button onclick="realizarBusqueda()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-white p-1.5 rounded-full hover:bg-primary-dark transition-colors">
 <span class="material-symbols-outlined block text-xl">search</span>
 </button>
 </div>
@@ -2504,6 +2504,114 @@ function cerrarSesionCliente() {
 function loadHome() {
     location.reload();
 }
+
+// Función de búsqueda
+function realizarBusqueda() {
+    const termino = document.getElementById('searchInput').value.trim();
+    
+    if (!termino) {
+        alert('Por favor ingresa un término de búsqueda');
+        return;
+    }
+    
+    document.getElementById('mainContent').innerHTML = '<div class="flex justify-center items-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div></div>';
+    
+    fetch('api/api_buscar.php?q=' + encodeURIComponent(termino))
+        .then(r => r.json())
+        .then(data => {
+            let html = '<section class="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">' +
+                '<div class="flex items-center justify-between mb-8 border-l-4 border-primary pl-4">' +
+                    '<div>' +
+                        '<h2 class="text-2xl font-bold text-slate-900 dark:text-white">Resultados de búsqueda</h2>' +
+                        '<p class="text-sm text-slate-500 dark:text-slate-400 mt-1"><strong>"' + termino + '"</strong></p>' +
+                    '</div>' +
+                    '<button onclick="loadHome()" class="text-primary hover:underline font-semibold flex items-center gap-1 bg-none border-none cursor-pointer">' +
+                        '<span class="material-symbols-outlined">arrow_back</span> Inicio' +
+                    '</button>' +
+                '</div>';
+            
+            let totalResultados = (data.productos?.length || 0) + (data.marcas?.length || 0) + (data.categorias?.length || 0);
+            
+            if (totalResultados === 0) {
+                html += '<div class="flex flex-col items-center justify-center py-20 text-center">' +
+                    '<span class="material-symbols-outlined text-6xl text-slate-300 dark:text-slate-600 mb-4">search_off</span>' +
+                    '<p class="text-slate-600 dark:text-slate-400 text-lg">No se encontraron resultados para "<strong>' + termino + '</strong>"</p>' +
+                    '<p class="text-sm text-slate-500 dark:text-slate-500 mt-2">Intenta con otros términos de búsqueda</p>' +
+                '</div>';
+            } else {
+                // Mostrar Productos
+                if (data.productos && data.productos.length > 0) {
+                    html += '<div class="mb-12">' +
+                        '<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">' +
+                            '<span class="material-symbols-outlined text-primary">shopping_bag</span> Productos (' + data.productos.length + ')' +
+                        '</h3>' +
+                        '<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">';
+                    
+                    data.productos.forEach(prod => {
+                        const precio = parseFloat(prod.precio);
+                        const precioFormato = '<?php echo $cfg_moneda; ?>' + precio.toFixed(2);
+                        html += '<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onclick="loadDetalleProducto(' + prod.id_producto + ')">' +
+                            '<div class="aspect-square bg-slate-100 dark:bg-slate-800 overflow-hidden relative">' +
+                                '<img src="' + (prod.imagen_principal || 'img/placeholder.png') + '" class="w-full h-full object-cover hover:scale-105 transition-transform" alt="' + prod.nombre + '">' +
+                            '</div>' +
+                            '<div class="p-4">' +
+                                '<p class="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold">' + prod.marca_nombre + '</p>' +
+                                '<h4 class="font-bold text-slate-900 dark:text-white line-clamp-2 text-sm mb-2">' + prod.nombre + '</h4>' +
+                                '<p class="text-lg font-bold text-primary">' + precioFormato + '</p>' +
+                            '</div>' +
+                        '</div>';
+                    });
+                    
+                    html += '</div></div>';
+                }
+                
+                // Mostrar Marcas
+                if (data.marcas && data.marcas.length > 0) {
+                    html += '<div class="mb-12">' +
+                        '<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">' +
+                            '<span class="material-symbols-outlined text-primary">branding_watermark</span> Marcas (' + data.marcas.length + ')' +
+                        '</h3>' +
+                        '<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">';
+                    
+                    data.marcas.forEach(marca => {
+                        html += '<div class="bg-white dark:bg-slate-900 rounded-lg p-4 border border-slate-200 dark:border-slate-800 text-center cursor-pointer hover:border-primary transition-colors" onclick="loadProductosPorMarca(' + marca.id_marca + ', \'' + marca.nombre.replace(/'/g, "\\'") + '\')">' +
+                            '<img src="img/' + marca.logo + '" class="w-16 h-16 object-contain mx-auto mb-2" alt="' + marca.nombre + '">' +
+                            '<p class="text-sm font-semibold text-slate-900 dark:text-white">' + marca.nombre + '</p>' +
+                        '</div>';
+                    });
+                    
+                    html += '</div></div>';
+                }
+                
+                // Mostrar Categorías
+                if (data.categorias && data.categorias.length > 0) {
+                    html += '<div class="mb-12">' +
+                        '<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">' +
+                            '<span class="material-symbols-outlined text-primary">category</span> Departamentos (' + data.categorias.length + ')' +
+                        '</h3>' +
+                        '<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">';
+                    
+                    data.categorias.forEach(cat => {
+                        html += '<div class="bg-white dark:bg-slate-900 rounded-lg p-4 border border-slate-200 dark:border-slate-800 text-center cursor-pointer hover:border-primary transition-colors" onclick="loadProductosPorCategoria(' + cat.id_categoria + ', \'' + cat.nombre.replace(/'/g, "\\'") + '\')">' +
+                            '<p class="text-sm font-semibold text-slate-900 dark:text-white">' + cat.nombre + '</p>' +
+                        '</div>';
+                    });
+                    
+                    html += '</div></div>';
+                }
+            }
+            
+            html += '</section>';
+            document.getElementById('mainContent').innerHTML = html;
+            window.scrollTo(0, 0);
+            document.getElementById('searchInput').value = '';
+        })
+        .catch(err => {
+            console.error('Error en búsqueda:', err);
+            document.getElementById('mainContent').innerHTML = '<div class="text-center py-20 text-red-500"><span class="material-symbols-outlined text-5xl">error</span><p class="mt-2">Error al realizar la búsqueda</p></div>';
+        });
+}
+
 // Función para toggle del menú de cuenta
 function toggleAccountMenu() {
     const menu = document.getElementById('accountMenu');

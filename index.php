@@ -764,6 +764,8 @@ function loadCategoriasPanel() {
             </section>`;
             document.getElementById('mainContent').innerHTML = html;
             window.scrollTo(0, 0);
+            // Guardar en historial
+            AppRouter.push('categorias', {});
             // Cargar subcategorías de la primera categoría
             if (categorias.length > 0) {
                 seleccionarCategoria(0, categorias[0].id_categoria, document.querySelector('.cat-sidebar-item'));
@@ -938,6 +940,8 @@ function loadProductosPorCategoria(idCategoria, nombreCategoria) {
             html += '</div></section>';
             document.getElementById('mainContent').innerHTML = html;
             window.scrollTo(0, 0);
+            // Guardar en historial
+            AppRouter.push('productos_categoria', { id: idCategoria, nombre: nombreCategoria });
         })
         .catch(err => {
             console.error('Error:', err);
@@ -1039,6 +1043,8 @@ function loadProductosPorMarca(idMarca, nombreMarca) {
             html += '</div></section>';
             document.getElementById('mainContent').innerHTML = html;
             window.scrollTo(0, 0);
+            // Guardar en historial
+            AppRouter.push('productos_marca', { id: idMarca, nombre: nombreMarca });
         })
         .catch(err => {
             console.error('Error:', err);
@@ -1430,6 +1436,8 @@ function loadLogin() {
             
             // Scroll hacia arriba para ver el contenido
             window.scrollTo(0, 0);
+            // Guardar en historial
+            AppRouter.push('login', {});
         })
         .catch(error => console.error('Error al cargar login:', error));
 }
@@ -1459,6 +1467,8 @@ function loadRegistrarse() {
             
             // Scroll hacia arriba para ver el contenido
             window.scrollTo(0, 0);
+            // Guardar en historial
+            AppRouter.push('registrarse', {});
         })
         .catch(error => console.error('Error al cargar registro:', error));
 }
@@ -1521,6 +1531,8 @@ function loadHistorialPedidos() {
             document.getElementById('mainContent').innerHTML = data;
             // Scroll hacia arriba para ver el contenido
             window.scrollTo(0, 0);
+            // Guardar en historial
+            AppRouter.push('historial_pedidos', {});
         })
         .catch(error => console.error('Error al cargar historialpedidoC:', error));
 }
@@ -1551,6 +1563,8 @@ function loadListaDeseos() {
 
             // Scroll hacia arriba para ver el contenido
             window.scrollTo(0, 0);
+            // Guardar en historial
+            AppRouter.push('lista_deseos', {});
         })
         .catch(error => console.error('Error al cargar listadedeseo:', error));
 }
@@ -1587,6 +1601,8 @@ function loadPerfil() {
             }, 50);
 
             window.scrollTo(0, 0);
+            // Guardar en historial
+            AppRouter.push('perfil', {});
         })
         .catch(error => console.error('Error al cargar perfil:', error));
 }
@@ -1712,6 +1728,8 @@ function loadContactanos() {
 
     document.getElementById('mainContent').innerHTML = html;
     window.scrollTo(0, 0);
+    // Guardar en historial
+    AppRouter.push('contacto', {});
 
     // Inicializar el formulario de contacto
     setTimeout(function() {
@@ -2604,6 +2622,8 @@ function realizarBusqueda() {
             html += '</section>';
             document.getElementById('mainContent').innerHTML = html;
             window.scrollTo(0, 0);
+            // Guardar búsqueda en historial (sin parámetros porque se perdería el término)
+            AppRouter.push('busqueda', {});
             document.getElementById('searchInput').value = '';
         })
         .catch(err => {
@@ -2626,6 +2646,77 @@ document.addEventListener('click', function(event) {
     if (!accountButton || !accountButton.textContent.includes('Cuenta')) {
         if (accountMenu && !accountMenu.contains(event.target)) {
             accountMenu.classList.add('hidden');
+        }
+    }
+});
+
+// ====== SISTEMA DE NAVEGACIÓN CON HISTORY API ======
+const AppRouter = {
+    routes: {},
+    
+    push(route, state = {}) {
+        // Guardar el estado en el historial
+        window.history.pushState(
+            { type: route, ...state },
+            document.title,
+            window.location.pathname
+        );
+    },
+    
+    replace(route, state = {}) {
+        // Reemplazar el estado actual sin crear nueva entrada en historial
+        window.history.replaceState(
+            { type: route, ...state },
+            document.title,
+            window.location.pathname
+        );
+    }
+};
+
+// Inicializar el estado actual como 'home'
+AppRouter.replace('home', {});
+
+// Manejar cuando el usuario presiona atrás/adelante
+window.addEventListener('popstate', function(event) {
+    if (event.state) {
+        const { type, ...params } = event.state;
+        
+        // Restaurar la vista según el tipo guardado
+        switch(type) {
+            case 'home':
+                location.reload(); // Vuelve al inicio
+                break;
+            case 'categorias':
+                loadCategoriasPanel();
+                break;
+            case 'productos_categoria':
+                loadProductosPorCategoria(params.id, params.nombre);
+                break;
+            case 'productos_marca':
+                loadProductosPorMarca(params.id, params.nombre);
+                break;
+            case 'busqueda':
+                // Para búsqueda, simplemente recarga el home ya que el término se perdería
+                location.reload();
+                break;
+            case 'login':
+                loadLogin();
+                break;
+            case 'registrarse':
+                loadRegistrarse();
+                break;
+            case 'perfil':
+                loadPerfil();
+                break;
+            case 'lista_deseos':
+                loadListaDeseos();
+                break;
+            case 'historial_pedidos':
+                loadHistorialPedidos();
+                break;
+            case 'contacto':
+                loadContacto();
+                break;
         }
     }
 });

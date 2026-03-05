@@ -3218,60 +3218,50 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 <script>
 (function() {
-    if (window.listenerPedidosActivo) return;
-    window.listenerPedidosActivo = true;
-
-    // Cancelar pedido: FASE DE CAPTURA para ejecutarse ANTES que cualquier otro listener.
-    // Así confirm() siempre se muestra primero y ningún otro script puede ejecutar fetch antes.
-    document.addEventListener("click", function (e) {
-        var btnCancelar = e.target && e.target.closest && e.target.closest("button.btn-cancelar-pedido");
-        if (!btnCancelar) return;
-
+    document.body.addEventListener("click", function(e) {
+        var btn = e.target.closest(".btn-cancelar-pedido");
+        if (!btn) return;
         e.preventDefault();
         e.stopPropagation();
-        e.stopImmediatePropagation();
-
-        if (btnCancelar.dataset.locked === "1") return;
-        btnCancelar.dataset.locked = "1";
-
-        if (!confirm("¿Estás seguro que deseas cancelar este pedido?")) {
-            btnCancelar.dataset.locked = "";
-            return;
+        var id = btn.getAttribute("data-id");
+        if (!id) return;
+        var modal = document.getElementById("modalConfirmacionCancelacion");
+        if (!modal) return;
+        modal.style.display = "flex";
+        window.pedidoA = {id: id, btn: btn};
+    });
+    
+    document.addEventListener("click", function(e) {
+        if (e.target.id === "btnConfirmarCancelacion") {
+            e.preventDefault();
+            var modal = document.getElementById("modalConfirmacionCancelacion");
+            if (modal) modal.style.display = "none";
+            if (!window.pedidoA) return;
+            var fd = new FormData();
+            fd.append("id_pedido", window.pedidoA.id);
+            fetch("./api/api_cancelar_pedido.php", {method: "POST", credentials: "include", body: fd})
+                .then(r => r.json())
+                .then(d => {
+                    if (d.exito) {
+                        var tr = window.pedidoA.btn.closest("tr");
+                        if (tr) tr.remove();
+                        alert(d.mensaje || "Cancelado");
+                    } else {
+                        alert(d.error || "Error");
+                    }
+                    window.pedidoA = null;
+                })
+                .catch(e => alert("Error"));
         }
-
-        var idPedido = btnCancelar.dataset.id;
-        if (!idPedido) {
-            btnCancelar.dataset.locked = "";
-            return;
+        if (e.target.id === "btnCancelarCancelacion") {
+            var modal = document.getElementById("modalConfirmacionCancelacion");
+            if (modal) modal.style.display = "none";
         }
+    });
+})();
+</script>
 
-        var formData = new FormData();
-        formData.append("id_pedido", idPedido);
-
-        fetch("./api/api_cancelar_pedido.php", {
-            method: "POST",
-            credentials: "include",
-            body: formData
-        })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-            btnCancelar.dataset.locked = "";
-            if (data.exito) {
-                var fila = btnCancelar.closest("tr");
-                if (fila) fila.remove();
-                var modal = document.getElementById("modalPedido");
-                if (modal) modal.classList.add("hidden");
-                alert(data.mensaje || "Pedido cancelado correctamente");
-            } else {
-                alert(data.error || "No se pudo cancelar el pedido");
-            }
-        })
-        .catch(function() {
-            btnCancelar.dataset.locked = "";
-            alert("No se pudo cancelar el pedido.");
-        });
-    }, true);
-
+<script>
     // Ver detalle: delegación en burbuja (solo abre modal).
     document.addEventListener("click", function (e) {
         var btnDetalle = e.target && e.target.closest && e.target.closest(".btn-ver-detalle");

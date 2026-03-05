@@ -1,5 +1,6 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
+date_default_timezone_set('America/Tegucigalpa');
 
 require_once '../core/conexion.php';
 require_once '../core/sesiones.php';
@@ -24,7 +25,7 @@ if ($id_pedido <= 0) {
     exit;
 }
 
-// Obtener pedido y validar que sea del cliente, estado pendiente y menos de 3 horas
+// Obtener pedido
 $stmt = $conexion->prepare("SELECT id_pedido, estado, fecha_pedido FROM pedidos WHERE id_pedido = ? AND id_cliente = ? LIMIT 1");
 $stmt->bind_param("ii", $id_pedido, $id_cliente);
 $stmt->execute();
@@ -39,25 +40,63 @@ if ($res->num_rows === 0) {
 $pedido = $res->fetch_assoc();
 $stmt->close();
 
+// Validar estado
 if ($pedido['estado'] !== 'pendiente') {
     echo json_encode(['exito' => false, 'error' => 'Solo se pueden cancelar pedidos en estado pendiente']);
     exit;
 }
 
-$segundosDesdePedido = time() - strtotime($pedido['fecha_pedido']);
-if ($segundosDesdePedido > 10800) { // 3 horas = 10800 segundos
-    echo json_encode(['exito' => false, 'error' => 'Solo puedes cancelar dentro de las primeras 3 horas desde que realizaste el pedido']);
+/*
+================================
+CALCULO DE LAS 3 HORAS
+================================
+*/
+
+$fechaPedido = new DateTime($pedido['fecha_pedido']);
+
+$fechaLimite = clone $fechaPedido;
+$fechaLimite->modify('+3 hours');
+
+$ahora = new DateTime();
+
+if ($ahora > $fechaLimite) {
+    echo json_encode([
+        'exito' => false,
+        'error' => 'Solo puedes cancelar dentro de las primeras 3 horas desde que realizaste el pedido'
+    ]);
     exit;
 }
 
-// Actualizar a cancelado
+// Cancelar pedido
 $stmtUp = $conexion->prepare("UPDATE pedidos SET estado = 'cancelado' WHERE id_pedido = ? AND id_cliente = ?");
 $stmtUp->bind_param("ii", $id_pedido, $id_cliente);
 
 if ($stmtUp->execute() && $stmtUp->affected_rows > 0) {
     $stmtUp->close();
-    echo json_encode(['exito' => true, 'mensaje' => 'Pedido cancelado correctamente']);
+
+    // Devolver productos al stock solo si el estado anterior NO era "cancelado" (evitar doble devolución)
+    if ($pedido['estado'] !== 'cancelado') {
+        $stmtDetalle = $conexion->prepare("SELECT id_producto, cantidad FROM detalle_pedido WHERE id_pedido = ?");
+        $stmtDetalle->bind_param("i", $id_pedido);
+        $stmtDetalle->execute();
+        $resDetalle = $stmtDetalle->get_result();
+        while ($fila = $resDetalle->fetch_assoc()) {
+            $stmtStock = $conexion->prepare("UPDATE productos SET stock = stock + ? WHERE id_producto = ?");
+            $stmtStock->bind_param("ii", $fila['cantidad'], $fila['id_producto']);
+            $stmtStock->execute();
+            $stmtStock->close();
+        }
+        $stmtDetalle->close();
+    }
+
+    echo json_encode([
+        'exito' => true,
+        'mensaje' => 'Pedido cancelado correctamente'
+    ]);
 } else {
     $stmtUp->close();
-    echo json_encode(['exito' => false, 'error' => 'No se pudo cancelar el pedido']);
+    echo json_encode([
+        'exito' => false,
+        'error' => 'No se pudo cancelar el pedido'
+    ]);
 }

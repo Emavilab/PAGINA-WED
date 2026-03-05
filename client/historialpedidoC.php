@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('America/Tegucigalpa');
 require_once '../core/sesiones.php';
 
 if (!usuarioAutenticado()) {
@@ -14,14 +15,32 @@ if (!$id_cliente) {
     exit();
 }
 
-// Obtener pedidos del cliente
+// --- PAGINACIÓN ---
+$por_pagina = 10;
+$pagina_actual = (isset($_GET['page']) && (int)$_GET['page'] > 0) ? (int)$_GET['page'] : 1;
+$offset = ($pagina_actual - 1) * $por_pagina;
+
+// Obtener total de pedidos del cliente para paginación
+$sql_total = "SELECT COUNT(*) AS total FROM pedidos WHERE id_cliente = ?";
+$stmt_total = $conexion->prepare($sql_total);
+$stmt_total->bind_param("i", $id_cliente);
+$stmt_total->execute();
+$res_total = $stmt_total->get_result();
+$total_pedidos = 0;
+if ($row_total = $res_total->fetch_assoc()) {
+    $total_pedidos = (int)$row_total['total'];
+}
+$total_paginas = max(1, ceil($total_pedidos / $por_pagina));
+
+// Obtener pedidos paginados del cliente
 $sql = "SELECT id_pedido, fecha_pedido, estado, total 
         FROM pedidos 
         WHERE id_cliente = ? 
-        ORDER BY fecha_pedido DESC";
+        ORDER BY fecha_pedido DESC
+        LIMIT ? OFFSET ?";
 
 $stmt = $conexion->prepare($sql);
-$stmt->bind_param("i", $id_cliente);
+$stmt->bind_param("iii", $id_cliente, $por_pagina, $offset);
 $stmt->execute();
 $resultado = $stmt->get_result();
 ?>
@@ -108,9 +127,17 @@ $resultado = $stmt->get_result();
         // Formatear fecha
         $fecha = date("d \\d\\e F, Y", strtotime($pedido['fecha_pedido']));
 
-        // Puede cancelar solo si está pendiente y han pasado menos de 3 horas (10800 segundos)
-        $deadlineTs = strtotime($pedido['fecha_pedido']) + 10800;
-        $puedeCancelar = ($pedido['estado'] === 'pendiente' && (time() - strtotime($pedido['fecha_pedido']) <= 10800));
+        // Puede cancelar solo si está pendiente y han pasado menos de 3 horas 
+        $fechaPedido = new DateTime($pedido['fecha_pedido']);
+
+        $fechaLimite = clone $fechaPedido;
+        $fechaLimite->modify('+3 hours');
+
+        $ahora = new DateTime();
+        $deadlineTs = $fechaLimite->getTimestamp();
+
+        $puedeCancelar = ($pedido['estado'] === 'pendiente' && $ahora <= $fechaLimite);
+        $restanteInicial = max(0, $fechaLimite->getTimestamp() - $ahora->getTimestamp());
         $esPendiente = ($pedido['estado'] === 'pendiente');
         $restanteInicial = $esPendiente ? max(0, $deadlineTs - time()) : 0;
 
@@ -139,7 +166,7 @@ $resultado = $stmt->get_result();
         }
     ?>
 
-    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors" <?php if ($esPendiente): ?> data-deadline="<?php echo date('c', $deadlineTs); ?>"<?php endif; ?>>
+    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors" <?php if ($esPendiente): ?>data-deadline="<?php echo $deadlineTs; ?>"<?php endif; ?> data-id="<?php echo $pedido['id_pedido']; ?>">
 
         <td class="px-6 py-5 whitespace-nowrap">
             <span class="font-bold text-slate-900 dark:text-white">
@@ -152,7 +179,7 @@ $resultado = $stmt->get_result();
         </td>
 
         <td class="px-6 py-5">
-            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase <?php echo $claseEstado; ?>">
+            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase <?php echo $claseEstado; ?> estado-label">
                 <?php echo $textoEstado; ?>
             </span>
             <?php if ($esPendiente): ?>
@@ -180,13 +207,13 @@ $resultado = $stmt->get_result();
                     <span class="material-icons text-sm">visibility</span>
                 </button>
                 <?php if ($puedeCancelar): ?>
-                <button 
+                <button
                     type="button"
                     class="btn-cancelar-pedido inline-flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-500 dark:bg-red-900/30 dark:hover:bg-red-500 text-red-600 hover:text-white dark:text-red-400 dark:hover:text-white rounded-lg text-sm font-bold transition-all border border-red-200 dark:border-red-800"
                     data-id="<?php echo (int)$pedido['id_pedido']; ?>">
                     Cancelar Pedido
                     <span class="material-icons text-sm">close</span>
-                </button>
+                    </button>
                 <?php endif; ?>
             </div>
         </td>
@@ -208,15 +235,58 @@ $resultado = $stmt->get_result();
 </table>
 </div>
 <div class="p-6 bg-slate-50 dark:bg-slate-800/20 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-<p class="text-sm text-slate-500">Mostrando 4 pedidos</p>
+<p class="text-sm text-slate-500">
+<?php
+       $offset = ($pagina_actual - 1) * $por_pagina;
+
+       /* calcular rango mostrado */
+       $desde = 0;
+       $hasta = 0;
+       
+       if ($total_pedidos > 0) {
+           $desde = $offset + 1;
+           $hasta = min($offset + $por_pagina, $total_pedidos);
+       }
+       echo "Mostrando {$desde}-{$hasta} de {$total_pedidos} pedidos";
+        ?>
+</p>
 <div class="flex gap-2">
-<button class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50" disabled="">
-<span class="material-icons text-lg leading-none">chevron_left</span>
-</button>
-<button class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-primary text-white font-bold px-4 text-sm">1</button>
-<button class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-white dark:hover:bg-slate-700">
-<span class="material-icons text-lg leading-none">chevron_right</span>
-</button>
+    <!-- Botón anterior -->
+    <button
+        class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50"
+        <?php if ($pagina_actual <= 1): ?>disabled<?php endif; ?>
+        onclick="if(<?php echo $pagina_actual; ?> > 1) window.location='?modulo=historialpedidoC&page=<?php echo ($pagina_actual-1); ?>';"
+        aria-label="Anterior"
+    >
+        <span class="material-icons text-lg leading-none">chevron_left</span>
+    </button>
+    <!-- Botones de página dinámicos -->
+    <?php
+        // Mostrar un rango limitado si hay muchas páginas
+        $max_buttons = 5;
+        $mitad = floor($max_buttons/2);
+        $inicio = max(1, $pagina_actual - $mitad);
+        $fin = min($total_paginas, $inicio + $max_buttons - 1);
+        if ($fin - $inicio < $max_buttons - 1) {
+            $inicio = max(1, $fin - $max_buttons + 1);
+        }
+        for ($i = $inicio; $i <= $fin; $i++):
+    ?>
+        <button
+            class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg <?php echo ($i==$pagina_actual) ? 'bg-primary text-white font-bold px-4 text-sm' : 'hover:bg-white dark:hover:bg-slate-700'; ?>"
+            <?php if ($i == $pagina_actual): ?>disabled<?php endif; ?>
+            onclick="if(<?php echo $i; ?> != <?php echo $pagina_actual; ?>) window.location='?modulo=historialpedidoC&page=<?php echo $i; ?>';"
+        ><?php echo $i; ?></button>
+    <?php endfor; ?>
+    <!-- Botón siguiente -->
+    <button
+        class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50"
+        <?php if ($pagina_actual >= $total_paginas): ?>disabled<?php endif; ?>
+        onclick="if(<?php echo $pagina_actual; ?> < <?php echo $total_paginas; ?>) window.location='?modulo=historialpedidoC&page=<?php echo ($pagina_actual+1); ?>';"
+        aria-label="Siguiente"
+    >
+        <span class="material-icons text-lg leading-none">chevron_right</span>
+    </button>
 </div>
 </div>
 </div>
@@ -234,7 +304,7 @@ $resultado = $stmt->get_result();
     function actualizarCountdowns() {
         var ahora = Math.floor(Date.now() / 1000);
         document.querySelectorAll('tr[data-deadline]').forEach(function(tr) {
-            var deadline = new Date(tr.getAttribute('data-deadline')).getTime() / 1000;
+            var deadline = parseInt(tr.getAttribute('data-deadline'));
             var restante = Math.max(0, Math.floor(deadline - ahora));
             var cell = tr.querySelector('.countdown-cell');
             if (!cell) return;
@@ -257,16 +327,67 @@ $resultado = $stmt->get_result();
     }
     actualizarCountdowns();
     setInterval(actualizarCountdowns, 1000);
+
+    // --- CANCELAR PEDIDO SIN ELIMINAR FILA ---
+    document.addEventListener('click', function(e){
+        if (e.target && (e.target.classList.contains('btn-cancelar-pedido') || e.target.closest('.btn-cancelar-pedido'))) {
+            var btn = e.target.classList.contains('btn-cancelar-pedido') ? e.target : e.target.closest('.btn-cancelar-pedido');
+            var idPedido = btn.getAttribute('data-id');
+            if (!idPedido) return;
+            if (!confirm("¿Está seguro de cancelar este pedido?")) return;
+
+            btn.disabled = true;
+            btn.classList.add('pointer-events-none', 'opacity-50');
+
+            // AJAX request
+            fetch('cancelar_pedido_ajax.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'id_pedido=' + encodeURIComponent(idPedido)
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data){
+                btn.disabled = false;
+                btn.classList.remove('pointer-events-none', 'opacity-50');
+                if (data && data.success) {
+                    // Encontrar la fila tr de este pedido
+                    var tr = btn.closest('tr');
+                    // Cambiar el estado visualmente y ocultar el botón cancelar
+                    if (tr) {
+                        var estadoSpan = tr.querySelector('.estado-label');
+                        if (estadoSpan) {
+                            estadoSpan.textContent = 'Cancelado';
+                            estadoSpan.className = estadoSpan.className.replace(/status-badge-\w+/g, 'status-badge-cancelado');
+                        }
+                        // Quitar countdown y mensaje de tiempo
+                        var countdownCell = tr.querySelector('.countdown-cell');
+                        if (countdownCell) {
+                            countdownCell.innerHTML = '<span class="expirado-message">Tiempo de cancelación expirado</span>';
+                        }
+                        if (btn) btn.classList.add('hidden');
+                    }
+                } else {
+                    alert('No se pudo cancelar el pedido. Intenta de nuevo.');
+                }
+            }).catch(function(){
+                btn.disabled = false;
+                btn.classList.remove('pointer-events-none', 'opacity-50');
+                alert('No se pudo cancelar el pedido. Intenta de nuevo.');
+            });
+        }
+    });
 })();
 </script>
 
 <div id="modalPedido" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 relative">
 
-        <button onclick="cerrarModal()" 
-            class="absolute top-3 right-3 text-gray-500 hover:text-black">
-            ✕
-        </button>
+    <button type="button"
+class="cerrar-modal absolute top-3 right-3 text-gray-500 hover:text-black">
+✕
+</button>
 
         <div id="contenidoModal">
             <!-- Aquí se carga el detalle -->
@@ -274,5 +395,43 @@ $resultado = $stmt->get_result();
 
     </div>
 </div>
+<script>
+function cerrarModal() {
+    const modal = document.getElementById("modalPedido");
+    const contenido = document.getElementById("contenidoModal");
 
+    if (modal) {
+        modal.classList.add("hidden");
+    }
+
+    if (contenido) {
+        contenido.innerHTML = "";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const btnCerrar = document.querySelector(".cerrar-modal");
+
+    if (btnCerrar) {
+        btnCerrar.addEventListener("click", cerrarModal);
+    }
+});
+</script>
 </body></html>
+<!-- Se requiere un archivo cancelar_pedido_ajax.php para manejar la actualización del estado vía AJAX:
+<?php
+require_once '../core/sesiones.php';
+if (!usuarioAutenticado()) {
+    echo json_encode(['success'=>false, 'msg'=>'No autenticado']); exit;
+}
+$id = isset($_POST['id_pedido']) ? (int)$_POST['id_pedido'] : 0;
+if (!$id) { echo json_encode(['success'=>false]); exit; }
+$usuario = obtenerDatosUsuario();
+$id_cliente = $usuario['id_cliente'] ?? null;
+require '../core/db.php'; // O el archivo que da acceso a $conexion
+$stmt = $conexion->prepare("UPDATE pedidos SET estado='cancelado' WHERE id_pedido=? AND id_cliente=?");
+$stmt->bind_param("ii", $id, $id_cliente);
+$stmt->execute();
+echo json_encode(['success'=>($stmt->affected_rows>0)]);
+?>
+-->

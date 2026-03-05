@@ -3203,70 +3203,82 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </script>
 <script>
-document.body.addEventListener("click", function (e) {
+(function() {
+    if (window.listenerPedidosActivo) return;
+    window.listenerPedidosActivo = true;
 
-    const btn = e.target.closest(".btn-ver-detalle");
+    // Cancelar pedido: FASE DE CAPTURA para ejecutarse ANTES que cualquier otro listener.
+    // Así confirm() siempre se muestra primero y ningún otro script puede ejecutar fetch antes.
+    document.addEventListener("click", function (e) {
+        var btnCancelar = e.target && e.target.closest && e.target.closest("button.btn-cancelar-pedido");
+        if (!btnCancelar) return;
 
-    if (btn) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
 
-        const id = btn.dataset.id;
+        if (btnCancelar.dataset.locked === "1") return;
+        btnCancelar.dataset.locked = "1";
 
-        fetch("client/obtener_detalle_pedido.php?id=" + id)
-            .then(res => res.text())
-            .then(data => {
+        if (!confirm("¿Estás seguro que deseas cancelar este pedido?")) {
+            btnCancelar.dataset.locked = "";
+            return;
+        }
 
-                const modal = document.getElementById("modalPedido");
-                const contenido = document.getElementById("contenidoModal");
+        var idPedido = btnCancelar.dataset.id;
+        if (!idPedido) {
+            btnCancelar.dataset.locked = "";
+            return;
+        }
 
-                if (modal && contenido) {
-                    contenido.innerHTML = data;
-                    modal.classList.remove("hidden");
-                    modal.classList.add("flex");
-                }
-
-            });
-
-    }
-
-    const btnCancelar = e.target.closest(".btn-cancelar-pedido");
-    if (btnCancelar) {
-        const idPedido = btnCancelar.dataset.id;
-        if (!idPedido) return;
-        if (!confirm("¿Estás seguro que deseas cancelar este pedido?")) return;
-
-        const formData = new FormData();
+        var formData = new FormData();
         formData.append("id_pedido", idPedido);
 
-        fetch("api/api_cancelar_pedido.php", {
+        fetch("./api/api_cancelar_pedido.php", {
             method: "POST",
             credentials: "include",
             body: formData
         })
-        .then(res => res.json())
-        .then(data => {
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            btnCancelar.dataset.locked = "";
             if (data.exito) {
-                if (typeof cerrarModal === "function") cerrarModal();
-                if (typeof loadHistorialPedidos === "function") loadHistorialPedidos();
+                var fila = btnCancelar.closest("tr");
+                if (fila) fila.remove();
+                var modal = document.getElementById("modalPedido");
+                if (modal) modal.classList.add("hidden");
                 alert(data.mensaje || "Pedido cancelado correctamente");
             } else {
                 alert(data.error || "No se pudo cancelar el pedido");
             }
         })
-        .catch(function () {
-            alert("Error de conexión. Intenta de nuevo.");
+        .catch(function() {
+            btnCancelar.dataset.locked = "";
+            alert("No se pudo cancelar el pedido.");
         });
-    }
+    }, true);
 
-});
+    // Ver detalle: delegación en burbuja (solo abre modal).
+    document.addEventListener("click", function (e) {
+        var btnDetalle = e.target && e.target.closest && e.target.closest(".btn-ver-detalle");
+        if (!btnDetalle) return;
 
-function cerrarModal() {
-    const modal = document.getElementById("modalPedido");
-    if (modal) {
-        modal.classList.add("hidden");
-        modal.classList.remove("flex");
-    }
-}
+        var id = btnDetalle.dataset.id;
+        if (!id) return;
 
+        fetch("client/obtener_detalle_pedido.php?id=" + id)
+        .then(function(res) { return res.text(); })
+        .then(function(data) {
+            var modal = document.getElementById("modalPedido");
+            var contenido = document.getElementById("contenidoModal");
+            if (modal && contenido) {
+                contenido.innerHTML = data;
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+            }
+        });
+    }, false);
+})();
 // === MANEJADOR DE ANCHORS/HASHES ===
 function procesarHash(hash) {
     // Mapear anchors a funciones

@@ -69,24 +69,53 @@ if ($ahora > $fechaLimite) {
 
 // Cancelar pedido
 $stmtUp = $conexion->prepare("UPDATE pedidos SET estado = 'cancelado' WHERE id_pedido = ? AND id_cliente = ?");
-$stmtUp->bind_param("ii", $id_pedido, $id_cliente);
 
-if ($stmtUp->execute() && $stmtUp->affected_rows > 0) {
+if (!$stmtUp) {
+    echo json_encode([
+        'exito' => false,
+        'error' => 'Error en la consulta: ' . $conexion->error
+    ]);
+    exit;
+}
+
+if (!$stmtUp->bind_param("ii", $id_pedido, $id_cliente)) {
+    echo json_encode([
+        'exito' => false,
+        'error' => 'Error al vincular parámetros: ' . $stmtUp->error
+    ]);
+    $stmtUp->close();
+    exit;
+}
+
+if (!$stmtUp->execute()) {
+    echo json_encode([
+        'exito' => false,
+        'error' => 'Error al ejecutar la actualización: ' . $stmtUp->error
+    ]);
+    $stmtUp->close();
+    exit;
+}
+
+if ($stmtUp->affected_rows > 0) {
     $stmtUp->close();
 
     // Devolver productos al stock solo si el estado anterior NO era "cancelado" (evitar doble devolución)
     if ($pedido['estado'] !== 'cancelado') {
         $stmtDetalle = $conexion->prepare("SELECT id_producto, cantidad FROM detalle_pedido WHERE id_pedido = ?");
-        $stmtDetalle->bind_param("i", $id_pedido);
-        $stmtDetalle->execute();
-        $resDetalle = $stmtDetalle->get_result();
-        while ($fila = $resDetalle->fetch_assoc()) {
-            $stmtStock = $conexion->prepare("UPDATE productos SET stock = stock + ? WHERE id_producto = ?");
-            $stmtStock->bind_param("ii", $fila['cantidad'], $fila['id_producto']);
-            $stmtStock->execute();
-            $stmtStock->close();
+        if ($stmtDetalle) {
+            $stmtDetalle->bind_param("i", $id_pedido);
+            $stmtDetalle->execute();
+            $resDetalle = $stmtDetalle->get_result();
+            while ($fila = $resDetalle->fetch_assoc()) {
+                $stmtStock = $conexion->prepare("UPDATE productos SET stock = stock + ? WHERE id_producto = ?");
+                if ($stmtStock) {
+                    $stmtStock->bind_param("ii", $fila['cantidad'], $fila['id_producto']);
+                    $stmtStock->execute();
+                    $stmtStock->close();
+                }
+            }
+            $stmtDetalle->close();
         }
-        $stmtDetalle->close();
     }
 
     echo json_encode([
@@ -97,6 +126,6 @@ if ($stmtUp->execute() && $stmtUp->affected_rows > 0) {
     $stmtUp->close();
     echo json_encode([
         'exito' => false,
-        'error' => 'No se pudo cancelar el pedido'
+        'error' => 'No se pudo cancelar el pedido. Verifica que el pedido exista y su estado sea válido'
     ]);
 }

@@ -1529,6 +1529,20 @@ function loadHistorialPedidos() {
         .then(response => response.text())
         .then(data => {
             document.getElementById('mainContent').innerHTML = data;
+            
+            // Extraer y ejecutar todos los scripts del contenido cargado
+            const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/g;
+            let match;
+            while ((match = scriptRegex.exec(data)) !== null) {
+                try {
+                    // Usar eval para ejecutar el script inmediatamente
+                    console.log('Ejecutando script inline...');
+                    eval(match[1]);
+                } catch (err) {
+                    console.error('Error ejecutando script inline:', err);
+                }
+            }
+            
             // Scroll hacia arriba para ver el contenido
             window.scrollTo(0, 0);
             // Guardar en historial

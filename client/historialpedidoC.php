@@ -378,6 +378,46 @@ $resultado = $stmt->get_result();
             });
         }
     });
+
+    // Ver detalles del pedido
+    document.addEventListener('click', function(e){
+        var btn = e.target.closest('.btn-ver-detalle');
+        if (!btn) return;
+        
+        console.log('Click en ver detalles detectado');
+        
+        var idPedido = btn.getAttribute('data-id');
+        if (!idPedido) { console.log('Sin id'); return; }
+        
+        var modal = document.getElementById('modalPedido');
+        var contenido = document.getElementById('contenidoModal');
+        
+        if (!modal) { console.log('Modal no existe'); return; }
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        contenido.innerHTML = '<p class="text-center py-4">Cargando detalles...</p>';
+        
+        var baseURL = window.location.origin + window.location.pathname.replace('index.php', '');
+        var detalleURL = baseURL + 'client/obtener_detalle_pedido.php?id=' + idPedido;
+        
+        console.log('Fetch a:', detalleURL);
+        
+        fetch(detalleURL, {
+            credentials: 'include'
+        })
+            .then(function(res) { return res.text(); })
+            .then(function(html) {
+                console.log('HTML recibido, longitud:', html.length);
+                contenido.innerHTML = html;
+            })
+            .catch(function(err) {
+                console.error('Error de fetch:', err);
+                contenido.innerHTML = '<p class="text-center py-4 text-red-500">Error: ' + err + '</p>';
+            });
+    });
+    
+    console.log('Historial script completamente inicializado');
 })();
 </script>
 
@@ -402,6 +442,7 @@ function cerrarModal() {
 
     if (modal) {
         modal.classList.add("hidden");
+        modal.classList.remove("flex");
     }
 
     if (contenido) {
@@ -409,11 +450,18 @@ function cerrarModal() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    const btnCerrar = document.querySelector(".cerrar-modal");
+// Cerrar modal al hacer clic en la X
+document.addEventListener("click", function(e) {
+    if (e.target && e.target.classList.contains("cerrar-modal")) {
+        cerrarModal();
+    }
+});
 
-    if (btnCerrar) {
-        btnCerrar.addEventListener("click", cerrarModal);
+// Cerrar modal al hacer clic fuera (en el fondo oscuro)
+document.addEventListener("click", function(e) {
+    const modal = document.getElementById("modalPedido");
+    if (modal && e.target === modal) {
+        cerrarModal();
     }
 });
 </script>

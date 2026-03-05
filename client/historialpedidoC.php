@@ -292,6 +292,34 @@ $resultado = $stmt->get_result();
 </div>
 </main>
 
+<!-- Modal de confirmación de cancelación -->
+<div id="modalConfirmacionCancelacion" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50" style="display: none;">
+    <div class="bg-white dark:bg-slate-900 rounded-xl w-full max-w-md p-6 shadow-lg">
+        <div class="mb-4">
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Confirmación</h2>
+        </div>
+        <div class="mb-6">
+            <p class="text-slate-600 dark:text-slate-300 text-base">
+                ¿Estás seguro de que deseas cancelar este pedido? Esta acción no se puede deshacer.
+            </p>
+        </div>
+        <div class="flex gap-3 justify-end">
+            <button 
+                id="btnCancelarCancelacion"
+                type="button"
+                class="px-6 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg font-semibold transition-colors">
+                No, mantener pedido
+            </button>
+            <button 
+                id="btnConfirmarCancelacion"
+                type="button"
+                class="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition-colors">
+                Sí, cancelar pedido
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
 (function() {
     function formatRestante(segundos) {
@@ -327,95 +355,6 @@ $resultado = $stmt->get_result();
     }
     actualizarCountdowns();
     setInterval(actualizarCountdowns, 1000);
-
-    // --- CANCELAR PEDIDO SIN ELIMINAR FILA ---
-    document.addEventListener('click', function(e){
-        if (e.target && (e.target.classList.contains('btn-cancelar-pedido') || e.target.closest('.btn-cancelar-pedido'))) {
-            var btn = e.target.classList.contains('btn-cancelar-pedido') ? e.target : e.target.closest('.btn-cancelar-pedido');
-            var idPedido = btn.getAttribute('data-id');
-            if (!idPedido) return;
-            if (!confirm("¿Está seguro de cancelar este pedido?")) return;
-
-            btn.disabled = true;
-            btn.classList.add('pointer-events-none', 'opacity-50');
-
-            // AJAX request
-            fetch('cancelar_pedido_ajax.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: 'id_pedido=' + encodeURIComponent(idPedido)
-            })
-            .then(function(res) { return res.json(); })
-            .then(function(data){
-                btn.disabled = false;
-                btn.classList.remove('pointer-events-none', 'opacity-50');
-                if (data && data.success) {
-                    // Encontrar la fila tr de este pedido
-                    var tr = btn.closest('tr');
-                    // Cambiar el estado visualmente y ocultar el botón cancelar
-                    if (tr) {
-                        var estadoSpan = tr.querySelector('.estado-label');
-                        if (estadoSpan) {
-                            estadoSpan.textContent = 'Cancelado';
-                            estadoSpan.className = estadoSpan.className.replace(/status-badge-\w+/g, 'status-badge-cancelado');
-                        }
-                        // Quitar countdown y mensaje de tiempo
-                        var countdownCell = tr.querySelector('.countdown-cell');
-                        if (countdownCell) {
-                            countdownCell.innerHTML = '<span class="expirado-message">Tiempo de cancelación expirado</span>';
-                        }
-                        if (btn) btn.classList.add('hidden');
-                    }
-                } else {
-                    alert('No se pudo cancelar el pedido. Intenta de nuevo.');
-                }
-            }).catch(function(){
-                btn.disabled = false;
-                btn.classList.remove('pointer-events-none', 'opacity-50');
-                alert('No se pudo cancelar el pedido. Intenta de nuevo.');
-            });
-        }
-    });
-
-    // Ver detalles del pedido
-    document.addEventListener('click', function(e){
-        var btn = e.target.closest('.btn-ver-detalle');
-        if (!btn) return;
-        
-        console.log('Click en ver detalles detectado');
-        
-        var idPedido = btn.getAttribute('data-id');
-        if (!idPedido) { console.log('Sin id'); return; }
-        
-        var modal = document.getElementById('modalPedido');
-        var contenido = document.getElementById('contenidoModal');
-        
-        if (!modal) { console.log('Modal no existe'); return; }
-        
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        contenido.innerHTML = '<p class="text-center py-4">Cargando detalles...</p>';
-        
-        var baseURL = window.location.origin + window.location.pathname.replace('index.php', '');
-        var detalleURL = baseURL + 'client/obtener_detalle_pedido.php?id=' + idPedido;
-        
-        console.log('Fetch a:', detalleURL);
-        
-        fetch(detalleURL, {
-            credentials: 'include'
-        })
-            .then(function(res) { return res.text(); })
-            .then(function(html) {
-                console.log('HTML recibido, longitud:', html.length);
-                contenido.innerHTML = html;
-            })
-            .catch(function(err) {
-                console.error('Error de fetch:', err);
-                contenido.innerHTML = '<p class="text-center py-4 text-red-500">Error: ' + err + '</p>';
-            });
-    });
     
     console.log('Historial script completamente inicializado');
 })();
@@ -435,6 +374,7 @@ class="cerrar-modal absolute top-3 right-3 text-gray-500 hover:text-black">
 
     </div>
 </div>
+
 <script>
 function cerrarModal() {
     const modal = document.getElementById("modalPedido");

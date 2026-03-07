@@ -11,6 +11,16 @@ $resultado_marcas = mysqli_query($conexion, "SELECT * FROM marcas ORDER BY id_ma
 $res_envio = mysqli_query($conexion, "SELECT * FROM metodos_envio ORDER BY id_envio DESC");
 $res_pagos = mysqli_query($conexion, "SELECT * FROM metodos_pago ORDER BY id_metodo_pago DESC");
 $res_deps_envio = mysqli_query($conexion, "SELECT * FROM departamentos_envio ORDER BY nombre_departamento ASC");
+$res_bancos = mysqli_query($conexion,"
+SELECT b.*, t.nombre AS tipo_cuenta
+FROM bancos b
+LEFT JOIN tipos_cuenta_banco t ON t.id_tipo_cuenta = b.id_tipo_cuenta
+ORDER BY b.id_banco DESC
+");
+
+$res_tipos_cuenta = mysqli_query($conexion,"
+SELECT * FROM tipos_cuenta_banco ORDER BY nombre
+");
 
 // Cargar configuración general
 $res_config = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
@@ -86,6 +96,10 @@ $moneda_global = $config['moneda'] ?? 'USD';
                 <button onclick="mostrarTab('metodos-pago')" class="tab-btn bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold transition">
                     <i class="fas fa-credit-card mr-2"></i> Métodos de Pago
                 </button>
+                <button onclick="mostrarTab('bancos')" 
+                    class="tab-btn bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold transition">
+                        <i class="fas fa-university mr-2"></i> Bancos
+                    </button>
                 <button onclick="mostrarTab('departamentos-envio')" class="tab-btn bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold transition">
                     <i class="fas fa-map-marker-alt mr-2"></i> Departamentos Envío
                 </button>
@@ -385,6 +399,171 @@ $moneda_global = $config['moneda'] ?? 'USD';
                     </div>
                 </div>
             </div>
+
+            <!-- ==================== BANCOS ==================== -->
+<div id="tab-bancos" class="tab-content hidden">
+
+<div class="mb-6">
+<button onclick="prepararNuevoBanco()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-bold shadow-md flex items-center gap-2">
+<i class="fas fa-plus"></i> Nueva Cuenta Bancaria
+</button>
+</div>
+
+<!-- FORM -->
+<div id="formulario-banco" class="hidden bg-white p-8 mb-8 rounded-xl shadow-lg border border-slate-200">
+
+<h3 id="titulo-form-banco" class="text-xl font-bold mb-6 text-slate-800">
+Crear Nueva Cuenta
+</h3>
+
+<form id="formBanco" class="grid grid-cols-1 md:grid-cols-2 gap-6" onsubmit="return submitBanco(event)" enctype="multipart/form-data">
+
+<input type="hidden" name="accion" value="guardar_banco">
+<input type="hidden" name="id_banco" id="id_banco">
+
+<div>
+<label class="block text-sm font-bold text-slate-700 mb-2">Banco</label>
+<input type="text" name="nombre" id="nombre_banco" required
+class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-cyan-500">
+</div>
+
+<div>
+<label class="block text-sm font-bold text-slate-700 mb-2">Número de Cuenta</label>
+<input type="text" name="numero_cuenta" id="numero_cuenta" required
+class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-cyan-500">
+</div>
+
+<div>
+<label class="block text-sm font-bold text-slate-700 mb-2">Tipo de Cuenta</label>
+
+<select name="id_tipo_cuenta" id="tipo_cuenta"
+class="w-full border border-slate-300 rounded-lg p-2.5">
+
+<?php while($tipo = mysqli_fetch_assoc($res_tipos_cuenta)): ?>
+
+<option value="<?php echo $tipo['id_tipo_cuenta']; ?>">
+<?php echo htmlspecialchars($tipo['nombre']); ?>
+</option>
+
+<?php endwhile; ?>
+
+</select>
+
+</div>
+
+<div>
+<label class="block text-sm font-bold text-slate-700 mb-2">Logo</label>
+<input type="file" name="logo"
+class="w-full text-sm text-slate-500">
+</div>
+
+<div class="md:col-span-2 flex gap-3">
+
+<button type="submit"
+class="bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg">
+<i class="fas fa-save mr-2"></i> Guardar
+</button>
+
+<button type="button"
+onclick="document.getElementById('formulario-banco').classList.add('hidden')"
+class="bg-slate-400 text-white px-8 py-3 rounded-lg font-bold">
+<i class="fas fa-times mr-2"></i> Cancelar
+</button>
+
+</div>
+
+</form>
+</div>
+
+<!-- TABLA -->
+<div class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden">
+
+<div class="bg-cyan-700 p-4 flex items-center gap-3">
+<i class="fas fa-university text-white"></i>
+<h4 class="text-white font-bold text-lg">Cuentas Bancarias</h4>
+</div>
+
+<div class="overflow-x-auto">
+
+<table class="w-full text-left border-collapse">
+
+<thead class="bg-slate-50 border-b border-slate-200">
+<tr>
+
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">ID</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-center">Logo</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Banco</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Cuenta</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Tipo</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-center">Acciones</th>
+
+</tr>
+</thead>
+
+<tbody class="divide-y divide-slate-100">
+
+<?php while($bank = mysqli_fetch_assoc($res_bancos)): ?>
+
+<tr class="hover:bg-slate-50">
+
+<td class="px-6 py-4">#<?php echo $bank['id_banco']; ?></td>
+
+<td class="px-6 py-4 flex justify-center">
+
+<?php if(!empty($bank['logo'])): ?>
+
+<img src="../img/bancos/<?php echo $bank['logo']; ?>" class="w-10 h-10 object-contain">
+
+<?php else: ?>
+
+<i class="fas fa-image text-slate-300"></i>
+
+<?php endif; ?>
+
+</td>
+
+<td class="px-6 py-4 font-bold">
+<?php echo htmlspecialchars($bank['nombre']); ?>
+</td>
+
+<td class="px-6 py-4">
+<?php echo htmlspecialchars($bank['numero_cuenta']); ?>
+</td>
+
+<td class="px-6 py-4">
+<?php echo htmlspecialchars($bank['tipo_cuenta']); ?>
+</td>
+
+<td class="px-6 py-4 text-center">
+
+<div class="flex justify-center gap-2">
+
+<button onclick='editarBanco(<?php echo json_encode($bank); ?>)'
+class="w-9 h-9 flex items-center justify-center text-blue-500 border border-blue-500 rounded-lg">
+<i class="fas fa-edit"></i>
+</button>
+
+<button onclick="confirmarEliminar('banco', <?php echo $bank['id_banco']; ?>, '<?php echo htmlspecialchars(addslashes($bank['nombre'])); ?>')"
+class="w-9 h-9 flex items-center justify-center text-red-500 border border-red-500 rounded-lg">
+<i class="fas fa-trash"></i>
+</button>
+
+</div>
+
+</td>
+
+</tr>
+
+<?php endwhile; ?>
+
+</tbody>
+
+</table>
+
+</div>
+</div>
+
+</div>
 
             <!-- ==================== DEPARTAMENTOS ENVÍO ==================== -->
             <div id="tab-departamentos-envio" class="tab-content hidden">
@@ -1575,6 +1754,62 @@ function submitDepartamentoEnvio(e) {
     enviarFormulario('formDepartamentoEnvio');
     return false;
 }
+function submitBanco(e){
+
+e.preventDefault();
+
+const form = document.getElementById("formBanco");
+const formData = new FormData(form);
+
+fetch("admin_bancos.php",{
+method:"POST",
+body:formData
+})
+.then(res=>res.json())
+.then(data=>{
+
+if(data.status==="ok"){
+
+document.getElementById("formulario-banco").classList.add("hidden");
+
+mostrarModalExito("Banco ingresado correctamente");
+
+setTimeout(()=>recargarModulo(),1500);
+
+}else{
+
+mostrarModalError("Error al guardar el banco");
+
+}
+
+})
+.catch(()=>mostrarModalError("Error de conexión"));
+
+return false;
+
+}
+
+function eliminarBanco(id){
+
+const formData = new FormData();
+
+formData.append("accion","eliminar_banco");
+formData.append("id",id);
+
+fetch("admin/admin_bancos.php",{
+method:"POST",
+body:formData
+})
+.then(res=>res.json())
+.then(data=>{
+
+if(data.status==="ok"){
+location.reload();
+}
+
+});
+
+}
 
 // ==================== CONFIGURACIÓN GENERAL ====================
 function submitConfigGeneral(e) {
@@ -1837,6 +2072,37 @@ function resetConfigGeneral() {
         recargarModulo();
     }
 }
+
+// ==================== NUEVO BANCO ====================
+function prepararNuevoBanco() {
+
+    document.getElementById("formulario-banco").classList.remove("hidden");
+
+    document.getElementById("titulo-form-banco").innerText = "Crear Nueva Cuenta Bancaria";
+
+    document.getElementById("formBanco").reset();
+
+    document.getElementById("id_banco").value = "";
+
+}
+
+// ==================== EDITAR BANCO ====================
+function editarBanco(banco){
+
+    document.getElementById("formulario-banco").classList.remove("hidden");
+
+    document.getElementById("titulo-form-banco").innerText = "Editar Cuenta Bancaria";
+
+    document.getElementById("id_banco").value = banco.id_banco;
+
+    document.getElementById("nombre_banco").value = banco.nombre;
+
+    document.getElementById("numero_cuenta").value = banco.numero_cuenta;
+
+    document.getElementById("tipo_cuenta").value = banco.id_tipo_cuenta;
+
+}
+
 
 // ==================== BANNERS PROMOCIONALES ====================
 function prepararNuevoBanner() {

@@ -162,26 +162,37 @@ $cfg_moneda = $simbolos_moneda[$cfg_moneda_cod] ?? $cfg_moneda_cod;
 </section>
 
 <section class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+
 <div class="flex items-center gap-4 mb-6">
 <span class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">3</span>
 <h2 class="text-xl font-bold">Método de Pago</h2>
 </div>
+
 <div class="space-y-4">
+
 <div id="checkout-metodos-pago" class="flex flex-wrap gap-2 mb-6"></div>
+
 <div id="contenedor-comprobante" class="mt-4 hidden">
     <label class="block text-sm font-medium mb-2">
         Subir comprobante de transferencia
     </label>
+
     <input 
         type="file" 
         id="input-comprobante"
         accept="image/png, image/jpeg, image/jpg, image/webp"
         class="w-full rounded-lg border border-slate-300 p-2"
     />
+
     <p class="text-xs text-slate-500 mt-1">
         Solo imágenes (JPG, PNG, WEBP). Máximo 3MB.
     </p>
 </div>
+
+<div id="contenedor-bancos" class="hidden mt-4"></div>
+
+</div> <!-- CIERRE space-y-4 -->
+
 </section>
 </div>
 
@@ -808,6 +819,61 @@ document.getElementById("shippingExtra").innerText =
         window._cfgMoneda + ' ' + total.toFixed(2);
 }
 
+async function cargarBancos() {
+
+const contenedor = document.getElementById("contenedor-bancos");
+if(!contenedor) return;
+
+try {
+
+const response = await fetch("api/api_bancos.php");
+const data = await response.json();
+
+if(!data.exito || !data.bancos.length){
+contenedor.innerHTML = "<p>No hay cuentas bancarias disponibles</p>";
+return;
+}
+
+contenedor.innerHTML = `
+<div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
+<h4 class="font-semibold mb-3">Cuentas bancarias disponibles</h4>
+
+<table class="w-full text-sm">
+<thead>
+<tr class="border-b">
+<th class="text-left py-2">Banco</th>
+<th class="text-left py-2">Cuenta</th>
+<th class="text-left py-2">Tipo</th>
+</tr>
+</thead>
+<tbody id="tabla-bancos"></tbody>
+</table>
+</div>
+`;
+
+const tabla = document.getElementById("tabla-bancos");
+
+data.bancos.forEach(banco => {
+
+tabla.innerHTML += `
+<tr class="border-b">
+<td class="py-2 flex items-center gap-2">
+${banco.logo ? `<img src="img/bancos/${banco.logo}" class="w-6 h-6 object-contain">` : ""}
+${banco.nombre}
+</td>
+<td class="py-2 font-semibold">${banco.numero_cuenta}</td>
+<td class="py-2">${banco.tipo_cuenta}</td>
+</tr>
+`;
+
+});
+
+}catch(error){
+console.error("Error cargando bancos:", error);
+}
+
+}
+
 /* ===============================
    CARGAR RESUMEN DEL PEDIDO
 ================================= */
@@ -965,13 +1031,25 @@ boton.classList.add("bg-primary", "text-white");
 
 const contenedor = document.getElementById("contenedor-comprobante");
 const input = document.getElementById("input-comprobante");
+const bancos = document.getElementById("contenedor-bancos");
 
 if (idMetodo == 20) {
-    contenedor.classList.remove("hidden");
-} else {
-    contenedor.classList.add("hidden");
 
-    // Limpia el comprobante si cambia de método
+    if(contenedor) contenedor.classList.remove("hidden");
+
+    if(bancos){
+        bancos.classList.remove("hidden");
+        cargarBancos();
+    }
+
+} else {
+
+    if(contenedor) contenedor.classList.add("hidden");
+
+    if(bancos){
+        bancos.classList.add("hidden");
+    }
+
     if (input) {
         input.value = "";
     }

@@ -595,6 +595,34 @@ if (isset($_GET['eliminar_marca'])) {
     }
 }
 
+/* =========================
+   ELIMINAR BANCO
+========================= */
+
+if(isset($_GET['eliminar_banco'])){
+
+$id = intval($_GET['eliminar_banco']);
+
+$res = mysqli_query($conexion,"SELECT logo FROM bancos WHERE id_banco=$id");
+$banco = mysqli_fetch_assoc($res);
+
+if(!empty($banco['logo'])){
+$ruta = "../img/bancos/".$banco['logo'];
+if(file_exists($ruta)){
+unlink($ruta);
+}
+}
+
+mysqli_query($conexion,"DELETE FROM bancos WHERE id_banco=$id");
+
+echo json_encode([
+"success"=>true,
+"message"=>"Banco eliminado correctamente"
+]);
+
+exit();
+
+}
 // Eliminar Envío
 if (isset($_GET['eliminar_envio'])) {
     $id = intval($_GET['eliminar_envio']);

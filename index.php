@@ -929,8 +929,11 @@ function loadProductosPorCategoria(idCategoria, nombreCategoria) {
                                     '<span class="text-xl font-bold text-slate-900 dark:text-white">' + window._cfgMoneda + ' ' + precioFinal + '</span>' +
                                     (enOferta ? '<span class="text-xs text-slate-400 line-through">' + window._cfgMoneda + ' ' + precioOriginal + '</span>' : '') +
                                 '</div>' +
-                                '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
-                                    '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar</button>' +
+                               (parseInt(prod.stock) > 0 
+                    ? '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
+                        '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar</button>'
+                    : '<button disabled class="bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold cursor-not-allowed">' +
+                        '<span class="material-symbols-outlined text-lg">remove_shopping_cart</span> Sin stock</button>') + 
                             '</div>' +
                         '</div>' +
                     '</div>';
@@ -1085,8 +1088,11 @@ function renderizarProductosMarca(productosAMostrar) {
                         '<span class="text-xl font-bold text-slate-900 dark:text-white">' + window._cfgMoneda + ' ' + precioFinal + '</span>' +
                         (enOferta ? '<span class="text-xs text-slate-400 line-through">' + window._cfgMoneda + ' ' + precioOriginal + '</span>' : '') +
                     '</div>' +
-                    '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
-                        '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar</button>' +
+                   (parseInt(prod.stock) > 0 
+                    ? '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
+                        '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar</button>'
+                    : '<button disabled class="bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold cursor-not-allowed">' +
+                        '<span class="material-symbols-outlined text-lg">remove_shopping_cart</span> Sin stock</button>') + 
                 '</div>' +
             '</div>' +
         '</div>';
@@ -1184,8 +1190,11 @@ function cargarProductosDestacados() {
                                 '<span class="text-xl font-bold text-slate-900 dark:text-white">' + mon + ' ' + precioFinal + '</span>' +
                                 (enOferta ? '<span class="text-xs text-slate-400 line-through">' + mon + ' ' + precioOriginal + '</span>' : '') +
                             '</div>' +
-                            '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
-                                '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar</button>' +
+                            (parseInt(prod.stock) > 0 
+                    ? '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
+                        '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar</button>'
+                    : '<button disabled class="bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold cursor-not-allowed">' +
+                        '<span class="material-symbols-outlined text-lg">remove_shopping_cart</span> Sin stock</button>') + 
                         '</div>' +
                     '</div>' +
                 '</div>';
@@ -1889,8 +1898,11 @@ function loadProductos() {
                                     '<span class="text-xl font-bold text-slate-900 dark:text-white">' + window._cfgMoneda + ' ' + precioFinal + '</span>' +
                                     (enOferta ? '<span class="text-xs text-slate-400 line-through">' + window._cfgMoneda + ' ' + precioOriginal + '</span>' : '') +
                                 '</div>' +
-                                '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
-                                    '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar</button>' +
+                                (parseInt(prod.stock) > 0 
+                    ? '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
+                        '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar</button>'
+                    : '<button disabled class="bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold cursor-not-allowed">' +
+                        '<span class="material-symbols-outlined text-lg">remove_shopping_cart</span> Sin stock</button>') +
                             '</div>' +
                         '</div>' +
                     '</div>';
@@ -2094,7 +2106,11 @@ function ofRenderProductos() {
                         '<button onclick="cardCantidad(this,1)" class="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm font-bold">+</button>' +
                     '</div>' +
                 '</div>' +
-                '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="w-full bg-slate-900 dark:bg-primary text-white py-2 rounded-lg font-medium text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"><span class="material-symbols-outlined text-lg">shopping_cart</span> Añadir al carrito</button>' +
+              (parseInt(prod.stock) > 0 
+                    ? '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
+                        '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar</button>'
+                    : '<button disabled class="bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold cursor-not-allowed">' +
+                        '<span class="material-symbols-outlined text-lg">remove_shopping_cart</span> Sin stock</button>') +
             '</div>' +
         '</div>';
     });
@@ -2399,6 +2415,7 @@ function prodAplicarFiltros() {
 
     let cards = '';
     filtrados.forEach(function(prod, index) {
+        const tieneStock = parseInt(prod.stock) > 0; 
         const imgSrc = prod.imagen_principal || 'https://via.placeholder.com/300x300?text=Sin+Imagen';
         const precioOriginal = parseFloat(prod.precio).toFixed(2);
         const enOferta = prod.en_oferta == 1 && prod.precio_descuento;
@@ -2429,8 +2446,11 @@ function prodAplicarFiltros() {
                         '<span class="text-xl font-bold text-slate-900 dark:text-white">' + window._cfgMoneda + ' ' + precioFinal + '</span>' +
                         (enOferta ? '<span class="text-xs text-slate-400 line-through">' + window._cfgMoneda + ' ' + precioOriginal + '</span>' : '') +
                     '</div>' +
-                    '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
-                        '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar</button>' +
+                    (parseInt(prod.stock) > 0 
+                    ? '<button onclick="agregarAlCarritoDesdeCard(this,' + prod.id_producto + ')" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-colors">' +
+                        '<span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar</button>'
+                    : '<button disabled class="bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold cursor-not-allowed">' +
+                        '<span class="material-symbols-outlined text-lg">remove_shopping_cart</span> Sin stock</button>') + 
                 '</div>' +
             '</div>' +
         '</div>';
@@ -3282,7 +3302,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }, false);
-})();
+    
 // === MANEJADOR DE ANCHORS/HASHES ===
 function procesarHash(hash) {
     // Mapear anchors a funciones

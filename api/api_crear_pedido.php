@@ -125,7 +125,30 @@ try {
         $items[] = $item;
     }
 
-    $total = $subtotal + $impuesto_total;
+    /* ================================
+   OBTENER ENVIO DEPARTAMENTO
+================================ */
+
+$stmtEnvio = $conexion->prepare("
+    SELECT de.costo_envio
+    FROM direcciones_cliente dc
+    JOIN departamentos_envio de 
+    ON dc.id_departamento = de.id_departamento
+    WHERE dc.id_direccion = ?
+");
+
+$stmtEnvio->bind_param("i", $id_direccion);
+$stmtEnvio->execute();
+$resEnvio = $stmtEnvio->get_result();
+$rowEnvio = $resEnvio->fetch_assoc();
+
+$envio_departamento = $rowEnvio ? $rowEnvio['costo_envio'] : 0;
+
+/* ================================
+   TOTAL
+================================ */
+
+$total = $subtotal + $impuesto_total + $envio_departamento;
 
     /* ================================
        INSERTAR PEDIDO
@@ -133,13 +156,14 @@ try {
 
     $stmt = $conexion->prepare("
         INSERT INTO pedidos 
-        (subtotal, impuesto_total, total, id_cliente, id_direccion, id_envio, id_metodo_pago, comprobante_pago, fecha_pedido)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        (subtotal, envio_departamento, impuesto_total, total, id_cliente, id_direccion, id_envio, id_metodo_pago, comprobante_pago, fecha_pedido)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?,?, NOW())
     ");
 
     $stmt->bind_param(
-        "dddiiiis",
+        "ddddiiiis",
         $subtotal,
+        $envio_departamento,
         $impuesto_total,
         $total,
         $id_cliente,

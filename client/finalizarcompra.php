@@ -207,8 +207,15 @@ $cfg_moneda = $simbolos_moneda[$cfg_moneda_cod] ?? $cfg_moneda_cod;
 <span><span id="subtotal">218,90</span> <span id="monedaSubtotal" class="text-slate-600 dark:text-slate-400">L</span></span>
 </div>
 <div class="flex justify-between text-sm">
-<span class="opacity-70">Envío</span>
-<span class="text-emerald-500 font-medium" id="shippingCost">Gratis</span>
+<span class="opacity-70" id="shippingDepartmentLabel">
+Envío a tu departamento
+</span>
+<span id="shippingDepartment">L 0.00</span>
+</div>
+
+<div class="flex justify-between text-sm">
+<span class="opacity-70">Envío adicional</span>
+<span id="shippingExtra">L 0.00</span>
 </div>
 <div class="flex justify-between text-sm">
 <span class="opacity-70">Impuestos</span>
@@ -546,7 +553,14 @@ function mostrarDireccionSeleccionada(direccion, ciudad, codigoPostal, telefono,
     if (!display) return;
 
     if (typeof costoEnvio === 'number' && !isNaN(costoEnvio)) {
-        envioSeleccionado = costoEnvio;
+       envioDepartamento = costoEnvio;
+
+        // actualizar etiqueta con nombre del departamento
+        const label = document.getElementById("shippingDepartmentLabel");
+        if(label){
+            label.innerText = "Envío a tu departamento (" + nombreDepartamento + ")";
+        }
+
         cargarResumenPedido();
     }
 
@@ -710,7 +724,8 @@ async function confirmarPedido() {
         alert("❌ Error de conexión. Verifica tu conexión a internet.");
     }
 }
-let envioSeleccionado = 0;
+let envioDepartamento = 0;
+let envioMetodo = 0;
 
 async function cargarMetodosEnvio() {
 
@@ -737,9 +752,9 @@ async function cargarMetodosEnvio() {
                 "border-2 border-primary bg-primary/5" : 
                 "border border-slate-200 dark:border-slate-700";
 
-            if(index === 0) {
-                envioSeleccionado = parseFloat(metodo.costo);
-            }
+                if(index === 0) {
+                 envioMetodo = parseFloat(metodo.costo);
+                 }
 
             contenedor.innerHTML += `
                 <label class="relative flex flex-col p-4 ${border} rounded-xl cursor-pointer hover:border-primary/50 transition-colors">
@@ -776,15 +791,18 @@ async function cargarMetodosEnvio() {
     }
 }
 function seleccionarEnvio(costo) {
-    envioSeleccionado = parseFloat(costo);
+    envioMetodo = parseFloat(costo);
     cargarResumenPedido(); // recalcula todo correctamente
 }
 function actualizarTotalConEnvio(subtotal, impuestos) {
 
-    const total = subtotal + impuestos + envioSeleccionado;
+    const total = subtotal + impuestos + envioDepartamento + envioMetodo;
 
-    document.getElementById("shippingCost").innerText =
-        envioSeleccionado === 0 ? "Gratis" : window._cfgMoneda + ' ' + envioSeleccionado.toFixed(2);
+   document.getElementById("shippingDepartment").innerText =
+    window._cfgMoneda + ' ' + envioDepartamento.toFixed(2);
+
+document.getElementById("shippingExtra").innerText =
+    envioMetodo === 0 ? "Gratis" : window._cfgMoneda + ' ' + envioMetodo.toFixed(2);
 
     document.getElementById("totalPrice").innerText =
         window._cfgMoneda + ' ' + total.toFixed(2);

@@ -76,6 +76,7 @@ Pedido #<?php echo $pedido['id_pedido']; ?>
 <div>
 <p><strong>Método Envío:</strong> <?php echo htmlspecialchars($pedido['metodo_envio'] ?? 'No definido'); ?></p>
 <p><strong>Costo Envío:</strong> L <?php echo number_format($pedido['costo_envio'] ?? 0,2); ?></p>
+<p><strong>Envío (Departamento):</strong> L <?php echo number_format($pedido['envio_departamento'] ?? 0,2); ?></p>
 <p><strong>Impuesto:</strong> L <?php echo number_format($pedido['impuesto_total'],2); ?></p>
 </div>
 
@@ -142,8 +143,16 @@ L <?php echo number_format($item['precio_unitario'] * $item['cantidad'],2); ?>
 <div class="mt-6 text-right text-sm space-y-1">
 
 <p>Subtotal: <strong>L <?php echo number_format($pedido['subtotal'],2); ?></strong></p>
+
 <p>Impuesto: <strong>L <?php echo number_format($pedido['impuesto_total'],2); ?></strong></p>
-<p>Envío: <strong>L <?php echo number_format($pedido['costo_envio'] ?? 0,2); ?></strong></p>
+
+<p>Envío (Departamento):
+<strong>L <?php echo number_format($pedido['envio_departamento'] ?? 0,2); ?></strong>
+</p>
+
+<p>Envío (<?php echo htmlspecialchars($pedido['metodo_envio'] ?? 'Método'); ?>):
+<strong>L <?php echo number_format($pedido['costo_envio'] ?? 0,2); ?></strong>
+</p>
 
 <hr class="my-2">
 

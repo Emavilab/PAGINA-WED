@@ -143,12 +143,28 @@ $resEnvio = $stmtEnvio->get_result();
 $rowEnvio = $resEnvio->fetch_assoc();
 
 $envio_departamento = $rowEnvio ? $rowEnvio['costo_envio'] : 0;
+/* ================================
+   OBTENER ENVIO METODO
+================================ */
+
+$stmtMetodo = $conexion->prepare("
+    SELECT costo
+    FROM metodos_envio
+    WHERE id_envio = ?
+");
+
+$stmtMetodo->bind_param("i", $id_envio);
+$stmtMetodo->execute();
+$resMetodo = $stmtMetodo->get_result();
+$rowMetodo = $resMetodo->fetch_assoc();
+
+$envio_metodo = $rowMetodo ? $rowMetodo['costo'] : 0;
 
 /* ================================
    TOTAL
 ================================ */
 
-$total = $subtotal + $impuesto_total + $envio_departamento;
+$total = $subtotal + $impuesto_total + $envio_departamento + $envio_metodo;
 
     /* ================================
        INSERTAR PEDIDO

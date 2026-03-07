@@ -28,6 +28,7 @@ SELECT
     p.estado,
     p.subtotal,
     p.impuesto_total,
+    p.envio_departamento,
     p.total,
     m.nombre AS nombre_envio,
     m.costo AS costo_envio
@@ -69,7 +70,8 @@ $resultDetalle = $stmt2->get_result();
 /* Valores */
 $subtotal = $pedido['subtotal'];
 $impuesto = $pedido['impuesto_total'];
-$envio = $pedido['costo_envio'] ?? 0;
+$envio_departamento = $pedido['envio_departamento'] ?? 0;
+$envio_metodo = $pedido['costo_envio'] ?? 0;
 $total = $pedido['total'];
 ?>
 
@@ -131,9 +133,14 @@ $total = $pedido['total'];
     </div>
 
     <div class="flex justify-between">
-        <span>Envío (<?php echo $pedido['nombre_envio']; ?>):</span>
-        <span>L <?php echo number_format($envio, 2); ?></span>
-    </div>
+    <span>Envío (Departamento):</span>
+    <span>L <?php echo number_format($envio_departamento, 2); ?></span>
+</div>
+
+<div class="flex justify-between">
+    <span>Envío (<?php echo $pedido['nombre_envio']; ?>):</span>
+    <span>L <?php echo number_format($envio_metodo, 2); ?></span>
+</div>
 
     <div class="flex justify-between font-bold text-lg border-t pt-2">
         <span>Total:</span>

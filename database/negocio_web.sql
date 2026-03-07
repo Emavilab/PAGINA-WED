@@ -16,6 +16,33 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `bancos`
+--
+
+DROP TABLE IF EXISTS `bancos`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `bancos` (
+  `id_banco` int(11) NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(100) NOT NULL,
+  `numero_cuenta` varchar(100) NOT NULL,
+  `id_tipo_cuenta` int(11) NOT NULL,
+  `logo` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id_banco`),
+  KEY `id_tipo_cuenta` (`id_tipo_cuenta`),
+  CONSTRAINT `bancos_ibfk_1` FOREIGN KEY (`id_tipo_cuenta`) REFERENCES `tipos_cuenta_banco` (`id_tipo_cuenta`) ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `bancos`
+--
+
+/*!40000 ALTER TABLE `bancos` DISABLE KEYS */;
+INSERT INTO `bancos` VALUES (1,'Banco Atlántida','12345678',1,'1772921723_Captura de pantalla 2025-07-20 163548.png');
+/*!40000 ALTER TABLE `bancos` ENABLE KEYS */;
+
+--
 -- Table structure for table `banners`
 --
 
@@ -63,7 +90,7 @@ CREATE TABLE `carrito_detalle` (
   KEY `id_producto` (`id_producto`),
   CONSTRAINT `carrito_detalle_ibfk_1` FOREIGN KEY (`id_carrito`) REFERENCES `carritos` (`id_carrito`),
   CONSTRAINT `carrito_detalle_ibfk_2` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`)
-) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=50 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -88,7 +115,7 @@ CREATE TABLE `carritos` (
   PRIMARY KEY (`id_carrito`),
   KEY `id_cliente` (`id_cliente`),
   CONSTRAINT `carritos_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `clientes` (`id_cliente`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -96,7 +123,7 @@ CREATE TABLE `carritos` (
 --
 
 /*!40000 ALTER TABLE `carritos` DISABLE KEYS */;
-INSERT INTO `carritos` VALUES (17,22,'2026-03-03 00:23:02','comprado'),(18,22,'2026-03-04 14:31:09','activo');
+INSERT INTO `carritos` VALUES (17,22,'2026-03-03 00:23:02','comprado'),(18,22,'2026-03-04 14:31:09','comprado'),(19,22,'2026-03-05 13:30:53','comprado'),(20,22,'2026-03-05 14:55:32','comprado'),(21,22,'2026-03-05 14:56:54','comprado'),(22,22,'2026-03-05 15:01:27','comprado'),(23,22,'2026-03-05 15:13:57','comprado'),(24,22,'2026-03-05 15:14:22','comprado'),(25,22,'2026-03-05 15:25:56','comprado'),(26,22,'2026-03-05 15:27:53','comprado'),(27,22,'2026-03-05 15:28:51','comprado'),(28,22,'2026-03-05 15:37:09','comprado');
 /*!40000 ALTER TABLE `carritos` ENABLE KEYS */;
 
 --
@@ -246,7 +273,7 @@ CREATE TABLE `detalle_pedido` (
   KEY `id_producto` (`id_producto`),
   CONSTRAINT `detalle_pedido_ibfk_1` FOREIGN KEY (`id_pedido`) REFERENCES `pedidos` (`id_pedido`),
   CONSTRAINT `detalle_pedido_ibfk_2` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -254,7 +281,7 @@ CREATE TABLE `detalle_pedido` (
 --
 
 /*!40000 ALTER TABLE `detalle_pedido` DISABLE KEYS */;
-INSERT INTO `detalle_pedido` VALUES (16,1,12000.00,12000.00,15.00,1800.00,13,8),(17,3,7000.00,21000.00,15.00,3150.00,13,6);
+INSERT INTO `detalle_pedido` VALUES (16,1,12000.00,12000.00,15.00,1800.00,13,8),(17,3,7000.00,21000.00,15.00,3150.00,13,6),(18,1,10000.00,10000.00,15.00,1500.00,14,7),(19,1,10000.00,10000.00,15.00,1500.00,14,14),(20,1,2400.00,2400.00,15.00,360.00,15,13),(21,2,20000.00,40000.00,15.00,6000.00,16,12),(22,1,20000.00,20000.00,15.00,3000.00,17,12),(23,1,15000.00,15000.00,15.00,2250.00,18,11),(24,1,15000.00,15000.00,15.00,2250.00,19,11),(25,1,20000.00,20000.00,15.00,3000.00,20,12),(26,1,50000.00,50000.00,15.00,7500.00,21,9),(27,1,50000.00,50000.00,15.00,7500.00,22,9),(28,1,20000.00,20000.00,15.00,3000.00,23,12),(29,1,2400.00,2400.00,15.00,360.00,24,13);
 /*!40000 ALTER TABLE `detalle_pedido` ENABLE KEYS */;
 
 --
@@ -279,7 +306,7 @@ CREATE TABLE `direcciones_cliente` (
   KEY `fk_direcciones_departamento` (`id_departamento`),
   CONSTRAINT `direcciones_cliente_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `clientes` (`id_cliente`),
   CONSTRAINT `fk_direcciones_departamento` FOREIGN KEY (`id_departamento`) REFERENCES `departamentos_envio` (`id_departamento`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -287,7 +314,7 @@ CREATE TABLE `direcciones_cliente` (
 --
 
 /*!40000 ALTER TABLE `direcciones_cliente` DISABLE KEYS */;
-INSERT INTO `direcciones_cliente` VALUES (5,22,'La paz','La paz','07001','98048195','casa azul','2026-03-04 20:28:54',12);
+INSERT INTO `direcciones_cliente` VALUES (5,22,'La paz','La paz','07001','98048195','casa azul','2026-03-04 20:28:54',12),(6,22,'Dos Cuadras Al Oeste De Hondutel','La paz','07001','98048195','casa azul','2026-03-05 19:29:27',6);
 /*!40000 ALTER TABLE `direcciones_cliente` ENABLE KEYS */;
 
 --
@@ -363,7 +390,7 @@ CREATE TABLE `lista_deseos` (
   `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id_lista`),
   UNIQUE KEY `unique_cliente_producto` (`id_cliente`,`id_producto`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -371,6 +398,7 @@ CREATE TABLE `lista_deseos` (
 --
 
 /*!40000 ALTER TABLE `lista_deseos` DISABLE KEYS */;
+INSERT INTO `lista_deseos` VALUES (19,22,7,'2026-03-04 21:13:07','2026-03-04 21:13:07');
 /*!40000 ALTER TABLE `lista_deseos` ENABLE KEYS */;
 
 --
@@ -489,9 +517,10 @@ CREATE TABLE `pedidos` (
   `id_pedido` int(11) NOT NULL AUTO_INCREMENT,
   `fecha_pedido` datetime NOT NULL DEFAULT current_timestamp(),
   `subtotal` decimal(10,2) NOT NULL,
+  `envio_departamento` decimal(10,2) DEFAULT 0.00,
   `impuesto_total` decimal(10,2) DEFAULT 0.00,
   `total` decimal(10,2) NOT NULL,
-  `estado` enum('pendiente','confirmado','enviado','entregado') DEFAULT 'pendiente',
+  `estado` enum('pendiente','confirmado','enviado','entregado','cancelado') DEFAULT 'pendiente',
   `id_cliente` int(11) NOT NULL,
   `id_direccion` int(11) NOT NULL,
   `id_envio` int(11) NOT NULL,
@@ -506,7 +535,7 @@ CREATE TABLE `pedidos` (
   CONSTRAINT `pedidos_ibfk_2` FOREIGN KEY (`id_direccion`) REFERENCES `direcciones_cliente` (`id_direccion`),
   CONSTRAINT `pedidos_ibfk_3` FOREIGN KEY (`id_envio`) REFERENCES `metodos_envio` (`id_envio`),
   CONSTRAINT `pedidos_ibfk_4` FOREIGN KEY (`id_metodo_pago`) REFERENCES `metodos_pago` (`id_metodo_pago`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -514,7 +543,7 @@ CREATE TABLE `pedidos` (
 --
 
 /*!40000 ALTER TABLE `pedidos` DISABLE KEYS */;
-INSERT INTO `pedidos` VALUES (13,'2026-03-04 14:29:45',33000.00,4950.00,37950.00,'pendiente',22,5,3,3,NULL);
+INSERT INTO `pedidos` VALUES (13,'2026-03-04 14:29:45',33000.00,0.00,4950.00,37950.00,'pendiente',22,5,3,3,NULL),(14,'2026-03-05 13:30:33',20000.00,0.00,3000.00,23000.00,'cancelado',22,6,42,3,NULL),(15,'2026-03-05 14:54:05',2400.00,0.00,360.00,2760.00,'cancelado',22,6,3,3,NULL),(16,'2026-03-05 14:56:00',40000.00,0.00,6000.00,46000.00,'cancelado',22,6,3,3,NULL),(17,'2026-03-05 14:59:26',20000.00,0.00,3000.00,23000.00,'cancelado',22,6,3,3,NULL),(18,'2026-03-05 15:01:35',15000.00,0.00,2250.00,17250.00,'cancelado',22,6,3,3,NULL),(19,'2026-03-05 15:14:06',15000.00,0.00,2250.00,17250.00,'cancelado',22,6,3,3,NULL),(20,'2026-03-05 15:14:31',20000.00,0.00,3000.00,23000.00,'cancelado',22,6,3,3,NULL),(21,'2026-03-05 15:26:25',50000.00,0.00,7500.00,57500.00,'cancelado',22,6,3,3,NULL),(22,'2026-03-05 15:28:04',50000.00,0.00,7500.00,57500.00,'cancelado',22,6,3,3,NULL),(23,'2026-03-05 15:36:59',20000.00,0.00,3000.00,23000.00,'cancelado',22,6,3,3,NULL),(24,'2026-03-07 16:16:57',2400.00,150.00,360.00,2960.00,'confirmado',22,6,3,18,'comp_69aca3d9ba088.png');
 /*!40000 ALTER TABLE `pedidos` ENABLE KEYS */;
 
 --
@@ -580,7 +609,7 @@ CREATE TABLE `productos` (
 --
 
 /*!40000 ALTER TABLE `productos` DISABLE KEYS */;
-INSERT INTO `productos` VALUES (6,'3030','Monitor Dell/ 27\"/ FHD/ Blanco','Monitor FHD de 68,60 cm (27\") que optimiza la comodidad ocular y ofrece imágenes impresionantes, con una acústica excepcional y un diseño que complementa tu estilo de vida.',7000.00,47,'disponible','2026-03-02 22:25:13',19,24,NULL,0,NULL,NULL),(7,'8787','Monitor HP 24\"/ FHD/ Blanco','El HP Series 5 23.8 ″ FHD White Monitor (modelo 524sw, SKU 94C21AA#ABA) es una pantalla IPS de alta calidad diseñada para brindar imágenes nítidas y cómodas en cualquier espacio. Con una resolución Full HD de 1920 × 1080, una tasa de refresco de hasta 100 Hz, y un tiempo de respuesta de 5 ms (con overdrive), ofrece una experiencia visual fluida y detallada, ideal para productividad, entretenimiento e incluso gaming ligero.\r\n\r\nCuenta con un diseño delgado de tres bordes casi sin marco, que facilita una configuración multitarea con varias pantallas y reduce el desorden con una administración simplificada de cables. Además, incorpora el certificado HP Eye Ease, que limita la luz azul sin sacrificar la precisión del color, ayudando a reducir la fatiga visual durante sesiones prolongadas.\r\n\r\nPensando en el usuario, la pantalla ofrece ajuste de inclinación y acceso a la guía ergonómica desde el software HP Display Center, para una experiencia personalizada y cómoda. Sus opciones de conectividad incluyen los puertos HDMI (1.4) y VGA.\r\n\r\nFinalmente, su diseño es respetuoso con el medio ambiente: está fabricada con materiales reciclados (incluido plástico procedente de océanos) y cuenta con embalaje totalmente sostenible. Además, está certificada por EPEAT Silver y ENERGY STAR.',10000.00,49,'disponible','2026-03-02 22:36:09',20,23,NULL,0,NULL,NULL),(8,'5050','Monitor Samsung 27\" FHD Curvo/ LS27D366','Vive una experiencia envolvente con el monitor curvo de 27\" FHD, diseñado para quienes exigen una visualización fluida, cómoda y llena de detalle. Su curvatura te acerca a la acción, mejorando la inmersión en juegos, series y multitarea, mientras su resolución 1920x1080 ofrece textos nítidos y colores vibrantes para un día a día más productivo.\r\n\r\nGracias a su panel optimizado para reducir reflejos y fatiga visual, podrás trabajar durante horas con mayor confort. Su diseño elegante y minimalista se integra a cualquier escritorio, y la navegación es ágil gracias a tecnologías que suavizan el movimiento para una sensación más natural en desplazamientos y escenas rápidas.\r\n\r\nPantalla curva 27\" FHD (1920x1080): mayor inmersión y enfoque natural.\r\nColores intensos y buen contraste: ideal para contenido multimedia y creatividad.\r\nMovimiento más fluido: perfecto para juegos casuales y video sin interrupciones.\r\nComodidad visual: modos que ayudan a disminuir la fatiga y el parpadeo.\r\nDiseño delgado y moderno: base estable y bordes finos para más espacio útil.\r\nConectividad versátil: entradas listas para PC, consolas y laptops.\r\nEleva tu setup con un monitor que combina estilo, rendimiento y confort. Ya sea para estudiar, crear o entretenerte, este 27\" curvo FHD transforma cada momento frente a la pantalla en una experiencia increíble.',12000.00,9,'disponible','2026-03-02 23:11:33',10,19,NULL,0,NULL,NULL),(9,'101010','Apple iPhone 17 Pro/ Versión SIM/ 12GB RAM/ 256GB/ Silver','Descubre el Apple iPhone 17 Pro en su elegante acabado Silver, diseñado para quienes exigen velocidad, estilo y experiencias móviles superiores. Con 12GB de RAM para multitarea sin límites y 256GB de almacenamiento para tus fotos, apps y contenido 4K, este iPhone eleva cada interacción con una fluidez impresionante y una batería optimizada para el día a día.\r\n\r\nSu sistema de cámaras Pro captura detalles nítidos y colores vibrantes, ideal para contenido social, fotografía nocturna y video profesional. La pantalla avanzada ofrece brillo alto y contraste profundo para ver series, jugar y trabajar con una calidad visual envolvente. Conectividad estable, audio inmersivo y un chasis premium que combina ligereza y resistencia completan una experiencia top.\r\n\r\nMemoria: 12GB RAM para apps exigentes y gaming fluido.\r\nAlmacenamiento: 256GB para bibliotecas de fotos, videos y documentos.\r\nPantalla Pro: alta tasa de refresco y colores precisos para una visualización de nivel estudio.\r\nCámaras Pro: fotos con gran rango dinámico, retratos impactantes y video estable, incluso de noche.\r\nDiseño Silver: acabado sofisticado con materiales de calidad y agarre cómodo.\r\nBatería inteligente: autonomía optimizada y carga rápida para seguir tu ritmo.\r\nSeguridad y privacidad: autenticación biométrica avanzada y protección de datos.\r\nSi buscas rendimiento premium, estética impecable y herramientas creativas potentes, el iPhone 17 Pro Silver 256GB es la elección perfecta para destacar en cada momento.',50000.00,99,'disponible','2026-03-02 23:19:40',9,20,NULL,0,NULL,NULL),(10,'50500','Apple iPhone 13/ 4GB RAM/ 128GB/ Midnight','El Apple iPhone 13 de 128GB en color Midnight combina diseño elegante con un rendimiento excepcional. Su pantalla Super Retina XDR de 6.1 pulgadas ofrece colores vibrantes, brillo superior y una experiencia visual inmersiva ideal para ver series, editar fotos o jugar.\r\nEquipado con el chip A15 Bionic, brinda potencia y eficiencia para todo lo que hacés: desde multitarea fluida hasta juegos exigentes y grabación en calidad cinematográfica. Su sistema de cámara dual avanzada de 12MP con modo Noche, HDR Inteligente y grabación en 4K permite capturar fotos y videos con detalles impresionantes.\r\nEl iPhone 13 también ofrece mayor duración de batería, resistencia al agua y polvo (IP68) y conectividad 5G para descargas ultrarrápidas. Además, cuenta con Face ID y la última versión de iOS, garantizando seguridad, fluidez y actualizaciones continuas.\r\nEl iPhone 13 Midnight de 128GB es la combinación perfecta entre potencia, diseño premium y tecnología Apple, ideal para quienes buscan una experiencia móvil sin límites.',15000.00,50,'disponible','2026-03-02 23:21:24',17,20,10500.00,1,'2026-03-02','2026-03-07'),(11,'789','Smart TV Hisense 58\" UHD VIDAA 4K/ HIS-58A6NV','El Hisense Smart TV UHD de 58 pulgadas modelo 58A6NV transforma tu sala en un verdadero centro de entretenimiento. Su resolución Ultra HD 4K brinda imágenes cuatro veces más nítidas que un televisor Full HD, con colores realistas y gran nivel de detalle en cada escena.\r\nGracias al sistema operativo VIDAA, disfrutás una navegación ágil e intuitiva con acceso directo a aplicaciones de streaming como Netflix, Prime Video, Disney+ y YouTube. Además, su diseño moderno y delgado se adapta a cualquier espacio, aportando estilo y elegancia.\r\nEl Hisense 58A6NV también ofrece conectividad avanzada para vincular consolas de videojuegos, dispositivos de audio y más, garantizando una experiencia completa tanto para cine en casa como para gaming.\r\nSi buscás un televisor de gran tamaño, con excelente relación calidad-precio y funciones inteligentes, el Hisense UHD 58” 58A6NV es la elección perfecta.',15000.00,10,'disponible','2026-03-02 23:24:08',24,27,NULL,0,NULL,NULL),(12,'6363','Smart TV Hisense 65\" QLED VIDAA 4K/ HIS-65Q6QV','Disfruta un salto real en entretenimiento con el Televisor QLED de 65” 4K. Sus colores vibrantes, negros más profundos y brillo optimizado transforman tus series, películas y videojuegos con una claridad impresionante. Con VIDAA Smart TV navegas de forma ágil por tus apps favoritas, mientras el control por voz simplifica cada comando.\r\n\r\nLa tecnología QLED potencia el volumen de color para imágenes más vivas, y el 4K Ultra HD ofrece detalle fino en cada escena. Su modo de imagen inteligente ajusta el contenido en tiempo real, y el modo Juego reduce el input lag para reacciones rápidas. Además, su diseño de bisel delgado maximiza la pantalla y luce moderno en cualquier espacio.\r\n\r\nPantalla: 65” QLED, resolución 4K Ultra HD\r\nSmart TV: plataforma VIDAA rápida e intuitiva\r\nColores: alto volumen de color para imágenes más realistas\r\nHDR: compatibilidad con formatos populares para mayor contraste\r\nGaming: modo Juego con baja latencia para respuestas inmediatas\r\nAudio: sonido envolvente optimizado para cine, música y deportes\r\nConectividad: Wi‑Fi, múltiples HDMI y USB para tus dispositivos\r\nAsistentes: control por voz y búsqueda inteligente\r\nDiseño: bisel delgado y soporte estable para una estética elegante\r\nPrepárate para una experiencia inmersiva que combina calidad de imagen, facilidad de uso y rendimiento. Este Smart TV lo tiene todo para convertir tu sala en tu destino favorito de entretenimiento.',20000.00,15,'disponible','2026-03-02 23:25:50',24,27,NULL,0,NULL,NULL),(13,'258','Audífonos JBL/ Sense Lite/ Inalámbrico/ Negro','Descubre los OpenEar SenseLite Black, audífonos de diseño abierto que elevan tu día a día con sonido nítido, comodidad ultraligera y una sensación natural de libertad. Su arquitectura Open-Ear te permite disfrutar tu playlist favorita mientras mantienes total conciencia del entorno, ideal para entrenar al aire libre, movilizarte en la ciudad o trabajar con enfoque.\r\n\r\nCon un ajuste estable y ergonómico, estos audífonos se mantienen en su lugar durante tus movimientos más intensos. Disfruta de Bluetooth confiable, llamadas claras y una batería pensada para acompañarte por horas. Su diseño minimalista en color negro combina con cualquier estilo y su control intuitivo te da acceso rápido a música, volumen y llamadas.\r\n\r\nDiseño Open-Ear: escucha tu entorno sin sacrificar calidad de audio.\r\nComodidad ultraligera: uso prolongado sin presión en el canal auditivo.\r\nConectividad Bluetooth estable: emparejamiento rápido y transmisión fluida.\r\nLlamadas nítidas: micrófonos optimizados para voces más claras.\r\nControles sencillos: gestiona música y llamadas al instante.\r\nEstilo negro premium: discreto, moderno y resistente para el día a día.\r\nAutonomía para la jornada: horas de reproducción para entrenamiento, trabajo y ocio.\r\nSi buscas libertad, confort y sonido que te acompaña en todo momento, los SenseLite Black son la elección perfecta. Conecta, muévete y siente tu música como nunca, sin aislarte del mundo.',3000.00,9,'disponible','2026-03-02 23:33:21',26,28,2400.00,1,'2026-03-02','2026-03-14'),(14,'3031','aplee computadora','dsafds',10000.00,12,'disponible','2026-03-04 19:42:25',11,20,NULL,0,NULL,NULL);
+INSERT INTO `productos` VALUES (6,'3030','Monitor Dell/ 27\"/ FHD/ Blanco','Monitor FHD de 68,60 cm (27\") que optimiza la comodidad ocular y ofrece imágenes impresionantes, con una acústica excepcional y un diseño que complementa tu estilo de vida.',7000.00,47,'disponible','2026-03-02 22:25:13',19,24,NULL,0,NULL,NULL),(7,'8787','Monitor HP 24\"/ FHD/ Blanco','El HP Series 5 23.8 ″ FHD White Monitor (modelo 524sw, SKU 94C21AA#ABA) es una pantalla IPS de alta calidad diseñada para brindar imágenes nítidas y cómodas en cualquier espacio. Con una resolución Full HD de 1920 × 1080, una tasa de refresco de hasta 100 Hz, y un tiempo de respuesta de 5 ms (con overdrive), ofrece una experiencia visual fluida y detallada, ideal para productividad, entretenimiento e incluso gaming ligero.\r\n\r\nCuenta con un diseño delgado de tres bordes casi sin marco, que facilita una configuración multitarea con varias pantallas y reduce el desorden con una administración simplificada de cables. Además, incorpora el certificado HP Eye Ease, que limita la luz azul sin sacrificar la precisión del color, ayudando a reducir la fatiga visual durante sesiones prolongadas.\r\n\r\nPensando en el usuario, la pantalla ofrece ajuste de inclinación y acceso a la guía ergonómica desde el software HP Display Center, para una experiencia personalizada y cómoda. Sus opciones de conectividad incluyen los puertos HDMI (1.4) y VGA.\r\n\r\nFinalmente, su diseño es respetuoso con el medio ambiente: está fabricada con materiales reciclados (incluido plástico procedente de océanos) y cuenta con embalaje totalmente sostenible. Además, está certificada por EPEAT Silver y ENERGY STAR.',10000.00,49,'disponible','2026-03-02 22:36:09',20,23,NULL,0,NULL,NULL),(8,'5050','Monitor Samsung 27\" FHD Curvo/ LS27D366','Vive una experiencia envolvente con el monitor curvo de 27\" FHD, diseñado para quienes exigen una visualización fluida, cómoda y llena de detalle. Su curvatura te acerca a la acción, mejorando la inmersión en juegos, series y multitarea, mientras su resolución 1920x1080 ofrece textos nítidos y colores vibrantes para un día a día más productivo.\r\n\r\nGracias a su panel optimizado para reducir reflejos y fatiga visual, podrás trabajar durante horas con mayor confort. Su diseño elegante y minimalista se integra a cualquier escritorio, y la navegación es ágil gracias a tecnologías que suavizan el movimiento para una sensación más natural en desplazamientos y escenas rápidas.\r\n\r\nPantalla curva 27\" FHD (1920x1080): mayor inmersión y enfoque natural.\r\nColores intensos y buen contraste: ideal para contenido multimedia y creatividad.\r\nMovimiento más fluido: perfecto para juegos casuales y video sin interrupciones.\r\nComodidad visual: modos que ayudan a disminuir la fatiga y el parpadeo.\r\nDiseño delgado y moderno: base estable y bordes finos para más espacio útil.\r\nConectividad versátil: entradas listas para PC, consolas y laptops.\r\nEleva tu setup con un monitor que combina estilo, rendimiento y confort. Ya sea para estudiar, crear o entretenerte, este 27\" curvo FHD transforma cada momento frente a la pantalla en una experiencia increíble.',12000.00,9,'disponible','2026-03-02 23:11:33',10,19,NULL,0,NULL,NULL),(9,'101010','Apple iPhone 17 Pro/ Versión SIM/ 12GB RAM/ 256GB/ Silver','Descubre el Apple iPhone 17 Pro en su elegante acabado Silver, diseñado para quienes exigen velocidad, estilo y experiencias móviles superiores. Con 12GB de RAM para multitarea sin límites y 256GB de almacenamiento para tus fotos, apps y contenido 4K, este iPhone eleva cada interacción con una fluidez impresionante y una batería optimizada para el día a día.\r\n\r\nSu sistema de cámaras Pro captura detalles nítidos y colores vibrantes, ideal para contenido social, fotografía nocturna y video profesional. La pantalla avanzada ofrece brillo alto y contraste profundo para ver series, jugar y trabajar con una calidad visual envolvente. Conectividad estable, audio inmersivo y un chasis premium que combina ligereza y resistencia completan una experiencia top.\r\n\r\nMemoria: 12GB RAM para apps exigentes y gaming fluido.\r\nAlmacenamiento: 256GB para bibliotecas de fotos, videos y documentos.\r\nPantalla Pro: alta tasa de refresco y colores precisos para una visualización de nivel estudio.\r\nCámaras Pro: fotos con gran rango dinámico, retratos impactantes y video estable, incluso de noche.\r\nDiseño Silver: acabado sofisticado con materiales de calidad y agarre cómodo.\r\nBatería inteligente: autonomía optimizada y carga rápida para seguir tu ritmo.\r\nSeguridad y privacidad: autenticación biométrica avanzada y protección de datos.\r\nSi buscas rendimiento premium, estética impecable y herramientas creativas potentes, el iPhone 17 Pro Silver 256GB es la elección perfecta para destacar en cada momento.',50000.00,99,'disponible','2026-03-02 23:19:40',9,20,NULL,0,NULL,NULL),(10,'50500','Apple iPhone 13/ 4GB RAM/ 128GB/ Midnight','El Apple iPhone 13 de 128GB en color Midnight combina diseño elegante con un rendimiento excepcional. Su pantalla Super Retina XDR de 6.1 pulgadas ofrece colores vibrantes, brillo superior y una experiencia visual inmersiva ideal para ver series, editar fotos o jugar.\r\nEquipado con el chip A15 Bionic, brinda potencia y eficiencia para todo lo que hacés: desde multitarea fluida hasta juegos exigentes y grabación en calidad cinematográfica. Su sistema de cámara dual avanzada de 12MP con modo Noche, HDR Inteligente y grabación en 4K permite capturar fotos y videos con detalles impresionantes.\r\nEl iPhone 13 también ofrece mayor duración de batería, resistencia al agua y polvo (IP68) y conectividad 5G para descargas ultrarrápidas. Además, cuenta con Face ID y la última versión de iOS, garantizando seguridad, fluidez y actualizaciones continuas.\r\nEl iPhone 13 Midnight de 128GB es la combinación perfecta entre potencia, diseño premium y tecnología Apple, ideal para quienes buscan una experiencia móvil sin límites.',15000.00,50,'disponible','2026-03-02 23:21:24',17,20,10500.00,1,'2026-03-02','2026-03-07'),(11,'789','Smart TV Hisense 58\" UHD VIDAA 4K/ HIS-58A6NV','El Hisense Smart TV UHD de 58 pulgadas modelo 58A6NV transforma tu sala en un verdadero centro de entretenimiento. Su resolución Ultra HD 4K brinda imágenes cuatro veces más nítidas que un televisor Full HD, con colores realistas y gran nivel de detalle en cada escena.\r\nGracias al sistema operativo VIDAA, disfrutás una navegación ágil e intuitiva con acceso directo a aplicaciones de streaming como Netflix, Prime Video, Disney+ y YouTube. Además, su diseño moderno y delgado se adapta a cualquier espacio, aportando estilo y elegancia.\r\nEl Hisense 58A6NV también ofrece conectividad avanzada para vincular consolas de videojuegos, dispositivos de audio y más, garantizando una experiencia completa tanto para cine en casa como para gaming.\r\nSi buscás un televisor de gran tamaño, con excelente relación calidad-precio y funciones inteligentes, el Hisense UHD 58” 58A6NV es la elección perfecta.',15000.00,10,'disponible','2026-03-02 23:24:08',24,27,NULL,0,NULL,NULL),(12,'6363','Smart TV Hisense 65\" QLED VIDAA 4K/ HIS-65Q6QV','Disfruta un salto real en entretenimiento con el Televisor QLED de 65” 4K. Sus colores vibrantes, negros más profundos y brillo optimizado transforman tus series, películas y videojuegos con una claridad impresionante. Con VIDAA Smart TV navegas de forma ágil por tus apps favoritas, mientras el control por voz simplifica cada comando.\r\n\r\nLa tecnología QLED potencia el volumen de color para imágenes más vivas, y el 4K Ultra HD ofrece detalle fino en cada escena. Su modo de imagen inteligente ajusta el contenido en tiempo real, y el modo Juego reduce el input lag para reacciones rápidas. Además, su diseño de bisel delgado maximiza la pantalla y luce moderno en cualquier espacio.\r\n\r\nPantalla: 65” QLED, resolución 4K Ultra HD\r\nSmart TV: plataforma VIDAA rápida e intuitiva\r\nColores: alto volumen de color para imágenes más realistas\r\nHDR: compatibilidad con formatos populares para mayor contraste\r\nGaming: modo Juego con baja latencia para respuestas inmediatas\r\nAudio: sonido envolvente optimizado para cine, música y deportes\r\nConectividad: Wi‑Fi, múltiples HDMI y USB para tus dispositivos\r\nAsistentes: control por voz y búsqueda inteligente\r\nDiseño: bisel delgado y soporte estable para una estética elegante\r\nPrepárate para una experiencia inmersiva que combina calidad de imagen, facilidad de uso y rendimiento. Este Smart TV lo tiene todo para convertir tu sala en tu destino favorito de entretenimiento.',20000.00,15,'disponible','2026-03-02 23:25:50',24,27,NULL,0,NULL,NULL),(13,'258','Audífonos JBL/ Sense Lite/ Inalámbrico/ Negro','Descubre los OpenEar SenseLite Black, audífonos de diseño abierto que elevan tu día a día con sonido nítido, comodidad ultraligera y una sensación natural de libertad. Su arquitectura Open-Ear te permite disfrutar tu playlist favorita mientras mantienes total conciencia del entorno, ideal para entrenar al aire libre, movilizarte en la ciudad o trabajar con enfoque.\r\n\r\nCon un ajuste estable y ergonómico, estos audífonos se mantienen en su lugar durante tus movimientos más intensos. Disfruta de Bluetooth confiable, llamadas claras y una batería pensada para acompañarte por horas. Su diseño minimalista en color negro combina con cualquier estilo y su control intuitivo te da acceso rápido a música, volumen y llamadas.\r\n\r\nDiseño Open-Ear: escucha tu entorno sin sacrificar calidad de audio.\r\nComodidad ultraligera: uso prolongado sin presión en el canal auditivo.\r\nConectividad Bluetooth estable: emparejamiento rápido y transmisión fluida.\r\nLlamadas nítidas: micrófonos optimizados para voces más claras.\r\nControles sencillos: gestiona música y llamadas al instante.\r\nEstilo negro premium: discreto, moderno y resistente para el día a día.\r\nAutonomía para la jornada: horas de reproducción para entrenamiento, trabajo y ocio.\r\nSi buscas libertad, confort y sonido que te acompaña en todo momento, los SenseLite Black son la elección perfecta. Conecta, muévete y siente tu música como nunca, sin aislarte del mundo.',3000.00,8,'disponible','2026-03-02 23:33:21',26,28,2400.00,1,'2026-03-02','2026-03-14'),(14,'3031','aplee computadora','dsafds',10000.00,12,'disponible','2026-03-04 19:42:25',11,20,NULL,0,NULL,NULL);
 /*!40000 ALTER TABLE `productos` ENABLE KEYS */;
 
 --
@@ -606,6 +635,28 @@ CREATE TABLE `roles` (
 /*!40000 ALTER TABLE `roles` DISABLE KEYS */;
 INSERT INTO `roles` VALUES (1,'admin','Administrador del sistema'),(2,'vendedor','Gestión de pedidos'),(3,'cliente','Cliente de la tienda');
 /*!40000 ALTER TABLE `roles` ENABLE KEYS */;
+
+--
+-- Table structure for table `tipos_cuenta_banco`
+--
+
+DROP TABLE IF EXISTS `tipos_cuenta_banco`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tipos_cuenta_banco` (
+  `id_tipo_cuenta` int(11) NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(100) NOT NULL,
+  PRIMARY KEY (`id_tipo_cuenta`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tipos_cuenta_banco`
+--
+
+/*!40000 ALTER TABLE `tipos_cuenta_banco` DISABLE KEYS */;
+INSERT INTO `tipos_cuenta_banco` VALUES (1,'Cuenta de Ahorro'),(2,'Cuenta Corriente'),(3,'Cuenta Empresarial');
+/*!40000 ALTER TABLE `tipos_cuenta_banco` ENABLE KEYS */;
 
 --
 -- Table structure for table `usuarios`
@@ -650,4 +701,4 @@ INSERT INTO `usuarios` VALUES (7,'eduardo avila12','ea31925712@gmail.com','$2y$1
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-04 14:36:04
+-- Dump completed on 2026-03-07 16:48:05

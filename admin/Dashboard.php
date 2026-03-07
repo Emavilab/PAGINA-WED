@@ -267,6 +267,18 @@ $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
 </div>
 </div>
 </div>
+<div style="margin-top:20px">
+<a href="compras.php">
+<button style="padding:10px;background:#2563eb;color:white;border:none;border-radius:5px;">
+Modulo de Compras
+</button>
+</a>
+<a href="reportes.php">
+<button style="padding:10px;background:#16a34a;color:white;border:none;border-radius:5px;">
+Ver Reportes
+</button>
+</a>    
+</div>
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
 <div class="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm">
 <div class="flex items-center justify-between mb-6">

@@ -17,7 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $nombre   = trim($_POST['nombre']);
         $correo   = trim($_POST['correo']);
         $password = $_POST['password'];
-        $estado   = $_POST['estado'];
+        $estado   = "activo";
 
         // validar nombre
         if(strlen($nombre) < 3){
@@ -52,7 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             exit();
         }
 
-        if (empty($nombre) || empty($correo) || empty($password) || empty($estado)) {
+        if (empty($nombre) || empty($correo) || empty($password)) {
             echo json_encode([
                 "success" => false,
                 "message" => "Datos incompletos"
@@ -91,9 +91,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $conexion->commit();
 
+        $resFecha = $conexion->query("SELECT fecha_registro FROM clientes WHERE id_usuario = " . intval($id_usuario));
+        $fecha_registro = date('Y-m-d H:i:s');
+        if ($resFecha && $rowFecha = $resFecha->fetch_assoc()) {
+            $fecha_registro = $rowFecha['fecha_registro'];
+        }
+
         echo json_encode([
             "success" => true,
-            "message" => "Cliente registrado correctamente"
+            "message" => "Cliente registrado correctamente",
+            "cliente" => [
+                "id_usuario" => (int)$id_usuario,
+                "nombre" => $nombre,
+                "correo" => $correo,
+                "fecha_registro" => $fecha_registro
+            ]
         ]);
         exit();
 
@@ -179,17 +191,6 @@ $resultado = mysqli_query($conexion, $sql);
                             <p id="error-password" class="text-red-500 text-sm mt-1 hidden"></p>
                     </div>
 
-                    <!-- Estado -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="fas fa-toggle-on text-green-500"></i> Estado
-                        </label>
-                       <select name="estado" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                            <option value="activo">Activo</option>
-                            <option value="inactivo">Inactivo</option>
-                        </select>
-                    </div>
-
                     <!-- Botones -->
                     <div class="md:col-span-2 flex gap-4">
                         <input type="submit" value="Guardar Cliente"
@@ -220,22 +221,22 @@ $resultado = mysqli_query($conexion, $sql);
                 <th class="px-6 py-3 text-center text-sm font-semibold text-gray-700">Acciones</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="tbody-clientes">
             <?php while($fila = mysqli_fetch_assoc($resultado)) { ?>
-                <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
+                <tr id="cliente-<?php echo $fila['id_usuario']; ?>" class="border-b border-gray-200 hover:bg-gray-50 transition">
                     <td class="px-6 py-4 text-sm text-gray-700">
                         <?php echo $fila['id_usuario']; ?>
                     </td>
 
-                    <td class="px-6 py-4 text-sm text-gray-700 font-semibold">
-                        <?php echo $fila['nombre']; ?>
+                    <td class="cliente-nombre px-6 py-4 text-sm text-gray-700 font-semibold">
+                        <?php echo htmlspecialchars($fila['nombre']); ?>
                     </td>
 
-                    <td class="px-6 py-4 text-sm text-gray-700">
-                        <?php echo $fila['correo']; ?>
+                    <td class="cliente-correo px-6 py-4 text-sm text-gray-700">
+                        <?php echo htmlspecialchars($fila['correo']); ?>
                     </td>
 
-                    <td class="px-6 py-4 text-sm text-gray-600">
+                    <td class="cliente-fecha px-6 py-4 text-sm text-gray-600">
                         <?php echo $fila['fecha_registro']; ?>
                     </td>
 
@@ -275,14 +276,6 @@ $resultado = mysqli_query($conexion, $sql);
                 class="w-full border px-3 py-2 rounded" required>
             </div>
 
-            <div class="mb-3">
-                <select name="estado" id="edit_estado"
-                class="w-full border px-3 py-2 rounded">
-                    <option value="activo">Activo</option>
-                    <option value="inactivo">Inactivo</option>
-                </select>
-            </div>
-
             <div class="flex gap-3">
                 <button type="submit"
                  class="flex-1 bg-indigo-600 text-white py-2 rounded">
@@ -320,6 +313,26 @@ $resultado = mysqli_query($conexion, $sql);
 </div>
 
 <script>
+// Añadir nueva fila al crear cliente (sin recargar)
+function addClienteRow(cliente) {
+    const tbody = document.getElementById("tbody-clientes");
+    if (!tbody) return;
+    const id = cliente.id_usuario || cliente.id;
+    const nombre = (cliente.nombre || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const correo = (cliente.correo || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const fecha = cliente.fecha_registro || "";
+    const row = '<tr id="cliente-' + id + '" class="border-b border-gray-200 hover:bg-gray-50 transition">' +
+        '<td class="px-6 py-4 text-sm text-gray-700">' + id + '</td>' +
+        '<td class="cliente-nombre px-6 py-4 text-sm text-gray-700 font-semibold">' + nombre + '</td>' +
+        '<td class="cliente-correo px-6 py-4 text-sm text-gray-700">' + correo + '</td>' +
+        '<td class="cliente-fecha px-6 py-4 text-sm text-gray-600">' + fecha + '</td>' +
+        '<td class="px-6 py-4 text-sm text-center">' +
+        '<button class="btn-editar bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2 transition" data-id="' + id + '"><i class="fas fa-edit"></i></button>' +
+        '<button class="btn-eliminar bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition" data-id="' + id + '"><i class="fas fa-trash"></i></button>' +
+        '</td></tr>';
+    tbody.insertAdjacentHTML("beforeend", row);
+}
+
 // TOGGLE FORMULARIO
 function toggleFormulario(type) {
     const formulario = document.getElementById('formulario-' + type);
@@ -383,12 +396,12 @@ document.addEventListener("submit", function(e){
             if(data.success){
 
                 toggleFormulario('crear');
+                document.getElementById("formCliente").reset();
                 showSuccessModal(data.message);
 
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-                
+                if (data.cliente) {
+                    addClienteRow(data.cliente);
+                }
 
             }else {
 
@@ -495,7 +508,6 @@ function abrirModalEditar(id){
         document.getElementById("edit_id").value = data.id_usuario;
         document.getElementById("edit_nombre").value = data.nombre;
         document.getElementById("edit_correo").value = data.correo;
-        document.getElementById("edit_estado").value = data.estado;
 
         const modal = document.getElementById("modalEditar");
         modal.classList.remove("hidden");
@@ -523,8 +535,6 @@ function cerrarModal(){
 // EDITAR
 document.getElementById("formEditar").addEventListener("submit", function(e){
 
-    console.log("SUBMIT DIRECTO");
-
     e.preventDefault();
 
     const formData = new FormData(this);
@@ -541,9 +551,16 @@ document.getElementById("formEditar").addEventListener("submit", function(e){
     cerrarModal();
     showSuccessModal("Cliente actualizado correctamente");
 
-    setTimeout(() => {
-        window.location.reload();
-    }, 1500);
+    const id = document.getElementById("edit_id").value;
+    const nombre = document.getElementById("edit_nombre").value;
+    const correo = document.getElementById("edit_correo").value;
+    const row = document.getElementById("cliente-" + id);
+    if (row) {
+        const cellNombre = row.querySelector(".cliente-nombre");
+        const cellCorreo = row.querySelector(".cliente-correo");
+        if (cellNombre) cellNombre.innerText = nombre;
+        if (cellCorreo) cellCorreo.innerText = correo;
+    }
 
 } else {
     alert(data.message);
@@ -574,15 +591,14 @@ function confirmarEliminar(){
     cerrarModal();
     showSuccessModal("Cliente eliminado correctamente");
 
-    setTimeout(() => {
-        if (data.redirect) {
-            // Si hay redirect, enviar al usuario eliminado a index
+    if (data.redirect) {
+        setTimeout(function() {
             window.location.href = data.redirect;
-        } else {
-            // Si es admin eliminando a otro, solo recargar
-            window.location.reload();
-        }
-    }, 1500);
+        }, 1500);
+    } else {
+        const row = document.getElementById("cliente-" + id);
+        if (row) row.remove();
+    }
 
 } else if (data.message && data.message.toLowerCase().includes("autenticaci")) {
     // Mensaje de autenticación

@@ -11,16 +11,15 @@ $response = ["success" => false];
 
 try {
 
-    if (!isset($_POST['id'], $_POST['nombre'], $_POST['correo'], $_POST['estado'])) {
+    if (!isset($_POST['id'], $_POST['nombre'], $_POST['correo'])) {
         throw new Exception("Datos incompletos");
     }
 
     $id     = intval($_POST['id']);
     $nombre = trim($_POST['nombre']);
     $correo = trim($_POST['correo']);
-    $estado = trim($_POST['estado']);
 
-    if ($id <= 0 || empty($nombre) || empty($correo) || empty($estado)) {
+    if ($id <= 0 || empty($nombre) || empty($correo)) {
         throw new Exception("Datos inválidos");
     }
 
@@ -31,19 +30,19 @@ try {
     // 1️⃣ Actualizar tabla clientes
     $stmt1 = $conexion->prepare("
         UPDATE clientes 
-        SET nombre = ?, estado = ?
+        SET nombre = ?
         WHERE id_usuario = ?
     ");
-    $stmt1->bind_param("ssi", $nombre, $estado, $id);
+    $stmt1->bind_param("si", $nombre, $id);
     $stmt1->execute();
 
     // 2️⃣ Actualizar tabla usuarios
     $stmt2 = $conexion->prepare("
         UPDATE usuarios 
-        SET nombre = ?, correo = ?, estado = ?
+        SET nombre = ?, correo = ?
         WHERE id_usuario = ?
     ");
-    $stmt2->bind_param("sssi", $nombre, $correo, $estado, $id);
+    $stmt2->bind_param("ssi", $nombre, $correo, $id);
     $stmt2->execute();
 
     $conexion->commit();

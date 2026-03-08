@@ -174,6 +174,20 @@ $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
 <span class="material-icons-round">mail</span>
 <span class="font-medium">Mensajería</span>
 </a>
+<!-- MODULO COMPRAS -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link"
+href="#"
+onclick="loadPage('./admin_compras.php', event)">
+<span class="material-icons-round">shopping_cart</span>
+<span class="font-medium">Compras</span>
+</a>
+<!-- MODULO REPORTES -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link"
+href="#"
+onclick="loadPage('./admin_reportes.php', event)">
+<span class="material-icons-round">bar_chart</span>
+<span class="font-medium">Reportes</span>
+</a>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('configuracion.php', event)">
 <span class="material-icons-round">settings</span>
 <span class="font-medium">Configuraciones</span>
@@ -266,20 +280,8 @@ $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
 </div>
 </div>
 </div>
-</div>
-<div style="margin-top:20px">
-<a href="compras.php">
-<button style="padding:10px;background:#2563eb;color:white;border:none;border-radius:5px;">
-Modulo de Compras
-</button>
-</a>
-<a href="reportes.php">
-<button style="padding:10px;background:#16a34a;color:white;border:none;border-radius:5px;">
-Ver Reportes
-</button>
-</a>    
-</div>
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+</div> 
+<div clss="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
 <div class="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm">
 <div class="flex items-center justify-between mb-6">
 <h4 class="font-bold text-slate-800 dark:text-white flex items-center gap-2">
@@ -453,6 +455,10 @@ function loadPage(page, event) {
         pageTitle.textContent = 'Usuarios';
     } else if (page.includes('mensajeria.php')) {
         pageTitle.textContent = 'Mensajería';
+    } else if (page.includes('admin_compras.php')) {
+    pageTitle.textContent = 'Compras';
+    }else if (page.includes('admin_reportes.php')) {
+    pageTitle.textContent = 'Reportes';                      
     } else if (page.includes('configuracion.php')) {
         pageTitle.textContent = 'Configuraciones';
     }

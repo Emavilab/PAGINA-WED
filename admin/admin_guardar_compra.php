@@ -5,51 +5,115 @@
 GUARDAR COMPRA EN LA BASE DE DATOS
 =====================================================
 
-Este archivo recibe los datos del formulario
-del modulo de compras y realiza dos acciones:
+Este archivo recibe los datos enviados desde
+el formulario del módulo de compras y realiza
+las siguientes acciones:
 
-1) Guarda la compra en la tabla "compras"
-2) Actualiza el stock del producto comprado
+1️⃣ Crea un registro en la tabla "compras"
+2️⃣ Obtiene el ID de la compra creada
+3️⃣ Inserta el detalle en la tabla "detalle_compra"
+4️⃣ Actualiza el stock del producto comprado
+5️⃣ Redirige al módulo de compras
+
+TABLAS UTILIZADAS
+-----------------------------------------------------
+productos
+compras
+detalle_compra
+
+FLUJO DEL SISTEMA
+-----------------------------------------------------
+Formulario Compras
+        │
+        ▼
+admin_guardar_compra.php
+        │
+        ▼
+1 Insertar compra
+2 Insertar detalle compra
+3 Actualizar stock
+4 Redirigir
 
 Autor: Sistema de Inventario
 */
 
-// Conectar con la base de datos
+# =====================================================
+# CONEXIÓN A LA BASE DE DATOS
+# =====================================================
+
 require('../../database/conexion.php');
 
 
+# =====================================================
+# RECIBIR DATOS DEL FORMULARIO
+# =====================================================
+
 /*
-=====================================================
-RECIBIR LOS DATOS DEL FORMULARIO
-=====================================================
+Datos enviados desde admin_compras.php
 */
 
-// ID del producto seleccionado
-$producto_id = $_POST['producto_id'];
+$producto_id = $_POST['producto_id'];   // ID del producto seleccionado
+$cantidad    = $_POST['cantidad'];      // Cantidad comprada
+$precio      = $_POST['precio'];        // Precio de compra
 
-// Cantidad comprada
-$cantidad = $_POST['cantidad'];
 
+# =====================================================
+# 1 CREAR REGISTRO EN TABLA COMPRAS
+# =====================================================
 
 /*
-=====================================================
-INSERTAR LA COMPRA EN LA TABLA COMPRAS
-=====================================================
+Se crea una nueva compra.
+Aquí solo se guarda la fecha.
+Los productos se guardan en detalle_compra.
 */
 
 mysqli_query($conexion,"
-INSERT INTO compras(producto_id,cantidad,fecha)
-VALUES('$producto_id','$cantidad',NOW())
+INSERT INTO compras(fecha)
+VALUES(NOW())
 ");
 
 
-/*
-=====================================================
-ACTUALIZAR EL STOCK DEL PRODUCTO
-=====================================================
+# =====================================================
+# 2 OBTENER ID DE LA COMPRA
+# =====================================================
 
-Cada vez que se registra una compra,
-el sistema aumenta el stock del producto.
+/*
+mysqli_insert_id obtiene el ID generado
+por la última consulta INSERT.
+*/
+
+$compra_id = mysqli_insert_id($conexion);
+
+
+# =====================================================
+# 3 INSERTAR DETALLE DE LA COMPRA
+# =====================================================
+
+/*
+Se guarda la relación entre:
+
+compra
+producto
+cantidad
+precio
+*/
+
+mysqli_query($conexion,"
+INSERT INTO detalle_compra
+(compra_id, producto_id, cantidad, precio)
+
+VALUES
+('$compra_id', '$producto_id', '$cantidad', '$precio')
+");
+
+
+# =====================================================
+# 4 ACTUALIZAR STOCK DEL PRODUCTO
+# =====================================================
+
+/*
+Cada compra aumenta el stock del inventario
+del producto seleccionado.
 */
 
 mysqli_query($conexion,"
@@ -59,15 +123,15 @@ WHERE id = $producto_id
 ");
 
 
-/*
-=====================================================
-REDIRECCIONAR AL DASHBOARD
-=====================================================
+# =====================================================
+# 5 REDIRECCIONAR AL MODULO DE COMPRAS
+# =====================================================
 
-Después de guardar la compra el sistema
-vuelve al panel principal.
+/*
+Después de guardar la compra
+el sistema vuelve al módulo de compras.
 */
 
-header("Location: Dashboard.php");
+header("Location: admin_compras.php");
 
-?>
+?> 

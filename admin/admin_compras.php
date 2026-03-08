@@ -4,86 +4,143 @@
 MODULO DE COMPRAS
 =====================================================
 
-Este archivo muestra un formulario para registrar
-compras de productos en el sistema.
+Este módulo permite registrar compras de productos
+en el sistema de inventario.
 
-Función principal:
-- Seleccionar un producto existente
-- Ingresar la cantidad comprada
-- Enviar los datos al archivo que guardará la compra
-  en la base de datos.
+FUNCIONES:
+✔ Mostrar lista de productos disponibles
+✔ Registrar la cantidad comprada
+✔ Registrar el precio de compra
+✔ Enviar los datos al archivo que guarda la compra
+✔ Posteriormente actualizar el stock del producto
+
+TABLAS RELACIONADAS:
+- productos
+- compras
+- detalle_compra
+
+FLUJO DEL SISTEMA:
+1️⃣ El usuario selecciona un producto
+2️⃣ Ingresa cantidad y precio
+3️⃣ Se envía al archivo admin_guardar_compra.php
+4️⃣ Se guarda la compra
+5️⃣ Se guarda el detalle de la compra
+6️⃣ Se actualiza el stock del producto
 
 Autor: Sistema de Inventario
 */
 
-// Conexión a la base de datos
+# =====================================================
+# CONEXIÓN A BASE DE DATOS
+# =====================================================
 require('../../database/conexion.php');
+
+
+# =====================================================
+# CONSULTAR PRODUCTOS
+# =====================================================
+# Obtiene todos los productos disponibles en inventario
+$query = mysqli_query($conexion,"SELECT id, nombre, stock FROM productos");
 ?>
 
-<!-- CONTENEDOR PRINCIPAL DEL MÓDULO -->
+<!-- =====================================================
+CONTENEDOR PRINCIPAL DEL MODULO
+===================================================== -->
+
 <div class="container" style="border:1px solid #ccc; padding:20px; border-radius:10px; background:#f9f9f9;">
 
-    <!-- TÍTULO DEL MÓDULO -->
+    <!-- TITULO -->
     <h2 style="font-size:24px; font-weight:bold; margin-bottom:20px; color:#2563eb;">
-        Módulo de Compras
+        📦 Módulo de Compras
     </h2>
 
-    <!-- SUBTÍTULO Y BARRA DE BÚSQUEDA -->
-    <p style="margin-bottom:10px;">Gestiona y revisa las compras realizadas</p>
-    <input type="text" placeholder="Buscar por producto, fecha o cantidad..." 
-           class="form-control mb-3" 
-           style="border:1px solid #2563eb; border-radius:5px; padding:8px;">
+    <!-- DESCRIPCIÓN -->
+    <p style="margin-bottom:10px;">
+        Gestiona y registra compras de productos para actualizar el inventario.
+    </p>
 
-    <!-- BOTÓN DE ACTUALIZAR -->
-    <button class="btn btn-primary" 
-            style="background:#2563eb; color:white; padding:8px 15px; border:none; border-radius:5px; margin-bottom:15px;">
+    <!-- BUSCADOR (solo visual por ahora) -->
+    <input type="text" 
+           placeholder="Buscar por producto, fecha o cantidad..." 
+           style="border:1px solid #2563eb; border-radius:5px; padding:8px; width:100%; margin-bottom:15px;">
+
+    <!-- BOTON ACTUALIZAR -->
+    <button style="background:#2563eb; color:white; padding:8px 15px; border:none; border-radius:5px; margin-bottom:20px;">
         Actualizar
     </button>
 
-    <!-- FILTROS DE COMPRAS -->
-    <div class="filters mt-3" style="margin-bottom:20px;">
-        <button class="btn btn-secondary" style="background:#6b7280; color:white; margin-right:5px;">Todos</button>
-        <button class="btn btn-secondary" style="background:#10b981; color:white; margin-right:5px;">Nuevos</button>
-        <button class="btn btn-secondary" style="background:#f59e0b; color:white; margin-right:5px;">Procesados</button>
-        <button class="btn btn-secondary" style="background:#ef4444; color:white;">Cancelados</button>
-    </div>
 
-    <p class="mt-3">0 compras registradas</p>
+    <!-- =====================================================
+    FORMULARIO DE REGISTRO DE COMPRA
+    ===================================================== -->
 
-    <!-- FORMULARIO PARA REGISTRAR UNA COMPRA -->
-    <form action="admin_guardar_compra.php" method="POST" 
+    <form action="admin_guardar_compra.php" method="POST"
           style="border:1px solid #ddd; padding:20px; border-radius:10px; background:#ffffff;">
 
-        <!-- SELECT PARA MOSTRAR LOS PRODUCTOS -->
-        <label style="font-weight:bold;">Producto</label><br>
-        <select name="producto_id" required 
+
+        <!-- =====================================================
+        SELECT PRODUCTOS
+        ===================================================== -->
+
+        <label style="font-weight:bold;">Producto</label>
+
+        <select name="producto_id" required
                 style="width:100%; padding:8px; border:1px solid #ccc; border-radius:5px; margin-bottom:15px;">
+
             <?php
             /*
-            Consulta SQL para obtener todos los productos
-            registrados en la tabla productos
+            Recorre los productos de la base de datos
+            y los muestra dentro del select
             */
-            $query = mysqli_query($conexion,"SELECT * FROM productos");
 
-            /*
-            Recorre cada producto encontrado
-            y lo muestra dentro del select
-            */
             while($row = mysqli_fetch_array($query)){
-                echo "<option value='".$row['id']."'>".$row['nombre']."</option>";
+
+                echo "<option value='".$row['id']."'>";
+
+                echo $row['nombre']." (Stock actual: ".$row['stock'].")";
+
+                echo "</option>";
             }
             ?>
+
         </select>
 
-        <!-- CAMPO PARA INGRESAR LA CANTIDAD COMPRADA -->
-        <label style="font-weight:bold;">Cantidad</label><br>
-        <input type="number" name="cantidad" required 
+
+        <!-- =====================================================
+        CANTIDAD COMPRADA
+        ===================================================== -->
+
+        <label style="font-weight:bold;">Cantidad comprada</label>
+
+        <input type="number"
+               name="cantidad"
+               required
+               min="1"
                style="width:100%; padding:8px; border:1px solid #ccc; border-radius:5px; margin-bottom:15px;">
 
-        <!-- BOTÓN PARA GUARDAR LA COMPRA -->
-        <button type="submit" 
+
+        <!-- =====================================================
+        PRECIO DE COMPRA
+        ===================================================== -->
+
+        <label style="font-weight:bold;">Precio de compra</label>
+
+        <input type="number"
+               name="precio"
+               step="0.01"
+               required
+               style="width:100%; padding:8px; border:1px solid #ccc; border-radius:5px; margin-bottom:20px;">
+
+
+        <!-- =====================================================
+        BOTÓN GUARDAR
+        ===================================================== -->
+
+        <button type="submit"
                 style="background:#2563eb; color:white; padding:10px 20px; border:none; border-radius:5px; font-weight:bold;">
             Guardar Compra
         </button>
+
     </form>
-</div>
+
+</div> 

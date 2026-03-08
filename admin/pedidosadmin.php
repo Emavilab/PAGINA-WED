@@ -77,34 +77,60 @@ body { font-family: 'Inter', sans-serif; }
 
 <!-- FILTROS Y BÚSQUEDA -->
 <div class="bg-white dark:bg-slate-800 rounded-xl p-6 mb-8 border border-slate-200 dark:border-slate-700">
-    <div class="flex flex-col md:flex-row gap-4">
-        
-        <div class="flex-1">
-            <label class="block text-sm font-semibold mb-2">Buscar por Número de Pedido</label>
-            <input 
-                type="text" 
-                id="inputBusqueda"
-                placeholder="Ej: 123"
-                class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:border-primary"
-            />
-        </div>
 
-        <div class="flex-1">
-            <label class="block text-sm font-semibold mb-2">Filtrar por Estado</label>
-            <select 
-                id="selectEstado"
-                class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:border-primary"
-            >
-                <option value="">-- Todos los estados --</option>
-                <option value="pendiente">Pendiente</option>
-                <option value="confirmado">Confirmado</option>
-                <option value="enviado">Enviado</option>
-                <option value="entregado">Entregado</option>
-                <option value="cancelado">Cancelado</option>
-            </select>
-        </div>
+<div class="flex flex-col md:flex-row gap-4">
 
-    </div>
+<!-- Buscar pedido -->
+<div class="flex-1">
+<label class="block text-sm font-semibold mb-2">Buscar por Número de Pedido</label>
+<input 
+type="text" 
+id="inputBusqueda"
+placeholder="Ej: 123"
+class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:border-primary"
+/>
+</div>
+
+<!-- Filtro estado -->
+<div class="flex-1">
+<label class="block text-sm font-semibold mb-2">Filtrar por Estado</label>
+<select 
+id="selectEstado"
+class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:border-primary"
+>
+<option value="">-- Todos los estados --</option>
+<option value="pendiente">Pendiente</option>
+<option value="confirmado">Confirmado</option>
+<option value="enviado">Enviado</option>
+<option value="entregado">Entregado</option>
+<option value="cancelado">Cancelado</option>
+</select>
+</div>
+
+<!-- Filtro metodo pago -->
+<div class="flex-1">
+<label class="block text-sm font-semibold mb-2">Filtrar por Método de Pago</label>
+
+<select 
+id="selectMetodoPago"
+class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:border-primary"
+>
+
+<option value="">-- Todos los métodos --</option>
+
+<?php
+$metodos = mysqli_query($conexion,"SELECT * FROM metodos_pago WHERE estado='activo'");
+while($m = mysqli_fetch_assoc($metodos)){
+?>
+<option value="<?php echo $m['id_metodo_pago']; ?>">
+<?php echo $m['nombre']; ?>
+</option>
+<?php } ?>
+
+</select>
+</div>
+
+</div>
 </div>
 
 <div class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden table-container border border-slate-200 dark:border-slate-700">
@@ -128,6 +154,7 @@ body { font-family: 'Inter', sans-serif; }
         const inputBusqueda = document.getElementById('inputBusqueda');
         const selectEstado = document.getElementById('selectEstado');
         const tablasResultados = document.getElementById('tablasResultados');
+        const selectMetodoPago = document.getElementById('selectMetodoPago');
 
         if (!inputBusqueda || !selectEstado || !tablasResultados) {
             console.log('Esperando elementos...');
@@ -143,6 +170,7 @@ body { font-family: 'Inter', sans-serif; }
         // Event listeners
         inputBusqueda.addEventListener('input', cargarResultados);
         selectEstado.addEventListener('change', cargarResultados);
+        selectMetodoPago.addEventListener('change', cargarResultados);
     }
 
     window.cargarResultados = async function(pagina = 1) {
@@ -154,12 +182,13 @@ body { font-family: 'Inter', sans-serif; }
 
         const numero_pedido = inputBusqueda.value;
         const estado_filtro = selectEstado.value;
+        const metodo_pago_filtro = document.getElementById('selectMetodoPago').value;
 
         const formData = new FormData();
-        formData.append('numero_pedido', numero_pedido);
+       formData.append('numero_pedido', numero_pedido);
         formData.append('estado_filtro', estado_filtro);
+        formData.append('metodo_pago_filtro', metodo_pago_filtro);
         formData.append('pagina', pagina);
-
         try {
             tablasResultados.innerHTML = '<p class="text-center py-10 text-gray-500">Cargando...</p>';
             
@@ -189,11 +218,13 @@ body { font-family: 'Inter', sans-serif; }
 
         const numero_pedido = inputBusqueda.value;
         const estado_filtro = selectEstado.value;
+        const metodo_pago_filtro = document.getElementById('selectMetodoPago').value;
 
         const formData = new FormData();
         formData.append('numero_pedido', numero_pedido);
         formData.append('estado_filtro', estado_filtro);
         formData.append('pagina', pagina);
+        formData.append('metodo_pago_filtro', metodo_pago_filtro);
 
         fetch('pedidos_contenido.php', {
             method: 'POST',

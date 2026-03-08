@@ -1631,6 +1631,7 @@ function loadPerfil() {
 }
 function loadContactanos() {
     var redes = window._cfgRedes || {};
+    var direccionMapa = encodeURIComponent(window._cfgDireccion || '');
     var html = '<main class="max-w-7xl mx-auto px-4 py-12">' +
         '<div class="text-center mb-16">' +
             '<h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-4">Estamos para ayudarte</h1>' +
@@ -1689,6 +1690,15 @@ function loadContactanos() {
                         '</div>' +
                     '</div>' +
                 '</div>' +
+                // Mapa
+                '<div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">' +
+                            '<iframe ' +
+                                'src="https://www.google.com/maps?q=' + direccionMapa + '&output=embed" ' +
+                                'class="w-full h-64 border-0 rounded-lg" ' +
+                                'loading="lazy" ' +
+                                'referrerpolicy="no-referrer-when-downgrade">' +
+                            '</iframe>' +
+                        '</div>'+
                 // Teléfono
                 '<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm group hover:border-primary transition-colors">' +
                     '<div class="flex items-start gap-4">' +

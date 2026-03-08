@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'])) {
     $numeroPedido = isset($_POST['numero_pedido']) ? trim($_POST['numero_pedido']) : '';
     $estadoFiltro = isset($_POST['estado_filtro']) && $_POST['estado_filtro'] !== '' ? $_POST['estado_filtro'] : null;
     $pagina = isset($_POST['pagina']) && is_numeric($_POST['pagina']) ? (int)$_POST['pagina'] : 1;
+    $metodoPagoFiltro = isset($_POST['metodo_pago_filtro']) && $_POST['metodo_pago_filtro'] !== '' ? $_POST['metodo_pago_filtro'] : null;
 
     $porPagina = 10;
     $offset = ($pagina - 1) * $porPagina;
@@ -34,6 +35,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'])) {
     if ($estadoFiltro !== null) {
         $whereClauses[] = "p.estado = ?";
         $params[] = $estadoFiltro;
+    }
+    
+    if ($metodoPagoFiltro !== null) {
+    $whereClauses[] = "p.id_metodo_pago = ?";
+    $params[] = $metodoPagoFiltro;
     }
 
     $whereSQL = !empty($whereClauses) ? "WHERE " . implode(" AND ", $whereClauses) : "";
@@ -51,15 +57,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'])) {
     $totalPaginas = ceil($totalPedidos / $porPagina) ?: 1;
 
     $sql = "
-    SELECT 
-        p.id_pedido,
-        c.nombre AS cliente,
-        p.fecha_pedido,
-        p.subtotal,
-        p.total,
-        p.estado
-    FROM pedidos p
-    INNER JOIN clientes c ON p.id_cliente = c.id_cliente
+  SELECT 
+    p.id_pedido,
+    c.nombre AS cliente,
+    p.fecha_pedido,
+    p.subtotal,
+    p.total,
+    p.estado,
+    mp.nombre AS metodo_pago
+FROM pedidos p
+INNER JOIN clientes c ON p.id_cliente = c.id_cliente
+LEFT JOIN metodos_pago mp ON p.id_metodo_pago = mp.id_metodo_pago
     " . $whereSQL . "
     ORDER BY p.fecha_pedido DESC
     LIMIT ?, ?
@@ -87,6 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'])) {
 <th class="px-6 py-4 text-xs font-bold uppercase">Fecha</th>
 <th class="px-6 py-4 text-xs font-bold uppercase">Subtotal</th>
 <th class="px-6 py-4 text-xs font-bold uppercase">Total</th>
+<th class="px-6 py-4 text-xs font-bold uppercase">Método Pago</th>
 <th class="px-6 py-4 text-xs font-bold uppercase">Estado</th>
 <th class="px-6 py-4 text-xs font-bold uppercase text-center">Acciones</th>
 </tr>
@@ -121,6 +130,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'])) {
 </td>
 
 <td class="px-6 py-5">
+    <?php echo htmlspecialchars($pedido['metodo_pago'] ?? 'No definido'); ?>
+</td>
+
+<td class="px-6 py-5">
     <?php 
         $colores = [
             'pendiente' => 'bg-blue-100 text-blue-700',
@@ -144,14 +157,17 @@ data-id="<?php echo $pedido['id_pedido']; ?>">
 <span class="material-icons-outlined text-sm">visibility</span>
 </button>
 
+<?php if($pedido['estado'] != 'cancelado'): ?>
+
 <button class="btn-cambiar-estado w-8 h-8 rounded-full bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center"
 data-id="<?php echo $pedido['id_pedido']; ?>">
 <span class="material-icons-outlined text-sm">swap_horiz</span>
 </button>
 
+<?php endif; ?>
+
 </div>
 </td>
-
 </tr>
 
 <?php endwhile; ?>

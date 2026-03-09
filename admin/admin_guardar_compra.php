@@ -54,7 +54,6 @@ Datos enviados desde admin_compras.php
 
 $producto_id = $_POST['producto_id'];   // ID del producto seleccionado
 $cantidad    = $_POST['cantidad'];      // Cantidad comprada
-$precio      = $_POST['precio'];        // Precio de compra
 
 
 # =====================================================
@@ -95,15 +94,14 @@ Se guarda la relación entre:
 compra
 producto
 cantidad
-precio
 */
 
 mysqli_query($conexion,"
 INSERT INTO detalle_compra
-(compra_id, producto_id, cantidad, precio)
+(compra_id, producto_id, cantidad)
 
 VALUES
-('$compra_id', '$producto_id', '$cantidad', '$precio')
+('$compra_id', '$producto_id', '$cantidad')
 ");
 
 
@@ -134,4 +132,4 @@ el sistema vuelve al módulo de compras.
 
 header("Location: admin_compras.php");
 
-?> 
+?>

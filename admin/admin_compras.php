@@ -10,7 +10,6 @@ en el sistema de inventario.
 FUNCIONES:
 ✔ Mostrar lista de productos disponibles
 ✔ Registrar la cantidad comprada
-✔ Registrar el precio de compra
 ✔ Enviar los datos al archivo que guarda la compra
 ✔ Posteriormente actualizar el stock del producto
 
@@ -21,7 +20,7 @@ TABLAS RELACIONADAS:
 
 FLUJO DEL SISTEMA:
 1️⃣ El usuario selecciona un producto
-2️⃣ Ingresa cantidad y precio
+2️⃣ Ingresa la cantidad comprada
 3️⃣ Se envía al archivo admin_guardar_compra.php
 4️⃣ Se guarda la compra
 5️⃣ Se guarda el detalle de la compra
@@ -33,14 +32,15 @@ Autor: Sistema de Inventario
 # =====================================================
 # CONEXIÓN A BASE DE DATOS
 # =====================================================
-require('../../database/conexion.php');
+require_once '../core/conexion.php';
 
 
 # =====================================================
 # CONSULTAR PRODUCTOS
 # =====================================================
 # Obtiene todos los productos disponibles en inventario
-$query = mysqli_query($conexion,"SELECT id, nombre, stock FROM productos");
+
+$query = mysqli_query($conexion,"SELECT id_producto, nombre, stock FROM productos");
 ?>
 
 <!-- =====================================================
@@ -49,7 +49,10 @@ CONTENEDOR PRINCIPAL DEL MODULO
 
 <div class="container" style="border:1px solid #ccc; padding:20px; border-radius:10px; background:#f9f9f9;">
 
-    <!-- TITULO -->
+    <!-- =====================================================
+    TITULO DEL MODULO
+    ===================================================== -->
+
     <h2 style="font-size:24px; font-weight:bold; margin-bottom:20px; color:#2563eb;">
         📦 Módulo de Compras
     </h2>
@@ -59,12 +62,20 @@ CONTENEDOR PRINCIPAL DEL MODULO
         Gestiona y registra compras de productos para actualizar el inventario.
     </p>
 
-    <!-- BUSCADOR (solo visual por ahora) -->
+
+    <!-- =====================================================
+    BUSCADOR (solo visual)
+    ===================================================== -->
+
     <input type="text" 
            placeholder="Buscar por producto, fecha o cantidad..." 
            style="border:1px solid #2563eb; border-radius:5px; padding:8px; width:100%; margin-bottom:15px;">
 
-    <!-- BOTON ACTUALIZAR -->
+
+    <!-- =====================================================
+    BOTON ACTUALIZAR
+    ===================================================== -->
+
     <button style="background:#2563eb; color:white; padding:8px 15px; border:none; border-radius:5px; margin-bottom:20px;">
         Actualizar
     </button>
@@ -95,7 +106,7 @@ CONTENEDOR PRINCIPAL DEL MODULO
 
             while($row = mysqli_fetch_array($query)){
 
-                echo "<option value='".$row['id']."'>";
+                echo "<option value='".$row['id_producto']."'>";
 
                 echo $row['nombre']." (Stock actual: ".$row['stock'].")";
 
@@ -116,24 +127,11 @@ CONTENEDOR PRINCIPAL DEL MODULO
                name="cantidad"
                required
                min="1"
-               style="width:100%; padding:8px; border:1px solid #ccc; border-radius:5px; margin-bottom:15px;">
-
-
-        <!-- =====================================================
-        PRECIO DE COMPRA
-        ===================================================== -->
-
-        <label style="font-weight:bold;">Precio de compra</label>
-
-        <input type="number"
-               name="precio"
-               step="0.01"
-               required
                style="width:100%; padding:8px; border:1px solid #ccc; border-radius:5px; margin-bottom:20px;">
 
 
         <!-- =====================================================
-        BOTÓN GUARDAR
+        BOTÓN GUARDAR COMPRA
         ===================================================== -->
 
         <button type="submit"
@@ -143,4 +141,4 @@ CONTENEDOR PRINCIPAL DEL MODULO
 
     </form>
 
-</div> 
+</div>

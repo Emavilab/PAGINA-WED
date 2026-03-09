@@ -679,15 +679,52 @@ CREATE TABLE `usuarios` (
   CONSTRAINT `usuarios_ibfk_1` FOREIGN KEY (`id_rol`) REFERENCES `roles` (`id_rol`)
 ) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+-- -----------------------------------------------------
+-- Table structure for table `compras`
+-- -----------------------------------------------------
 
+DROP TABLE IF EXISTS `compras`;
+
+CREATE TABLE `compras` (
+  `id_compra` int(11) NOT NULL AUTO_INCREMENT,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_compra`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- -----------------------------------------------------
+-- Table structure for table `detalle_compra`
+-- -----------------------------------------------------
+
+DROP TABLE IF EXISTS `detalle_compra`;
+
+CREATE TABLE `detalle_compra` (
+  `id_detalle_compra` int(11) NOT NULL AUTO_INCREMENT,
+  `compra_id` int(11) NOT NULL,
+  `producto_id` int(11) NOT NULL,
+  `cantidad` int(11) NOT NULL,
+  `precio` decimal(10,2) NOT NULL,
+  PRIMARY KEY (`id_detalle_compra`),
+
+  KEY `compra_id` (`compra_id`),
+  KEY `producto_id` (`producto_id`),
+
+  CONSTRAINT `detalle_compra_ibfk_1`
+  FOREIGN KEY (`compra_id`)
+  REFERENCES `compras` (`id_compra`)
+  ON DELETE CASCADE,
+
+  CONSTRAINT `detalle_compra_ibfk_2`
+  FOREIGN KEY (`producto_id`)
+  REFERENCES `productos` (`id_producto`)
+  ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 --
 -- Dumping data for table `usuarios`
 --
 
 /*!40000 ALTER TABLE `usuarios` DISABLE KEYS */;
 INSERT INTO `usuarios` VALUES (7,'eduardo avila12','ea31925712@gmail.com','$2y$10$zp9Olr3n1B4wzEAx/x/KPuA4X/w57ofm51gLbg78ZMHfdwRmIoPSO','activo','2026-02-16 02:10:19',1),(13,'Eduardo1201','ea319257166@gmail.com','$2y$10$36vlWeiRgGcwbL8NBX6mIObuA9T9DAn3nnSSoMfaX4nwTTZUn..PO','activo','2026-02-16 04:17:30',2),(33,'edurado1201','ea3192571@gmail.com','$2y$10$angZBbCZWdV7Q2nzKo4WPuziGil0XtndpHs06FxNyWT.sS61fjQ5u','activo','2026-03-03 06:23:00',3);
-/*!40000 ALTER TABLE `usuarios` ENABLE KEYS */;
-
+/*!40000 ALTER TABLE `usuarios` ENABLE KEYS */; ALL
 --
 -- Dumping routines for database 'negocio_web'
 --

@@ -154,52 +154,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // --- LÓGICA PARA COSTO DE ENVÍO POR DEPARTAMENTO ---
-    if ($accion == 'guardar_departamento_envio') {
-        $id_departamento = isset($_POST['id_departamento']) ? intval($_POST['id_departamento']) : 0;
-        $costo_envio_raw = $_POST['costo_envio'] ?? '';
 
-        if ($id_departamento <= 0) {
-            responder(false, 'Departamento inválido');
-        }
+// ==================== GUARDAR DEPARTAMENTO ENVIO ====================
+if ($_POST['accion'] === 'guardar_departamento_envio') {
 
-        if ($costo_envio_raw === '' || !is_numeric($costo_envio_raw)) {
-            responder(false, 'El costo debe ser un valor válido');
-        }
+$id = $_POST['id_departamento'] ?? '';
+$nombre = $_POST['nombre_departamento'] ?? '';
+$costo = $_POST['costo_envio'];
 
-        $costo_envio = (float) $costo_envio_raw;
-        if ($costo_envio < 0) {
-            responder(false, 'El costo no puede ser negativo');
-        }
+if($id){
 
-        // Validar existencia del departamento
-        $stmtCheck = $conexion->prepare("SELECT id_departamento FROM departamentos_envio WHERE id_departamento = ? LIMIT 1");
-        if (!$stmtCheck) {
-            responder(false, 'Error al preparar validación: ' . mysqli_error($conexion));
-        }
-        $stmtCheck->bind_param("i", $id_departamento);
-        $stmtCheck->execute();
-        $res = $stmtCheck->get_result();
-        if (!$res || $res->num_rows === 0) {
-            $stmtCheck->close();
-            responder(false, 'El departamento no existe');
-        }
-        $stmtCheck->close();
+$stmt = $conexion->prepare("UPDATE departamentos_envio SET costo_envio=? WHERE id_departamento=?");
+$stmt->bind_param("di",$costo,$id);
 
-        // Actualizar costo
-        $stmtUp = $conexion->prepare("UPDATE departamentos_envio SET costo_envio = ? WHERE id_departamento = ?");
-        if (!$stmtUp) {
-            responder(false, 'Error al preparar actualización: ' . mysqli_error($conexion));
-        }
-        $stmtUp->bind_param("di", $costo_envio, $id_departamento);
-        if ($stmtUp->execute()) {
-            $stmtUp->close();
-            responder(true, 'Costo de envío actualizado correctamente');
-        }
-        $err = $stmtUp->error;
-        $stmtUp->close();
-        responder(false, 'Error al actualizar: ' . $err);
-    }
+}else{
+
+$stmt = $conexion->prepare("INSERT INTO departamentos_envio (nombre_departamento,costo_envio) VALUES (?,?)");
+$stmt->bind_param("sd",$nombre,$costo);
+
+}
+
+$stmt->execute();
+
+echo json_encode([
+"success"=>true,
+"message"=>"Departamento guardado correctamente"
+]);
+
+exit;
+}
+
 
     // --- LÓGICA PARA CONFIGURACIÓN GENERAL ---
     if ($accion == 'guardar_config_general') {
@@ -705,6 +689,24 @@ if (isset($_GET['eliminar_pago'])) {
         mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=1");
         responder(false, 'Error: ' . $e->getMessage());
     }
+}
+
+// Eliminar Departamento Envío
+if (isset($_GET['eliminar_departamento_envio'])) {
+
+$id = intval($_GET['eliminar_departamento_envio']);
+
+$stmt = $conexion->prepare("DELETE FROM departamentos_envio WHERE id_departamento = ?");
+$stmt->bind_param("i", $id);
+
+if ($stmt->execute()) {
+    responder(true, "Departamento eliminado correctamente");
+} else {
+    responder(false, "Error al eliminar departamento");
+}
+
+exit;
+
 }
 
 // Eliminar Banner

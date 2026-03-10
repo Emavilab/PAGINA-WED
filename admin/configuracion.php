@@ -567,6 +567,12 @@ class="w-9 h-9 flex items-center justify-center text-red-500 border border-red-5
 
             <!-- ==================== DEPARTAMENTOS ENVÍO ==================== -->
             <div id="tab-departamentos-envio" class="tab-content hidden">
+                <div class="mb-6">
+                    <button onclick="prepararNuevoDepartamentoEnvio()" 
+                    class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Nuevo Departamento
+                    </button>
+                </div>
                 <div id="formulario-departamento-envio" class="hidden bg-white rounded-lg shadow-lg p-8 mb-8">
                     <h2 class="text-2xl font-bold mb-6 text-gray-800">
                         <i class="fas fa-edit text-cyan-600"></i> <span id="titulo-departamento-envio">Editar costo de envío</span>
@@ -579,7 +585,7 @@ class="w-9 h-9 flex items-center justify-center text-red-500 border border-red-5
                             <label class="block text-sm font-semibold text-gray-700 mb-2">
                                 <i class="fas fa-building text-cyan-500"></i> Departamento
                             </label>
-                            <input type="text" id="nombre_departamento_envio" readonly class="w-full px-4 py-2 border border-gray-200 bg-gray-50 rounded-lg outline-none" placeholder="Departamento">
+                            <input type="text" name="nombre_departamento" id="nombre_departamento_envio" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                         </div>
 
                         <div class="md:col-span-2">
@@ -622,11 +628,19 @@ class="w-9 h-9 flex items-center justify-center text-red-500 border border-red-5
                                     <td class="px-6 py-4 text-sm text-gray-700 font-semibold"><?php echo htmlspecialchars($dep['nombre_departamento']); ?></td>
                                     <td class="px-6 py-4 text-sm text-green-600 font-bold"><?php echo htmlspecialchars($moneda_global); ?> <?php echo number_format((float)$dep['costo_envio'], 2); ?></td>
                                     <td class="px-6 py-4 text-sm text-center">
-                                        <div class="flex justify-center gap-2">
-                                            <button onclick='editarDepartamentoEnvio(<?php echo json_encode($dep); ?>)' class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded shadow" title="Editar">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
+                                    <div class="flex justify-center gap-2">
+
+                                    <button onclick='editarDepartamentoEnvio(<?php echo json_encode($dep); ?>)'
+                                    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded shadow">
+                                    <i class="fas fa-edit"></i>
+                                    </button>
+
+                                    <button onclick="confirmarEliminar('departamento_envio', <?php echo $dep['id_departamento']; ?>, '<?php echo htmlspecialchars(addslashes($dep['nombre_departamento'])); ?>')"
+                                    class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded shadow">
+                                    <i class="fas fa-trash"></i>
+                                    </button>
+
+                                    </div>
                                     </td>
                                 </tr>
                                 <?php endwhile; else: ?>
@@ -1706,6 +1720,20 @@ function editarDepartamentoEnvio(datos) {
     document.getElementById('costo_departamento_envio').value = datos.costo_envio;
     document.getElementById('titulo-departamento-envio').innerText = 'Editando: ' + datos.nombre_departamento;
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function prepararNuevoDepartamentoEnvio(){
+
+document.getElementById('formulario-departamento-envio').classList.remove('hidden');
+
+document.getElementById('id_departamento_envio').value = '';
+document.getElementById('nombre_departamento_envio').value = '';
+document.getElementById('costo_departamento_envio').value = '';
+
+document.getElementById('titulo-departamento-envio').innerText = 'Nuevo Departamento';
+
+window.scrollTo({ top: 0, behavior: 'smooth' });
+
 }
 
 // ==================== RESTAURAR TAB AL CARGAR ====================

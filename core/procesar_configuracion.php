@@ -164,24 +164,26 @@ $costo = $_POST['costo_envio'];
 
 if($id){
 
-$stmt = $conexion->prepare("UPDATE departamentos_envio SET costo_envio=? WHERE id_departamento=?");
-$stmt->bind_param("di",$costo,$id);
+$stmt = $conexion->prepare("UPDATE departamentos_envio 
+SET nombre_departamento=?, costo_envio=? 
+WHERE id_departamento=?");
+
+$stmt->bind_param("sdi",$nombre,$costo,$id);
 
 }else{
 
 $stmt = $conexion->prepare("INSERT INTO departamentos_envio (nombre_departamento,costo_envio) VALUES (?,?)");
+
 $stmt->bind_param("sd",$nombre,$costo);
 
 }
 
-$stmt->execute();
+if($stmt->execute()){
+responder(true,"Departamento guardado correctamente");
+}else{
+responder(false,"Error al guardar departamento");
+}
 
-echo json_encode([
-"success"=>true,
-"message"=>"Departamento guardado correctamente"
-]);
-
-exit;
 }
 
 

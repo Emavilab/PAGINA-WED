@@ -680,44 +680,25 @@ CREATE TABLE `usuarios` (
 ) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 -- -----------------------------------------------------
--- Table structure for table `compras`
--- -----------------------------------------------------
+ -- Tabla de compras
+CREATE TABLE compras (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    proveedor VARCHAR(100) NOT NULL,
+    fecha DATETIME NOT NULL
+);
 
-DROP TABLE IF EXISTS `compras`;
+-- Tabla de detalle de compras
+CREATE TABLE detalle_compra (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    compra_id INT(11) NOT NULL,
+    producto_id INT(11) NOT NULL,
+    cantidad INT(11) NOT NULL,
+    precio DECIMAL(10,2) NOT NULL,
+    -- Relaciones
+    CONSTRAINT fk_compra FOREIGN KEY (compra_id) REFERENCES compras(id) ON DELETE CASCADE,
+    CONSTRAINT fk_producto FOREIGN KEY (producto_id) REFERENCES productos(id_producto) ON DELETE CASCADE
+);
 
-CREATE TABLE `compras` (
-  `id_compra` int(11) NOT NULL AUTO_INCREMENT,
-  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id_compra`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- -----------------------------------------------------
--- Table structure for table `detalle_compra`
--- -----------------------------------------------------
-
-DROP TABLE IF EXISTS `detalle_compra`;
-
-CREATE TABLE `detalle_compra` (
-  `id_detalle_compra` int(11) NOT NULL AUTO_INCREMENT,
-  `compra_id` int(11) NOT NULL,
-  `producto_id` int(11) NOT NULL,
-  `cantidad` int(11) NOT NULL,
-  `precio` decimal(10,2) NOT NULL,
-  PRIMARY KEY (`id_detalle_compra`),
-
-  KEY `compra_id` (`compra_id`),
-  KEY `producto_id` (`producto_id`),
-
-  CONSTRAINT `detalle_compra_ibfk_1`
-  FOREIGN KEY (`compra_id`)
-  REFERENCES `compras` (`id_compra`)
-  ON DELETE CASCADE,
-
-  CONSTRAINT `detalle_compra_ibfk_2`
-  FOREIGN KEY (`producto_id`)
-  REFERENCES `productos` (`id_producto`)
-  ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4; 
 --
 -- Dumping data for table `usuarios`
 --

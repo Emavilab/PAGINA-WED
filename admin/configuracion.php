@@ -594,7 +594,19 @@ class="w-9 h-9 flex items-center justify-center text-red-500 border border-red-5
                             </label>
                             <input type="number" name="costo_envio" id="costo_departamento_envio" step="0.01" min="0" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition" placeholder="0.00">
                         </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-clock text-cyan-500"></i> Días de Entrega
+                            </label>
 
+                            <input type="number"
+                            name="dias_entrega"
+                            id="dias_entrega_departamento"
+                            min="1"
+                            required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none transition"
+                            placeholder="Ej: 2">
+                            </div>
                         <div class="md:col-span-2 flex gap-4">
                             <button type="submit" class="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md">
                                 <i class="fas fa-save mr-2"></i> Guardar
@@ -617,6 +629,7 @@ class="w-9 h-9 flex items-center justify-center text-red-500 border border-red-5
                                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
                                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Departamento</th>
                                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Costo de Envío</th>
+                                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Días de Entrega</th>
                                     <th class="px-6 py-3 text-center text-sm font-semibold text-gray-700">Acciones</th>
                                 </tr>
                             </thead>
@@ -627,6 +640,7 @@ class="w-9 h-9 flex items-center justify-center text-red-500 border border-red-5
                                     <td class="px-6 py-4 text-sm text-gray-700">#<?php echo $dep['id_departamento']; ?></td>
                                     <td class="px-6 py-4 text-sm text-gray-700 font-semibold"><?php echo htmlspecialchars($dep['nombre_departamento']); ?></td>
                                     <td class="px-6 py-4 text-sm text-green-600 font-bold"><?php echo htmlspecialchars($moneda_global); ?> <?php echo number_format((float)$dep['costo_envio'], 2); ?></td>
+                                    <td class="px-6 py-4 text-sm text-gray-700 font-semibold"><?php echo $dep['dias_entrega']; ?> días</td>
                                     <td class="px-6 py-4 text-sm text-center">
                                     <div class="flex justify-center gap-2">
 
@@ -1718,6 +1732,7 @@ function editarDepartamentoEnvio(datos) {
     document.getElementById('id_departamento_envio').value = datos.id_departamento;
     document.getElementById('nombre_departamento_envio').value = datos.nombre_departamento;
     document.getElementById('costo_departamento_envio').value = datos.costo_envio;
+    document.getElementById('dias_entrega_departamento').value = datos.dias_entrega;
     document.getElementById('titulo-departamento-envio').innerText = 'Editando: ' + datos.nombre_departamento;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }

@@ -160,21 +160,28 @@ if ($_POST['accion'] === 'guardar_departamento_envio') {
 
 $id = $_POST['id_departamento'] ?? '';
 $nombre = $_POST['nombre_departamento'] ?? '';
-$costo = $_POST['costo_envio'];
+$costo = $_POST['costo_envio'] ?? 0;
+$dias = $_POST['dias_entrega'] ?? 1;
 
 if($id){
 
-$stmt = $conexion->prepare("UPDATE departamentos_envio 
-SET nombre_departamento=?, costo_envio=? 
-WHERE id_departamento=?");
+$stmt = $conexion->prepare("
+UPDATE departamentos_envio 
+SET nombre_departamento=?, costo_envio=?, dias_entrega=? 
+WHERE id_departamento=?
+");
 
-$stmt->bind_param("sdi",$nombre,$costo,$id);
+$stmt->bind_param("sdii",$nombre,$costo,$dias,$id);
 
 }else{
 
-$stmt = $conexion->prepare("INSERT INTO departamentos_envio (nombre_departamento,costo_envio) VALUES (?,?)");
+$stmt = $conexion->prepare("
+INSERT INTO departamentos_envio 
+(nombre_departamento,costo_envio,dias_entrega) 
+VALUES (?,?,?)
+");
 
-$stmt->bind_param("sd",$nombre,$costo);
+$stmt->bind_param("sdi",$nombre,$costo,$dias);
 
 }
 

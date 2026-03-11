@@ -565,6 +565,8 @@ function mostrarDireccionSeleccionada(direccion, ciudad, codigoPostal, telefono,
 
     if (typeof costoEnvio === 'number' && !isNaN(costoEnvio)) {
        envioDepartamento = costoEnvio;
+       // cargar tarjeta dinámica de envío por departamento
+    cargarEnvioDepartamento(nombreDepartamento);
 
         // actualizar etiqueta con nombre del departamento
         const label = document.getElementById("shippingDepartmentLabel");
@@ -749,7 +751,7 @@ async function cargarMetodosEnvio() {
         const data = await response.json();
 
         if (!data.success || !data.metodos.length) {
-            contenedor.innerHTML = "<p>No hay métodos disponibles</p>";
+            contenedor.innerHTML = "<p>No hay métodos adicionales disponibles</p>";
             return;
         }
     
@@ -776,7 +778,7 @@ async function cargarMetodosEnvio() {
                         value="${metodo.id_envio}" 
                         ${checked}
                         class="absolute top-4 right-4 text-primary focus:ring-primary"
-                        onclick="seleccionarEnvio(${metodo.costo})"
+                        onclick="seleccionarEnvio(${metodo.costo}, this)"
                     />
 
                     <span class="font-bold text-slate-900 dark:text-white">
@@ -801,19 +803,115 @@ async function cargarMetodosEnvio() {
         console.error("Error cargando métodos envío:", error);
     }
 }
-function seleccionarEnvio(costo) {
-    envioMetodo = parseFloat(costo);
-    cargarResumenPedido(); // recalcula todo correctamente
+
+// TARJETA DINAMIDA PARA SELECCIÓN DE ENVÍO POR DEPARTAMENTO
+async function cargarEnvioDepartamento(departamento){
+
+const contenedor = document.getElementById("checkout-metodos-envio");
+if(!contenedor) return;
+
+try{
+
+const response = await fetch(`api/api_envio_departamento.php?departamento=${encodeURIComponent(departamento)}`);
+const data = await response.json();
+
+if(!data.success) return;
+
+const envio = data.envio;
+// seleccionar este método automáticamente
+envioMetodo = parseFloat(envio.costo_envio);
+envioMetodo = 0;
+
+// buscar si ya existe la tarjeta
+let tarjeta = document.getElementById("tarjeta-envio-departamento");
+
+// si no existe crearla
+if(!tarjeta){
+
+contenedor.insertAdjacentHTML("beforeend", `
+
+<label id="tarjeta-envio-departamento" class="relative flex flex-col p-4 border border-slate-200 rounded-xl cursor-pointer hover:border-primary/50 transition-colors">
+
+<input 
+type="radio"
+name="shipping"
+value="departamento"
+checked
+class="absolute top-4 right-4"
+onclick="seleccionarEnvio(${envio.costo_envio}, this)"
+/>
+
+<span id="envioDepNombre" class="font-bold text-slate-900"></span>
+
+<span id="envioDepDias" class="text-sm opacity-70 mb-2"></span>
+
+<span id="envioDepCosto" class="mt-auto font-bold"></span>
+
+</label>
+
+`);
+
+tarjeta = document.getElementById("tarjeta-envio-departamento");
+
 }
+
+// actualizar contenido
+document.getElementById("envioDepNombre").innerText =
+"Envío a " + envio.nombre_departamento;
+
+document.getElementById("envioDepDias").innerText =
+"Entrega estimada " + envio.dias_entrega + " días";
+
+document.getElementById("envioDepCosto").innerText =
+envio.costo_envio == 0 
+? "Gratis"
+: window._cfgMoneda + " " + envio.costo_envio;
+
+}catch(err){
+
+console.error("Error envío departamento",err);
+
+}
+
+}
+function seleccionarEnvio(costo, radio) {
+
+    envioMetodo = parseFloat(costo);
+
+    const tarjetas = document.querySelectorAll("#checkout-metodos-envio label");
+
+    tarjetas.forEach(t => {
+        t.classList.remove("border-2","border-primary","bg-primary/5");
+        t.classList.add("border","border-slate-200","dark:border-slate-700");
+    });
+
+    const tarjeta = radio.closest("label");
+
+    tarjeta.classList.remove("border","border-slate-200","dark:border-slate-700");
+    tarjeta.classList.add("border-2","border-primary","bg-primary/5");
+
+    cargarResumenPedido();
+}
+
 function actualizarTotalConEnvio(subtotal, impuestos) {
 
-    const total = subtotal + impuestos + envioDepartamento + envioMetodo;
+    let envioTotal = 0;
 
-   document.getElementById("shippingDepartment").innerText =
-    window._cfgMoneda + ' ' + envioDepartamento.toFixed(2);
+    // Si se selecciona envío por departamento
+    if (obtenerEnvioSeleccionado() === "departamento") {
+        envioTotal = envioDepartamento;
+        envioMetodo = 0;
+    } else {
+        envioTotal = envioMetodo;
+    }
 
-document.getElementById("shippingExtra").innerText =
-    envioMetodo === 0 ? "Gratis" : window._cfgMoneda + ' ' + envioMetodo.toFixed(2);
+    const total = subtotal + impuestos + envioTotal;
+
+    document.getElementById("shippingDepartment").innerText =
+        envioDepartamento > 0 ? window._cfgMoneda + ' ' + envioDepartamento.toFixed(2) : "Sin envío";
+
+    document.getElementById("shippingExtra").innerText =
+        envioMetodo > 0 ? window._cfgMoneda + ' ' + envioMetodo.toFixed(2) : "Sin envío adicional";
 
     document.getElementById("totalPrice").innerText =
         window._cfgMoneda + ' ' + total.toFixed(2);

@@ -121,6 +121,39 @@ $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
       function toggleDarkMode() {
         document.documentElement.classList.toggle('dark');
       }
+      
+      // ===================== FUNCIONES SIDEBAR MÓVIL =====================
+      function toggleSidebarMobile() {
+          const sidebar = document.getElementById('sidebarMobile');
+          const overlay = document.getElementById('sidebarOverlay');
+          
+          if (sidebar && overlay) {
+              if (sidebar.classList.contains('translate-x-0')) {
+                  // Cerrar
+                  sidebar.classList.remove('translate-x-0');
+                  sidebar.classList.add('-translate-x-full');
+                  overlay.classList.add('hidden');
+                  document.body.style.overflow = '';
+              } else {
+                  // Abrir
+                  sidebar.classList.remove('-translate-x-full');
+                  sidebar.classList.add('translate-x-0');
+                  overlay.classList.remove('hidden');
+                  document.body.style.overflow = 'hidden';
+              }
+          }
+      }
+      
+      function closeSidebarMobile() {
+          const sidebar = document.getElementById('sidebarMobile');
+          const overlay = document.getElementById('sidebarOverlay');
+          if (sidebar && overlay) {
+              sidebar.classList.add('-translate-x-full');
+              sidebar.classList.remove('translate-x-0');
+              overlay.classList.add('hidden');
+              document.body.style.overflow = '';
+          }
+      }
     </script>
 <style>
         body { font-family: 'Inter', sans-serif; }
@@ -133,6 +166,7 @@ $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
 </head>
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
 <div class="flex h-screen overflow-hidden">
+<!-- SIDEBAR DESKTOP -->
 <aside class="w-64 bg-sidebar-dark text-white flex-shrink-0 flex flex-col hidden lg:flex">
 <div class="p-6 flex items-center gap-3">
 <div class="bg-primary p-2 rounded-lg">
@@ -202,9 +236,86 @@ onclick="loadPage('./admin_reportes.php', event)">
 </button>
 </div>
 </aside>
+
+<!-- SIDEBAR MOBILE (DRAWER) -->
+<aside id="sidebarMobile" class="fixed inset-y-0 left-0 w-64 bg-sidebar-dark text-white flex flex-col lg:hidden transform -translate-x-full transition-transform duration-300 z-40 overflow-y-auto">
+<div class="p-6 flex items-center gap-3 border-b border-slate-700">
+<div class="bg-primary p-2 rounded-lg">
+<span class="material-icons-round text-white">store</span>
+</div>
+<div class="flex-1">
+<h1 class="font-bold text-lg leading-tight"><?php echo $admin_nombre; ?></h1>
+<p class="text-xs text-slate-400">Admin Panel</p>
+</div>
+<button onclick="toggleSidebarMobile()" class="p-2 text-slate-400 hover:text-white">
+<span class="material-icons-round">close</span>
+</button>
+</div>
+<nav class="flex-1 mt-4 px-3 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 sidebar-active rounded-r-none rounded-lg transition-all nav-link" href="#" onclick="loadPage('Dashboard.php', event); toggleSidebarMobile();">
+<span class="material-icons-round">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<?php if ($_SESSION['id_rol'] == 1): // Solo para administrador ?>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../admin/gestion_productos.php', event); toggleSidebarMobile();">
+<span class="material-icons-round">inventory_2</span>
+<span class="font-medium">Productos</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../client/categoria.php', event); toggleSidebarMobile();">
+<span class="material-icons-round">category</span>
+<span class="font-medium">Categorías</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../client/clientes.php', event); toggleSidebarMobile();">
+<span class="material-icons-round">people</span>
+<span class="font-medium">Clientes</span>
+</a>
+<?php endif; ?>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./pedidosadmin.php', event); toggleSidebarMobile();">
+<span class="material-icons-round">shopping_cart</span>
+<span class="font-medium">Pedidos</span>
+</a>
+<?php if ($_SESSION['id_rol'] == 1): // Solo para administrador ?>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./usuarios.php', event); toggleSidebarMobile();">
+<span class="material-icons-round">manage_accounts</span>
+<span class="font-medium">Usuarios</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../client/mensajeria.php', event); toggleSidebarMobile();">
+<span class="material-icons-round">mail</span>
+<span class="font-medium">Mensajería</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./admin_compras.php', event); toggleSidebarMobile();">
+<span class="material-icons-round">shopping_cart</span>
+<span class="font-medium">Compras</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./admin_reportes.php', event); toggleSidebarMobile();">
+<span class="material-icons-round">bar_chart</span>
+<span class="font-medium">Reportes</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('configuracion.php', event); toggleSidebarMobile();">
+<span class="material-icons-round">settings</span>
+<span class="font-medium">Configuraciones</span>
+</a>
+<?php endif; ?>
+</nav>
+<div class="p-4 mt-auto border-t border-slate-700">
+<button class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-red-400 w-full transition-all" onclick="cerrarSesion();">
+<span class="material-icons-round">logout</span>
+<span class="font-medium">Cerrar Sesión</span>
+</button>
+</div>
+</aside>
+
+<!-- OVERLAY MOBILE -->
+<div id="sidebarOverlay" class="fixed inset-0 bg-black/50 lg:hidden hidden z-30" onclick="toggleSidebarMobile()"></div>
 <div class="flex-1 flex flex-col overflow-y-auto">
-<header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between sticky top-0 z-10">
+<header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-8 flex items-center justify-between sticky top-0 z-10">
+<div class="flex items-center gap-4">
+<!-- BOTÓN HAMBURGUESA MOBILE -->
+<button class="lg:hidden p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" onclick="toggleSidebarMobile()">
+<span class="material-icons-round">menu</span>
+</button>
 <h2 id="page-title" class="text-xl font-bold dark:text-white">Dashboard</h2>
+</div>
 <div class="flex items-center gap-6">
 <button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors" onclick="toggleDarkMode()">
 <span class="material-icons-round dark:hidden">dark_mode</span>
@@ -645,6 +756,15 @@ const CustomModal = {
     }
 };
 window.CustomModal = CustomModal;
+
+// ===================== INICIALIZACIÓN =====================
+// Asegurar que el sidebar móvil esté cerrado al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebarMobile = document.getElementById('sidebarMobile');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (sidebarMobile) sidebarMobile.classList.add('-translate-x-full');
+    if (overlay) overlay.classList.add('hidden');
+});
 </script>
 <!-- Modal Éxito -->
 <div id="modalSuccess" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">

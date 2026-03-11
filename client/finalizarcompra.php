@@ -766,8 +766,15 @@ async function cargarMetodosEnvio() {
                 "border border-slate-200 dark:border-slate-700";
 
                 if(index === 0) {
-                 envioMetodo = parseFloat(metodo.costo);
-                 }
+            envioMetodo = parseFloat(metodo.costo);
+
+            setTimeout(() => {
+                const radio = document.querySelector('input[name="shipping"]:checked');
+                if(radio){
+                    seleccionarEnvio(envioMetodo, radio);
+                }
+            }, 50);
+        }
 
             contenedor.innerHTML += `
                 <label class="relative flex flex-col p-4 ${border} rounded-xl cursor-pointer hover:border-primary/50 transition-colors">

@@ -111,78 +111,102 @@ if($res_marcas && mysqli_num_rows($res_marcas) > 0) {
 </head>
 <body class="bg-white dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display transition-colors duration-300">
 <?php if(!empty($cfg['texto_banner_superior'])): ?>
-<div class="bg-primary text-white py-2 text-center text-sm font-medium">
+<div class="bg-primary text-white py-1.5 sm:py-2 text-center text-xs sm:text-sm font-medium px-4">
 <p><?php echo htmlspecialchars($cfg['texto_banner_superior']); ?></p>
 </div>
 <?php endif; ?>
 <header class="sticky top-0 z-50 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-slate-800 shadow-sm">
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-<div class="flex items-center justify-between h-20 gap-6">
-<div class="flex items-center gap-2 flex-shrink-0 cursor-pointer" onclick="if(typeof loadHome==='function'){loadHome();}else{location.reload();}" tabindex="0" role="button" aria-label="Ir al inicio">
+<div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+<div class="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4 lg:gap-6">
+<!-- LOGO Y NOMBRE -->
+<div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 cursor-pointer min-w-fit" onclick="if(typeof loadHome==='function'){loadHome();}else{location.reload();}" tabindex="0" role="button" aria-label="Ir al inicio">
 <?php if(!empty($cfg_logo)): ?>
-<img src="img/<?php echo $cfg_logo; ?>" alt="<?php echo $cfg_nombre; ?>" class="w-10 h-10 object-contain rounded-lg">
+<img src="img/<?php echo $cfg_logo; ?>" alt="<?php echo $cfg_nombre; ?>" class="w-8 sm:w-10 h-8 sm:h-10 object-contain rounded-lg">
 <?php else: ?>
-<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-<span class="material-icons-outlined text-white text-2xl">shopping_bag</span>
+<div class="w-8 sm:w-10 h-8 sm:h-10 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+<span class="material-icons-outlined text-white text-lg sm:text-2xl">shopping_bag</span>
 </div>
 <?php endif; ?>
-<span class="text-2xl font-bold tracking-tight text-primary"><?php echo $cfg_nombre; ?></span>
+<span class="text-base sm:text-lg md:text-xl lg:text-2xl font-bold tracking-tight text-primary line-clamp-1"><?php echo $cfg_nombre; ?></span>
 </div>
-<div class="hidden md:flex flex-1 max-w-xl relative">
-<input id="searchInput" class="w-full pl-4 pr-12 py-2.5 rounded-full border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary dark:bg-slate-800 dark:border-slate-700 transition-all text-sm" placeholder="Buscar productos, marcas o departamentos..." type="text" onkeyup="if(event.key==='Enter'){realizarBusqueda();}"/>
-<button onclick="realizarBusqueda()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-white p-1.5 rounded-full hover:bg-primary-dark transition-colors">
-<span class="material-symbols-outlined block text-xl">search</span>
+
+<!-- BUSCADOR DESKTOP -->
+<div class="hidden md:flex flex-1 max-w-md lg:max-w-xl relative">
+<input id="searchInput" class="w-full pl-3 sm:pl-4 pr-10 sm:pr-12 py-2 sm:py-2.5 rounded-full border border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-1 focus:ring-primary bg-slate-50 dark:bg-slate-800 transition-all text-xs sm:text-sm" placeholder="Buscar productos..." type="text" onkeyup="if(event.key==='Enter'){realizarBusqueda();}"/>
+<button onclick="realizarBusqueda()" class="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 bg-primary text-white p-1.5 sm:p-2 rounded-full hover:bg-primary-dark transition-colors flex-shrink-0">
+<span class="material-symbols-outlined block text-base sm:text-xl">search</span>
 </button>
 </div>
-<div class="flex items-center gap-5 lg:gap-8">
+
+<!-- BOTONES DERECHOS -->
+<div class="flex items-center gap-2 sm:gap-3 lg:gap-5">
+<!-- MENÚ HAMBURGUESA MOBILE -->
+<button onclick="toggleMobileMenu()" class="lg:hidden flex items-center justify-center p-1.5 sm:p-2 text-slate-600 dark:text-slate-300 hover:text-primary transition-colors flex-shrink-0">
+<span class="material-symbols-outlined text-xl sm:text-2xl">menu</span>
+</button>
+
+<!-- BUSCADOR MOBILE -->
+<button onclick="abrirBuscadorMobile()" class="md:hidden flex items-center justify-center p-1.5 sm:p-2 text-slate-600 dark:text-slate-300 hover:text-primary transition-colors flex-shrink-0">
+<span class="material-symbols-outlined text-xl sm:text-2xl">search</span>
+</button>
+
+<!-- CUENTA -->
 <div class="relative group">
-<button onclick="toggleAccountMenu()" class="flex flex-col items-center text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">
-<span class="material-symbols-outlined">person</span>
-<span class="text-[11px] font-semibold uppercase mt-0.5" id="account-button-text">Cuenta</span>
+<button onclick="toggleAccountMenu()" class="flex flex-col items-center justify-center gap-0.5 sm:gap-1 text-slate-600 dark:text-slate-300 hover:text-primary transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 group flex-shrink-0">
+<span class="material-symbols-outlined text-lg sm:text-xl">person</span>
+<span class="text-[10px] sm:text-[11px] font-semibold uppercase hidden sm:inline" id="account-button-text">Cuenta</span>
 </button>
 <!-- Dropdown Menu -->
-<div id="accountMenu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800 z-50">
+<div id="accountMenu" class="hidden absolute right-0 mt-2 w-40 sm:w-48 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800 z-50">
 <?php if ($usuarioAutenticado && $datosUsuario): ?>
-    <div class="px-4 py-3 text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800">
-        <p class="text-sm font-semibold"><?php echo htmlspecialchars($datosUsuario['nombre']); ?></p>
-        <p class="text-xs text-slate-500 dark:text-slate-400"><?php echo htmlspecialchars($datosUsuario['correo']); ?></p>
+    <div class="px-3 sm:px-4 py-2 sm:py-3 text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800">
+        <p class="text-xs sm:text-sm font-semibold truncate"><?php echo htmlspecialchars($datosUsuario['nombre']); ?></p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 truncate"><?php echo htmlspecialchars($datosUsuario['correo']); ?></p>
     </div>
-    <button onclick="loadPerfil(); toggleAccountMenu();" class="w-full text-left flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 transition-colors bg-none border-none cursor-pointer">
-        <span class="material-symbols-outlined text-lg">person</span>
-        <span class="text-sm font-semibold">Ver Perfil</span>
+    <button onclick="loadPerfil(); toggleAccountMenu();" class="w-full text-left flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 transition-colors bg-none border-none cursor-pointer text-xs sm:text-sm">
+        <span class="material-symbols-outlined text-base sm:text-lg flex-shrink-0">person</span>
+        <span class="font-semibold">Ver Perfil</span>
     </button>
-    <button onclick="cerrarSesionCliente(); toggleAccountMenu();" class="w-full text-left flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors bg-none border-none cursor-pointer text-red-600 dark:text-red-400">
-        <span class="material-symbols-outlined text-lg">logout</span>
-        <span class="text-sm font-semibold">Cerrar Sesión</span>
+    <button onclick="cerrarSesionCliente(); toggleAccountMenu();" class="w-full text-left flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors bg-none border-none cursor-pointer text-red-600 dark:text-red-400 text-xs sm:text-sm">
+        <span class="material-symbols-outlined text-base sm:text-lg flex-shrink-0">logout</span>
+        <span class="font-semibold">Cerrar Sesión</span>
     </button>
 <?php else: ?>
-    <button onclick="loadLogin(); toggleAccountMenu();" class="w-full text-left flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 transition-colors bg-none border-none cursor-pointer">
-        <span class="material-symbols-outlined text-lg">login</span>
-        <span class="text-sm font-semibold">Iniciar Sesión</span>
+    <button onclick="loadLogin(); toggleAccountMenu();" class="w-full text-left flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 transition-colors bg-none border-none cursor-pointer text-xs sm:text-sm">
+        <span class="material-symbols-outlined text-base sm:text-lg flex-shrink-0">login</span>
+        <span class="font-semibold">Iniciar Sesión</span>
     </button>
-    <button onclick="loadRegistrarse(); toggleAccountMenu();" class="w-full text-left flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors bg-none border-none cursor-pointer">
-        <span class="material-symbols-outlined text-lg">person_add</span>
-        <span class="text-sm font-semibold">Registrarse</span>
+    <button onclick="loadRegistrarse(); toggleAccountMenu();" class="w-full text-left flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors bg-none border-none cursor-pointer text-xs sm:text-sm">
+        <span class="material-symbols-outlined text-base sm:text-lg flex-shrink-0">person_add</span>
+        <span class="font-semibold">Registrarse</span>
     </button>
 <?php endif; ?>
 </div>
 </div>
-<button onclick="loadListaDeseos()" class="flex flex-col items-center text-slate-600 dark:text-slate-300 hover:text-primary transition-colors group bg-none border-none cursor-pointer">
-<span class="material-symbols-outlined">favorite</span>
-<span class="text-[11px] font-semibold uppercase mt-0.5 whitespace-nowrap">Lista de Deseos</span>
+
+<!-- LISTA DE DESEOS -->
+<button onclick="loadListaDeseos()" class="flex flex-col items-center justify-center gap-0.5 sm:gap-1 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary transition-colors bg-none border-none cursor-pointer flex-shrink-0">
+<span class="material-symbols-outlined text-lg sm:text-xl">favorite</span>
+<span class="text-[10px] sm:text-[11px] font-semibold uppercase hidden sm:inline">Deseos</span>
 </button>
-<button onclick="loadHistorialPedidos()" class="flex flex-col items-center text-slate-600 dark:text-slate-300 hover:text-primary transition-colors group bg-none border-none cursor-pointer">
-<span class="material-symbols-outlined">package_2</span>
-<span class="text-[11px] font-semibold uppercase mt-0.5 whitespace-nowrap">Mis Pedidos</span>
+
+<!-- MIS PEDIDOS -->
+<button onclick="loadHistorialPedidos()" class="flex flex-col items-center justify-center gap-0.5 sm:gap-1 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary transition-colors bg-none border-none cursor-pointer flex-shrink-0">
+<span class="material-symbols-outlined text-lg sm:text-xl">package_2</span>
+<span class="text-[10px] sm:text-[11px] font-semibold uppercase hidden sm:inline">Pedidos</span>
 </button>
-<button onclick="abrirCarrito()" class="flex flex-col items-center text-slate-600 dark:text-slate-300 hover:text-primary transition-colors relative group">
-<span class="material-symbols-outlined text-2xl">shopping_cart</span>
-<span class="text-[11px] font-semibold uppercase mt-0.5">Carrito</span>
-<span id="cartBadge" class="absolute -top-1 -right-1 bg-primary text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">0</span>
+
+<!-- CARRITO -->
+<button onclick="abrirCarrito()" class="flex flex-col items-center justify-center gap-0.5 sm:gap-1 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary transition-colors relative bg-none border-none cursor-pointer flex-shrink-0">
+<span class="material-symbols-outlined text-lg sm:text-xl">shopping_cart</span>
+<span class="text-[10px] sm:text-[11px] font-semibold uppercase hidden sm:inline">Carrito</span>
+<span id="cartBadge" class="absolute -top-0.5 -right-0.5 bg-primary text-white text-[9px] sm:text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold flex-shrink-0">0</span>
 </button>
 </div>
 </div>
-<nav class="hidden lg:flex items-center space-x-10 py-3 border-t border-slate-100 dark:border-slate-800">
+
+<!-- NAVEGACIÓN DESKTOP -->
+<nav class="hidden lg:flex items-center space-x-6 py-3 border-t border-slate-100 dark:border-slate-800 overflow-x-auto">
 <?php
 // Si no hay menú configurado, usar un conjunto por defecto
 $menu_items = $cfg_header_menu;
@@ -278,16 +302,16 @@ foreach ($menu_items as $item) {
     }
 
     if ($isInternal && $onclick !== '') {
-        echo '<button onclick="' . $onclick . '" class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary flex items-center gap-2 bg-none border-none cursor-pointer">';
+        echo '<button onclick="' . $onclick . '" class="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary flex items-center gap-1.5 sm:gap-2 bg-none border-none cursor-pointer whitespace-nowrap">';
         if ($icon !== '') {
-            echo '<span class="material-symbols-outlined text-xl">' . htmlspecialchars($icon) . '</span> ';
+            echo '<span class="material-symbols-outlined text-base sm:text-lg">' . htmlspecialchars($icon) . '</span> ';
         }
         echo $labelEsc . '</button>';
     } else {
         $href = htmlspecialchars($path);
-        echo '<a href="' . $href . '" class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary flex items-center gap-2">';
+        echo '<a href="' . $href . '" class="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">';
         if ($icon !== '') {
-            echo '<span class="material-symbols-outlined text-xl">' . htmlspecialchars($icon) . '</span> ';
+            echo '<span class="material-symbols-outlined text-base sm:text-lg">' . htmlspecialchars($icon) . '</span> ';
         }
         echo $labelEsc . '</a>';
     }
@@ -296,16 +320,134 @@ foreach ($menu_items as $item) {
 </nav>
 </div>
 </header>
+
+<!-- ========== MODAL BUSCADOR MOBILE ========== -->
+<div id="searchModalMobile" class="hidden fixed inset-0 bg-black/50 z-50 lg:hidden" onclick="if(event.target===this) cerrarBuscadorMobile()">
+<div class="absolute top-0 left-0 right-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 animate-in slide-in-from-top">
+<div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 flex items-center gap-2 sm:gap-3">
+<button onclick="cerrarBuscadorMobile()" class="p-1.5 text-slate-600 dark:text-slate-300 hover:text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-xl">close</span>
+</button>
+<input id="searchInputMobile" class="flex-1 px-4 py-2 sm:py-2.5 rounded-full border border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-1 focus:ring-primary bg-slate-50 dark:bg-slate-800 transition-all text-xs sm:text-sm" placeholder="Buscar productos..." type="text" onkeyup="if(event.key==='Enter'){realizarBusquedaMobile();}"/>
+<button onclick="realizarBusquedaMobile()" class="bg-primary text-white p-1.5 sm:p-2 rounded-full hover:bg-primary-dark transition-colors flex-shrink-0">
+<span class="material-symbols-outlined text-base sm:text-xl">search</span>
+</button>
+</div>
+</div>
+</div>
+
+<!-- ========== MENÚ DESPLEGABLE MOBILE ========== -->
+<div id="mobileMenuDrawer" class="hidden fixed inset-y-0 left-0 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-xl z-40 lg:hidden animate-in slide-in-from-left overflow-y-auto">
+<div class="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 flex items-center justify-between">
+<h3 class="font-bold text-slate-900 dark:text-white">Menú</h3>
+<button onclick="toggleMobileMenu()" class="p-1.5 text-slate-600 dark:text-slate-300 hover:text-primary">
+<span class="material-symbols-outlined text-xl">close</span>
+</button>
+</div>
+<nav class="p-4 space-y-2">
+<?php
+// Mostrar menú móvil
+$menu_items_mobile = $cfg_header_menu;
+if (empty($menu_items_mobile)) {
+    $menu_items_mobile = [
+        ['label' => 'Categorías', 'path' => '/categorias', 'icon' => 'grid_view'],
+        ['label' => 'Productos', 'path' => '/productos', 'icon' => 'inventory_2'],
+        ['label' => 'Ofertas', 'path' => '/ofertas', 'icon' => 'sell'],
+        ['label' => 'Contáctanos', 'path' => '/contacto', 'icon' => 'contact_support'],
+    ];
+}
+
+foreach ($menu_items_mobile as $item) {
+    $label = trim($item['label'] ?? '');
+    $path = trim($item['path'] ?? '');
+    if ($label === '' || $path === '') continue;
+
+    $labelEsc = htmlspecialchars($label);
+    $icon = trim($item['icon'] ?? '');
+
+    $isInternal = false;
+    $onclick = '';
+
+    if ($path !== '' && $path[0] === '/') {
+        $isInternal = true;
+        switch ($path) {
+            case '/categorias':
+                $onclick = 'loadCategoriasPanel(); toggleMobileMenu();';
+                break;
+            case '/ofertas':
+                $onclick = 'loadOfertas(); toggleMobileMenu();';
+                break;
+            case '/productos':
+                $onclick = 'loadProductos(); toggleMobileMenu();';
+                if ($icon === '') $icon = 'inventory_2';
+                break;
+            case '/contacto':
+            case '/contactanos':
+                $onclick = 'loadContactanos(); toggleMobileMenu();';
+                break;
+            case '/lista-deseos':
+            case '/lista_deseos':
+                $onclick = 'loadListaDeseos(); toggleMobileMenu();';
+                break;
+            case '/pedidos':
+            case '/mis-pedidos':
+                $onclick = 'loadHistorialPedidos(); toggleMobileMenu();';
+                break;
+            case '/carrito':
+                $onclick = 'abrirCarrito(); toggleMobileMenu();';
+                break;
+            case '/inicio':
+            case '/home':
+                $onclick = 'if(typeof loadHome===\'function\'){loadHome();}else{location.href=\'index.php\';}toggleMobileMenu();';
+                break;
+            default:
+                $isInternal = false;
+                break;
+        }
+
+        if ($icon === '') {
+            switch ($path) {
+                case '/categorias': $icon = 'grid_view'; break;
+                case '/ofertas': $icon = 'sell'; break;
+                case '/productos': $icon = 'inventory_2'; break;
+                case '/contacto':
+                case '/contactanos': $icon = 'contact_support'; break;
+                case '/lista-deseos':
+                case '/lista_deseos': $icon = 'favorite'; break;
+                case '/pedidos':
+                case '/mis-pedidos': $icon = 'package_2'; break;
+                case '/carrito': $icon = 'shopping_cart'; break;
+                case '/inicio':
+                case '/home': $icon = 'home'; break;
+            }
+        }
+    }
+
+    if ($isInternal && $onclick !== '') {
+        echo '<button onclick="' . $onclick . '" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary transition-colors bg-none border-none cursor-pointer text-sm font-medium">';
+        if ($icon !== '') {
+            echo '<span class="material-symbols-outlined text-base">' . htmlspecialchars($icon) . '</span>';
+        }
+        echo $labelEsc . '</button>';
+    }
+}
+?>
+</nav>
+</div>
+
+<!-- Overlay para cerrar menú -->
+<div id="mobileMenuOverlay" class="hidden fixed inset-0 z-30 lg:hidden" onclick="toggleMobileMenu()"></div>
+
 <main id="mainContent">
 <!-- ========== HERO CARRUSEL ========== -->
 <section id="heroCarousel" class="relative bg-slate-100 dark:bg-slate-900 group overflow-hidden">
-<div class="relative h-[500px] lg:h-[600px] w-full">
+<div class="relative h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] w-full">
     <!-- Slides container -->
     <div id="heroSlides" class="h-full w-full relative">
         <!-- Slide por defecto (config general) hasta que carguen banners -->
         <div class="hero-slide absolute inset-0 opacity-100 transition-opacity duration-700 ease-in-out">
             <div class="absolute inset-0 flex flex-col lg:flex-row items-center">
-                <div class="flex-1 px-8 lg:px-20 py-16 text-center lg:text-left z-10">
+                <div class="flex-1 px-4 sm:px-8 lg:px-20 py-8 sm:py-16 text-center lg:text-left z-10">
                     <?php if(!empty($cfg['hero_etiqueta'])): ?>
                     <span class="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary font-bold text-sm mb-6 uppercase tracking-wider"><?php echo htmlspecialchars($cfg['hero_etiqueta']); ?></span>
                     <?php endif; ?>
@@ -2665,6 +2807,91 @@ function cerrarSesionCliente() {
             window.location.href = 'core/cerrar_sesion.php';
         }
     });
+}
+
+// ===== FUNCIONES PARA MENÚ Y BÚSQUEDA MOBILE =====
+function toggleMobileMenu() {
+    const drawer = document.getElementById('mobileMenuDrawer');
+    const overlay = document.getElementById('mobileMenuOverlay');
+    
+    if (drawer.classList.contains('hidden')) {
+        drawer.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    } else {
+        drawer.classList.add('hidden');
+        overlay.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+}
+
+function abrirBuscadorMobile() {
+    const modal = document.getElementById('searchModalMobile');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('searchInputMobile').focus(), 100);
+}
+
+function cerrarBuscadorMobile() {
+    const modal = document.getElementById('searchModalMobile');
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+    document.getElementById('searchInputMobile').value = '';
+}
+
+function realizarBusquedaMobile() {
+    const termino = document.getElementById('searchInputMobile').value.trim();
+    
+    if (!termino) {
+        alert('Por favor ingresa un término de búsqueda');
+        return;
+    }
+    
+    cerrarBuscadorMobile();
+    
+    document.getElementById('mainContent').innerHTML = '<div class="flex justify-center items-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div></div>';
+    
+    fetch('api/api_buscar.php?q=' + encodeURIComponent(termino))
+        .then(r => r.json())
+        .then(data => {
+            let html = '<section class="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">' +
+                '<div class="flex items-center justify-between mb-8 border-l-4 border-primary pl-4">' +
+                    '<div>' +
+                        '<h2 class="text-2xl font-bold text-slate-900 dark:text-white">Resultados de búsqueda</h2>' +
+                        '<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Búsqueda: <strong>' + termino.replace(/'/g, "&#39;").replace(/"/g, "&quot;") + '</strong></p>' +
+                    '</div>' +
+                    '<button onclick="loadHome()" class="text-primary hover:underline font-semibold flex items-center gap-1 bg-none border-none cursor-pointer text-sm">' +
+                        '<span class="material-symbols-outlined">arrow_back</span> Volver al inicio' +
+                    '</button>' +
+                '</div>';
+            
+            if (data.length === 0) {
+                html += '<div class="text-center py-12"><span class="material-symbols-outlined text-5xl text-slate-400">search_off</span><p class="mt-2 text-slate-500">No se encontraron productos con ese término</p></div>';
+            } else {
+                html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">';
+                data.forEach(producto => {
+                    html += `<div class="group bg-white dark:bg-slate-800 rounded-lg overflow-hidden border border-slate-100 dark:border-slate-700 hover:shadow-lg transition-all duration-300 cursor-pointer" onclick="loadProductoDetalle(${producto.id_producto})">`;
+                    html += `<div class="relative h-40 bg-slate-100 dark:bg-slate-700 overflow-hidden">`;
+                    html += `<img src="img/productos/${producto.imagen}" alt="${producto.nombre}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"/>`;
+                    html += `<div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>`;
+                    html += `</div>`;
+                    html += `<div class="p-4">`;
+                    html += `<h3 class="font-semibold text-slate-900 dark:text-white line-clamp-2 text-sm">${producto.nombre}</h3>`;
+                    html += `<p class="text-primary font-bold mt-2">${producto.precio}</p>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                });
+                html += '</div>';
+            }
+            
+            html += '</section>';
+            document.getElementById('mainContent').innerHTML = html;
+            window.scrollTo(0, 0);
+        })
+        .catch(err => {
+            console.error('Error en búsqueda:', err);
+            document.getElementById('mainContent').innerHTML = '<div class="text-center py-20 text-red-500"><span class="material-symbols-outlined text-5xl">error</span><p class="mt-2">Error al realizar la búsqueda</p></div>';
+        });
 }
 
 // Función para volver al contenido original (opcional)

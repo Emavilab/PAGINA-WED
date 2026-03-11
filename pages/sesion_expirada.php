@@ -26,38 +26,17 @@ if (session_status() !== PHP_SESSION_NONE) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html class="scroll-smooth" lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Sesión Expirada</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            text-align: center;
-            padding: 60px 40px;
-            max-width: 500px;
-            animation: slideIn 0.5s ease-out;
-        }
-
+        body { font-family: 'Inter', sans-serif; }
+        
         @keyframes slideIn {
             from {
                 opacity: 0;
@@ -69,107 +48,121 @@ if (session_status() !== PHP_SESSION_NONE) {
             }
         }
 
-        .icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-            animation: pulse 2s infinite;
-        }
-
         @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.7;
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
 
-        h1 {
-            color: #333;
-            font-size: 32px;
-            margin-bottom: 15px;
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
-        p {
-            color: #666;
-            font-size: 16px;
-            line-height: 1.6;
-            margin-bottom: 10px;
-        }
-
-        .message {
-            background: #fff3cd;
-            border-left: 5px solid #ffc107;
-            padding: 15px;
-            margin: 25px 0;
-            border-radius: 5px;
-            text-align: left;
-            color: #856404;
-        }
-
-        .countdown {
-            font-size: 14px;
-            color: #999;
-            margin-top: 20px;
-        }
-
-        .button-container {
-            margin-top: 30px;
-        }
-
-        a {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 40px;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        a:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
+        .animate-slideIn { animation: slideIn 0.5s ease-out; }
+        .animate-pulse-custom { animation: pulse 2s infinite; }
+        .animate-bounce-custom { animation: bounce 2s infinite; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="icon">⏱️</div>
-        <h1>¡Sesión Expirada!</h1>
-        <p>Tu sesión ha caducado por inactividad.</p>
+<body class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 min-h-screen flex items-center justify-center px-4 py-6 sm:px-6 lg:px-8">
+
+  <!-- CONTENEDOR CENTRAL -->
+  <div class="w-full max-w-md sm:max-w-lg">
+
+    <!-- CARD PRINCIPAL -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden animate-slideIn border border-slate-100 dark:border-slate-800">
+
+      <!-- HEADER CON DEGRADADO -->
+      <div class="bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 px-4 sm:px-6 py-8 sm:py-10 text-center">
+        <div class="text-5xl sm:text-6xl md:text-7xl mb-3 sm:mb-4 animate-pulse-custom inline-block">⏱️</div>
+        <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mt-2 sm:mt-3">
+          ¡Sesión Expirada!
+        </h1>
+      </div>
+
+      <!-- CONTENIDO PRINCIPAL -->
+      <div class="px-4 sm:px-6 md:px-8 py-6 sm:py-8 space-y-5 sm:space-y-6">
+
+        <!-- DESCRIPCIÓN -->
+        <p class="text-base sm:text-lg text-slate-700 dark:text-slate-300 leading-relaxed">
+          Tu sesión ha caducado por inactividad.
+        </p>
+
+        <!-- MENSAJE DE ALERTA -->
+        <div class="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 dark:border-amber-600 rounded-lg p-3 sm:p-4">
+          <div class="flex gap-2 sm:gap-3">
+            <span class="material-icons-outlined text-amber-600 dark:text-amber-400 flex-shrink-0 text-xl sm:text-2xl">info</span>
+            <div class="text-left">
+              <p class="font-semibold text-amber-900 dark:text-amber-200 text-sm sm:text-base">¿Qué sucedió?</p>
+              <p class="text-amber-800 dark:text-amber-300 text-xs sm:text-sm mt-1 leading-relaxed">
+                Por motivos de seguridad, tu sesión se cierra automáticamente después de 2 minutos sin actividad.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXPLICACIÓN SECUNDARIA -->
+        <p class="text-base sm:text-lg text-slate-600 dark:text-slate-400 text-center">
+          Para continuar, debes iniciar sesión nuevamente.
+        </p>
+
+        <!-- COUNTDOWN -->
+        <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 sm:p-4 text-center">
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">⏳ Redirigiendo en</p>
+          <p class="text-2xl sm:text-4xl md:text-5xl font-bold text-indigo-600 dark:text-indigo-400 mt-1 sm:mt-2 animate-bounce-custom">
+            <span id="countdown">5</span>s
+          </p>
+        </div>
+
+      </div>
+
+      <!-- BOTONES DE ACCIÓN -->
+      <div class="px-4 sm:px-6 md:px-8 py-6 sm:py-8 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row gap-3 sm:gap-4">
         
-        <div class="message">
-            <strong>¿Qué sucedió?</strong><br>
-            Por motivos de seguridad, tu sesión se cierra automáticamente después de 2 minutos sin actividad.
-        </div>
+        <a href="../index.php" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 text-sm sm:text-base">
+          <span class="material-icons-outlined text-lg sm:text-xl">home</span>
+          Ir al Inicio
+        </a>
 
-        <p>Para continuar, debes iniciar sesión nuevamente.</p>
+        <a href="../pages/login.php" class="flex-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-bold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base">
+          <span class="material-icons-outlined text-lg sm:text-xl">login</span>
+          Iniciar Sesión
+        </a>
 
-        <div class="countdown">
-            Redirigiendo en <span id="countdown">5</span> segundos...
-        </div>
+      </div>
 
-        <div class="button-container">
-            <a href="../index.php">Ir al Inicio</a>
-        </div>
+      <!-- PIE DE INFORMACIÓN -->
+      <div class="px-4 sm:px-6 md:px-8 py-4 text-center border-t border-slate-200 dark:border-slate-700">
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-500">
+          Si experimentas problemas, contacta con soporte
+        </p>
+      </div>
+
     </div>
 
-    <script>
-        // Countdown para redirección automática
-        let seconds = 5;
-        const countdownElement = document.getElementById('countdown');
+    <!-- INFORMACIÓN ADICIONAL EN MOBILE -->
+    <div class="mt-6 sm:mt-8 text-center">
+      <p class="text-xs sm:text-sm text-white/70 dark:text-slate-300">
+        Esta protección ayuda a mantener tu cuenta segura
+      </p>
+    </div>
 
-        const interval = setInterval(() => {
-            seconds--;
-            countdownElement.textContent = seconds;
+  </div>
 
-            if (seconds <= 0) {
-                clearInterval(interval);
-                window.location.href = '../index.php';
-            }
-        }, 1000);
-    </script>
+  <script>
+    // Countdown para redirección automática
+    let seconds = 5;
+    const countdownElement = document.getElementById('countdown');
+
+    const interval = setInterval(() => {
+        seconds--;
+        countdownElement.textContent = seconds;
+
+        if (seconds <= 0) {
+            clearInterval(interval);
+            window.location.href = '../index.php';
+        }
+    }, 1000);
+  </script>
+
 </body>
 </html>

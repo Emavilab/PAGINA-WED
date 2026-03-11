@@ -22,26 +22,42 @@ if (!isset($usuario['id_cliente']) || !$usuario['id_cliente']) {
 <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Configuración de Cuenta</h1>
 <p class="text-slate-500 dark:text-slate-400 mt-1">Gestiona tu información personal y preferencias de seguridad.</p>
 </div>
+<div class="lg:hidden bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 mb-6 overflow-x-auto shadow-sm">
+<div class="flex gap-0">
+<button class="nav-tab-mobile flex-1 px-3 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-center border-b-2 border-primary text-primary whitespace-nowrap" data-tab="personal">
+<span class="material-symbols-outlined text-lg sm:text-xl inline sm:block">person</span>
+<span class="hidden sm:inline">Información</span>
+</button>
+<button class="nav-tab-mobile flex-1 px-3 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 border-b-2 border-transparent hover:text-slate-900 dark:hover:text-white text-center whitespace-nowrap" data-tab="direcciones">
+<span class="material-symbols-outlined text-lg sm:text-xl inline sm:block">location_on</span>
+<span class="hidden sm:inline">Direcciones</span>
+</button>
+<button class="nav-tab-mobile flex-1 px-3 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 border-b-2 border-transparent hover:text-slate-900 dark:hover:text-white text-center whitespace-nowrap" data-tab="seguridad">
+<span class="material-symbols-outlined text-lg sm:text-xl inline sm:block">shield</span>
+<span class="hidden sm:inline">Seguridad</span>
+</button>
+</div>
+</div>
 <div class="flex flex-col lg:flex-row gap-8">
-<aside class="w-full lg:w-64 flex-shrink-0">
-<nav class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+<aside class="hidden lg:block w-full lg:w-64 flex-shrink-0">
+<nav class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm sticky top-4">
 <ul class="flex flex-col">
 <li>
-<a class="flex items-center gap-3 px-6 py-4 text-sm font-semibold nav-link-active cursor-pointer nav-tab" data-tab="personal" href="javascript:void(0)">
-<span class="material-symbols-outlined text-[20px]">person</span>
-Información Personal
+<a class="flex items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 text-sm font-semibold nav-link-active cursor-pointer nav-tab" data-tab="personal" href="javascript:void(0)">
+<span class="material-symbols-outlined text-lg sm:text-xl">person</span>
+<span class="hidden sm:inline">Información Personal</span>
 </a>
 </li>
 <li>
-<a class="flex items-center gap-3 px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer nav-tab" data-tab="direcciones" href="javascript:void(0)">
-<span class="material-symbols-outlined text-[20px]">location_on</span>
-Direcciones de Envío
+<a class="flex items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer nav-tab" data-tab="direcciones" href="javascript:void(0)">
+<span class="material-symbols-outlined text-lg sm:text-xl">location_on</span>
+<span class="hidden sm:inline">Direcciones de Envío</span>
 </a>
 </li>
 <li>
-<a class="flex items-center gap-3 px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-t border-slate-100 dark:border-slate-800 cursor-pointer nav-tab" data-tab="seguridad" href="javascript:void(0)">
-<span class="material-symbols-outlined text-[20px]">shield</span>
-Seguridad
+<a class="flex items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-t border-slate-100 dark:border-slate-800 cursor-pointer nav-tab" data-tab="seguridad" href="javascript:void(0)">
+<span class="material-symbols-outlined text-lg sm:text-xl">shield</span>
+<span class="hidden sm:inline">Seguridad</span>
 </a>
 </li>
 </ul>
@@ -112,35 +128,32 @@ Seguridad
 </div>
 </div>
 </div>
-<div id="tab-direcciones" class="tab-content hidden">
-<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div id="tab-direcciones" class="tab-content hidden bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
 <div>
-<h2 class="text-3xl font-extrabold text-slate-900 dark:text-white">Mis Direcciones</h2>
-<p class="text-slate-500 dark:text-slate-400 mt-1">Gestiona tus lugares de entrega para un proceso de compra más rápido.</p>
+<h2 class="text-xl font-bold text-slate-900 dark:text-white">Mis Direcciones de Envío</h2>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Gestiona tus lugares de entrega para un proceso de compra más rápido.</p>
 </div>
 <button onclick="abrirModalDireccion()" 
-class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-blue-600 text-white font-bold rounded-xl shadow-md transition-all active:scale-95">
-
-    <span class="material-symbols-outlined">add</span>
-    Añadir dirección
-
+class="flex items-center justify-center gap-2 px-4 py-2 bg-primary hover:bg-blue-600 text-white font-bold rounded-lg text-sm transition-all active:scale-95">
+<span class="material-symbols-outlined text-base">add</span>
+<span class="hidden sm:inline">Añadir</span>
 </button>
 </div>
+<div class="p-6 md:p-8">
 <div id="contenedor-direcciones" 
-     class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+     class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
 </div>
 <button onclick="abrirModalDireccion()" 
-class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 flex flex-col items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all group">
-
-    <span class="material-symbols-outlined text-4xl mb-2 group-hover:scale-110 transition-transform">
-        add_circle
-    </span>
-
-    <span class="font-bold">
-        Añadir otra dirección
-    </span>
-
+class="w-full bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 flex flex-col items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all group">
+<span class="material-symbols-outlined text-4xl mb-2 group-hover:scale-110 transition-transform">
+add_circle
+</span>
+<span class="font-bold text-sm">
+Añadir otra dirección
+</span>
 </button>
+</div>
 </div>
 </div>
 </div>
@@ -291,10 +304,20 @@ class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed borde
 // ===============================
 let direccionAEliminar = null;
 function initTabs() {
+    // Tabs de desktop
     const tabs = document.querySelectorAll('.nav-tab');
-    
     tabs.forEach(tab => {
         tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            const tabName = this.getAttribute('data-tab');
+            showTab(tabName);
+        });
+    });
+
+    // Tabs de mobile
+    const mobileTabButtons = document.querySelectorAll('.nav-tab-mobile');
+    mobileTabButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
             e.preventDefault();
             const tabName = this.getAttribute('data-tab');
             showTab(tabName);
@@ -303,26 +326,44 @@ function initTabs() {
 }
 
 function showTab(tabName) {
+    // Ocultar todos los tabs
     const tabContents = document.querySelectorAll('.tab-content');
     tabContents.forEach(content => {
         content.classList.add('hidden');
     });
 
+    // Desactivar todos los tabs desktop
     const tabs = document.querySelectorAll('.nav-tab');
     tabs.forEach(tab => {
         tab.classList.remove('nav-link-active');
         tab.classList.add('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-50', 'dark:hover:bg-slate-800');
     });
 
+    // Desactivar todos los tabs mobile
+    const mobileTabButtons = document.querySelectorAll('.nav-tab-mobile');
+    mobileTabButtons.forEach(btn => {
+        btn.classList.remove('border-primary', 'text-primary', 'font-semibold');
+        btn.classList.add('border-transparent', 'text-slate-600', 'dark:text-slate-400', 'font-medium');
+    });
+
+    // Mostrar tab activo
     const activeContent = document.getElementById('tab-' + tabName);
     if (activeContent) {
         activeContent.classList.remove('hidden');
     }
 
+    // Activar tab desktop
     const activeTab = document.querySelector('.nav-tab[data-tab="' + tabName + '"]');
     if (activeTab) {
         activeTab.classList.add('nav-link-active');
         activeTab.classList.remove('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-50', 'dark:hover:bg-slate-800');
+    }
+
+    // Activar tab mobile
+    const activeMobileTab = document.querySelector('.nav-tab-mobile[data-tab="' + tabName + '"]');
+    if (activeMobileTab) {
+        activeMobileTab.classList.remove('border-transparent', 'text-slate-600', 'dark:text-slate-400', 'font-medium');
+        activeMobileTab.classList.add('border-primary', 'text-primary', 'font-semibold');
     }
 }
 
@@ -776,5 +817,10 @@ document.addEventListener("click", function(e) {
     if (btnEliminar) {
        abrirModalEliminarDireccion(btnEliminar.dataset.id);
     }
+});
+
+// Inicializar perfil cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    iniciarPerfil();
 });
 </script>

@@ -717,7 +717,7 @@ CREATE TABLE `detalle_compra` (
   FOREIGN KEY (`producto_id`)
   REFERENCES `productos` (`id_producto`)
   ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4; 
 --
 -- Dumping data for table `usuarios`
 --

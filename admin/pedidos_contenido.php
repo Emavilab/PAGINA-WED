@@ -110,7 +110,7 @@ LEFT JOIN metodos_pago mp ON p.id_metodo_pago = mp.id_metodo_pago
 <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
 
 <td class="px-6 py-5 font-semibold">
-    #<?php echo $pedido['id_pedido']; ?>
+    <?php echo $pedido['id_pedido']; ?>
 </td>
 
 <td class="px-6 py-5">

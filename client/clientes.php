@@ -384,7 +384,7 @@ document.addEventListener("submit", function(e){
             return;
         }
 
-        fetch("/PAGINA-WED/client/clientes.php", {
+        fetch("/PAGINA%20WED/client/clientes.php", {
             method: "POST",
             body: formData
         })
@@ -496,7 +496,7 @@ document.addEventListener("click", function(e){
 // ABRIR MODAL EDITAR
 function abrirModalEditar(id){
 
-    fetch("/PAGINA-WED/client/clientes_obtener.php?id=" + id)
+    fetch("/PAGINA%20WED/client/clientes_obtener.php?id=" + id)
     .then(res => res.json())
     .then(data => {
 
@@ -539,7 +539,7 @@ document.getElementById("formEditar").addEventListener("submit", function(e){
 
     const formData = new FormData(this);
 
-    fetch("/PAGINA-WED/client/clientes_editar.php", {
+    fetch("/PAGINA%20WED/client/clientes_editar.php", {
         method: "POST",
         body: formData
     })
@@ -578,7 +578,7 @@ function confirmarEliminar(){
 
     const id = document.getElementById("delete_id").value;
 
-    fetch("/PAGINA-WED/client/clientes_eliminar.php", {
+    fetch("/PAGINA%20WED/client/clientes_eliminar.php", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify({id:id})

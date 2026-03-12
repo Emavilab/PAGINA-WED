@@ -1,74 +1,64 @@
 ﻿<?php
 /*
-========================================================
-MODULO ADMINISTRADOR DE COMPRAS
-========================================================
+=====================================================
+MODULO DE COMPRAS
+=====================================================
 
-Este mÃ³dulo permite gestionar las compras del sistema.
+DESCRIPCIÓN:
+Este módulo permite gestionar las compras dentro del
+sistema de inventario. Desde aquí el administrador puede
+registrar nuevas compras, visualizar las compras
+registradas y eliminarlas cuando sea necesario.
 
-FUNCIONES:
-âœ” Mostrar lista de compras
-âœ” Registrar nueva compra
-âœ” Eliminar compra
-âœ” Interfaz sencilla para administrador
+FUNCIONES PRINCIPALES:
+✔ Mostrar lista de compras registradas
+✔ Registrar una nueva compra mediante formulario
+✔ Eliminar compras existentes
+✔ Interfaz visual sencilla para el administrador
 
-TABLA UTILIZADA:
-compras
-- id
-- fecha
-- proveedor
+TABLAS RELACIONADAS EN LA BASE DE DATOS:
+- productos
+- compras
+- detalle_compra
 
-AUTOR: Sistema Inventario
-========================================================
+FLUJO DEL MODULO:
+1. Conectar con la base de datos
+2. Consultar productos disponibles
+3. Mostrar formulario para registrar compra
+4. Mostrar tabla con las compras registradas
+5. Permitir eliminar compras desde la tabla
+
+AUTOR: Sistema de Inventario
+=====================================================
 */
 
-/* CONEXION A BASE DE DATOS */
-include("../core/conexion.php");
+
+# =====================================================
+# CONEXIÓN A BASE DE DATOS
+# =====================================================
+# Se carga el archivo de conexión que permite interactuar
+# con la base de datos MySQL del sistema.
+require_once '../core/conexion.php'; // ✅ Ajusta la ruta según tu proyecto
 
 
-/* =====================================================
-REGISTRAR NUEVA COMPRA
-=====================================================*/
-
-if(isset($_POST['guardar']))
-{
-
-    $fecha = $_POST['fecha'];
-    $proveedor = $_POST['proveedor'];
-
-    $sql = "INSERT INTO compras (fecha, proveedor)
-            VALUES ('$fecha','$proveedor')";
-
-    mysqli_query($conexion,$sql);
-
-}
-
-
-/* =====================================================
-ELIMINAR COMPRA
-=====================================================*/
-
-if(isset($_GET['eliminar']))
-{
-
-$id = $_GET['eliminar'];
-
-$sql = "DELETE FROM compras WHERE id='$id'";
-
-mysqli_query($conexion,$sql);
-
-}
-
-
-/* =====================================================
-CONSULTAR COMPRAS
-=====================================================*/
-
-$compras = mysqli_query($conexion,"SELECT * FROM compras ORDER BY id DESC");
+# =====================================================
+# CONSULTAR PRODUCTOS
+# =====================================================
+# Se realiza una consulta a la tabla productos para
+# obtener el ID, nombre y stock disponible.
+# Esta información puede ser utilizada posteriormente
+# al registrar una compra o mostrar datos relacionados.
+$query = mysqli_query($conexion,"SELECT id_producto, nombre, stock FROM productos");
 
 ?>
 
 <style>
+
+/* =====================================================
+   ESTILOS GENERALES DEL MODULO DE COMPRAS
+   Se utiliza tipografía moderna y diseño limpio
+===================================================== */
+
 * { font-family: 'Inter', sans-serif; }
 
 .contenedor-compras {
@@ -108,6 +98,11 @@ $compras = mysqli_query($conexion,"SELECT * FROM compras ORDER BY id DESC");
 .contenedor-compras h3 .material-icons-round {
     font-size: 24px;
 }
+
+
+/* =====================================================
+   ESTILOS DEL FORMULARIO
+===================================================== */
 
 .form-group {
     display: flex;
@@ -165,6 +160,11 @@ $compras = mysqli_query($conexion,"SELECT * FROM compras ORDER BY id DESC");
     box-shadow: 0 4px 12px rgba(33, 136, 56, 0.3);
 }
 
+
+/* =====================================================
+   ESTILOS DE LA TABLA DE COMPRAS
+===================================================== */
+
 .contenedor-compras table {
     width: 100%;
     border-collapse: collapse;
@@ -192,6 +192,11 @@ $compras = mysqli_query($conexion,"SELECT * FROM compras ORDER BY id DESC");
     background-color: #f8fafc;
 }
 
+
+/* =====================================================
+   BOTON ELIMINAR
+===================================================== */
+
 .contenedor-compras .eliminar {
     background: #ef4444;
     padding: 8px 14px;
@@ -211,9 +216,19 @@ $compras = mysqli_query($conexion,"SELECT * FROM compras ORDER BY id DESC");
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
+
+/* =====================================================
+   ICONOS MATERIAL
+===================================================== */
+
 .material-icons-round {
     font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
 }
+
+
+/* =====================================================
+   DISEÑO RESPONSIVO PARA MOVILES
+===================================================== */
 
 @media (max-width: 768px) {
     .contenedor-compras {
@@ -233,7 +248,9 @@ $compras = mysqli_query($conexion,"SELECT * FROM compras ORDER BY id DESC");
         padding: 10px;
     }
 }
+
 </style>
+
 
 <div class="contenedor-compras">
 
@@ -242,8 +259,10 @@ $compras = mysqli_query($conexion,"SELECT * FROM compras ORDER BY id DESC");
   Modulo de Compras
 </h1>
 
+
 <!-- ===================================================== -->
-<!-- FORMULARIO REGISTRAR COMPRA -->
+<!-- FORMULARIO PARA REGISTRAR NUEVA COMPRA                -->
+<!-- Permite ingresar fecha y proveedor de la compra      -->
 <!-- ===================================================== -->
 
 <h3>
@@ -271,8 +290,10 @@ $compras = mysqli_query($conexion,"SELECT * FROM compras ORDER BY id DESC");
 </form>
 
 
+
 <!-- ===================================================== -->
-<!-- TABLA DE COMPRAS -->
+<!-- TABLA QUE MUESTRA TODAS LAS COMPRAS REGISTRADAS      -->
+<!-- Permite visualizar y eliminar compras existentes     -->
 <!-- ===================================================== -->
 
 <h3>
@@ -287,7 +308,7 @@ $compras = mysqli_query($conexion,"SELECT * FROM compras ORDER BY id DESC");
       <th>ID</th>
       <th>Fecha</th>
       <th>Proveedor</th>
-      <th>AcciÃ³n</th>
+      <th>Acción</th>
     </tr>
   </thead>
   <tbody>
@@ -299,7 +320,7 @@ $compras = mysqli_query($conexion,"SELECT * FROM compras ORDER BY id DESC");
       <td>
         <a class="eliminar"
            href="admin_compras.php?eliminar=<?php echo $row['id']; ?>"
-           onclick="return confirm('Â¿Eliminar esta compra?')">
+           onclick="return confirm('¿Eliminar esta compra?')">
           <span class="material-icons-round" style="font-size: 18px;">delete</span>
           Eliminar
         </a>

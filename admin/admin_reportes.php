@@ -12,9 +12,11 @@ FUNCIONES PRINCIPALES:
 ✔ Mostrar total de productos
 ✔ Mostrar total de unidades en inventario
 ✔ Mostrar productos con bajo stock
-✔ Buscar productos (redirige al módulo productos)
 ✔ Mostrar tabla completa de productos
 ✔ Exportar datos a Excel
+
+NOTA:
+Se eliminó el buscador de productos según requerimiento.
 
 AUTOR: Sistema Inventario
 */
@@ -36,38 +38,33 @@ $row1 = $totalProductos->fetch_assoc();
 $totalStock = $conexion->query("SELECT SUM(stock) as total FROM productos");
 $row2 = $totalStock->fetch_assoc();
 
+
 /*
 ========================================================
 CONSULTA PRODUCTOS CON STOCK BAJO
 ========================================================
 */
+
 $consultaStockBajo = "
 SELECT * FROM productos
 WHERE stock < 5
 ORDER BY nombre ASC
 ";
+
 $resultadoStockBajo = $conexion->query($consultaStockBajo);
+
 
 /*
 ========================================================
 CONSULTA TABLA COMPLETA DE PRODUCTOS
 ========================================================
-Si se usa el buscador filtra resultados
-========================================================
 */
-if(isset($_GET['buscar']) && $_GET['buscar'] != ""){
-    $buscar = $conexion->real_escape_string($_GET['buscar']);
-    $consultaProductos = "
-    SELECT * FROM productos
-    WHERE nombre LIKE '%$buscar%'
-    ORDER BY nombre ASC
-    ";
-}else{
-    $consultaProductos = "
-    SELECT * FROM productos
-    ORDER BY nombre ASC
-    ";
-}
+
+$consultaProductos = "
+SELECT * FROM productos
+ORDER BY nombre ASC
+";
+
 $resultadoProductos = $conexion->query($consultaProductos);
 
 ?>
@@ -300,8 +297,9 @@ $resultadoProductos = $conexion->query($consultaProductos);
 
 <p>Visualiza estadísticas y estado del inventario.</p>
 
+
 <!-- ===================================================== -->
-<!-- FORMULARIO BUSCADOR -->
+<!-- BOTON EXPORTAR EXCEL -->
 <!-- ===================================================== -->
 <form method="GET" action="productos.php">
   <input 
@@ -395,8 +393,11 @@ $resultadoProductos = $conexion->query($consultaProductos);
     ?>
   </td>
 </tr>
+
 <?php } ?>
+
 </tbody>
+
 </table>
 
 </div>

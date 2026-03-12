@@ -559,56 +559,65 @@ function bindNewAddressForm() {
 /* ===============================
    MOSTRAR DIRECCIÓN EN RESUMEN
 ================================= */
-function mostrarDireccionSeleccionada(direccion, ciudad, codigoPostal, telefono, referencia, nombreDepartamento, costoEnvio) {
-    const display = document.getElementById('direccionDisplay');
-    if (!display) return;
+function mostrarDireccionSeleccionada(
+direccion,
+ciudad,
+codigoPostal,
+telefono,
+referencia,
+nombreDepartamento,
+costoEnvio
+) {
 
-    if (typeof costoEnvio === 'number' && !isNaN(costoEnvio)) {
-       envioDepartamento = costoEnvio;
-       // cargar tarjeta dinámica de envío por departamento
-    cargarEnvioDepartamento(nombreDepartamento);
+const display = document.getElementById('direccionDisplay');
+if (!display) return;
 
-        // actualizar etiqueta con nombre del departamento
-        const label = document.getElementById("shippingDepartmentLabel");
-        if(label){
-            label.innerText = "Envío a tu departamento (" + nombreDepartamento + ")";
-        }
+envioDepartamento = parseFloat(costoEnvio) || 0;
 
-        cargarResumenPedido();
-    }
-
-    display.innerHTML = `
-        <div class="space-y-2">
-            <div>
-                <p class="text-xs text-slate-500">Referencia</p>
-                <p class="font-semibold text-slate-900 dark:text-white">${referencia || 'No especificada'}</p>
-            </div>
-            <div>
-                <p class="text-xs text-slate-500">Dirección</p>
-                <p class="font-semibold text-slate-900 dark:text-white">${direccion}</p>
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-                <div>
-                    <p class="text-xs text-slate-500">Ciudad</p>
-                    <p class="font-semibold text-slate-900 dark:text-white">${ciudad}</p>
-                </div>
-                <div>
-                    <p class="text-xs text-slate-500">Departamento</p>
-                    <p class="font-semibold text-slate-900 dark:text-white">${nombreDepartamento || '-'}</p>
-                </div>
-                <div>
-                    <p class="text-xs text-slate-500">Código Postal</p>
-                    <p class="font-semibold text-slate-900 dark:text-white">${codigoPostal || '-'}</p>
-                </div>
-            </div>
-            <div>
-                <p class="text-xs text-slate-500">Teléfono</p>
-                <p class="font-semibold text-slate-900 dark:text-white">${telefono || '-'}</p>
-            </div>
-        </div>
-    `;
+// actualizar etiqueta
+const label = document.getElementById("shippingDepartmentLabel");
+if(label){
+label.innerText = "Envío a tu departamento (" + nombreDepartamento + ")";
 }
 
+cargarResumenPedido();
+
+display.innerHTML = `
+<div class="space-y-2">
+<div>
+<p class="text-xs text-slate-500">Referencia</p>
+<p class="font-semibold">${referencia || 'No especificada'}</p>
+</div>
+
+<div>
+<p class="text-xs text-slate-500">Dirección</p>
+<p class="font-semibold">${direccion}</p>
+</div>
+
+<div class="grid grid-cols-2 gap-2">
+<div>
+<p class="text-xs text-slate-500">Ciudad</p>
+<p class="font-semibold">${ciudad}</p>
+</div>
+
+<div>
+<p class="text-xs text-slate-500">Departamento</p>
+<p class="font-semibold">${nombreDepartamento || '-'}</p>
+</div>
+
+<div>
+<p class="text-xs text-slate-500">Código Postal</p>
+<p class="font-semibold">${codigoPostal || '-'}</p>
+</div>
+</div>
+
+<div>
+<p class="text-xs text-slate-500">Teléfono</p>
+<p class="font-semibold">${telefono || '-'}</p>
+</div>
+</div>
+`;
+}
 function obtenerEnvioSeleccionado() {
     const seleccionado = document.querySelector('input[name="shipping"]:checked');
     return seleccionado ? seleccionado.value : null;
@@ -780,12 +789,11 @@ async function cargarMetodosEnvio() {
                 <label class="relative flex flex-col p-4 ${border} rounded-xl cursor-pointer hover:border-primary/50 transition-colors">
                     
                     <input 
-                        type="radio" 
-                        name="shipping" 
-                        value="${metodo.id_envio}" 
-                        ${checked}
-                        class="absolute top-4 right-4 text-primary focus:ring-primary"
-                        onclick="seleccionarEnvio(${metodo.costo}, this)"
+                    type="checkbox"
+                    name="shipping"
+                    value="${metodo.id_envio}"
+                    class="absolute top-4 right-4 w-5 h-5 rounded-full border-2 border-slate-300 text-primary focus:ring-primary"
+                    onclick="seleccionarEnvio(${metodo.costo}, this)"
                     />
 
                     <span class="font-bold text-slate-900 dark:text-white">
@@ -811,119 +819,44 @@ async function cargarMetodosEnvio() {
     }
 }
 
-// TARJETA DINAMIDA PARA SELECCIÓN DE ENVÍO POR DEPARTAMENTO
-async function cargarEnvioDepartamento(departamento){
 
-const contenedor = document.getElementById("checkout-metodos-envio");
-if(!contenedor) return;
+function seleccionarEnvio(costo, checkbox) {
 
-try{
-
-const response = await fetch(`api/api_envio_departamento.php?departamento=${encodeURIComponent(departamento)}`);
-const data = await response.json();
-
-if(!data.success) return;
-
-const envio = data.envio;
-// seleccionar este método automáticamente
-envioMetodo = parseFloat(envio.costo_envio);
-envioMetodo = 0;
-
-// buscar si ya existe la tarjeta
-let tarjeta = document.getElementById("tarjeta-envio-departamento");
-
-// si no existe crearla
-if(!tarjeta){
-
-contenedor.insertAdjacentHTML("beforeend", `
-
-<label id="tarjeta-envio-departamento" class="relative flex flex-col p-4 border border-slate-200 rounded-xl cursor-pointer hover:border-primary/50 transition-colors">
-
-<input 
-type="radio"
-name="shipping"
-value="departamento"
-checked
-class="absolute top-4 right-4"
-onclick="seleccionarEnvio(${envio.costo_envio}, this)"
-/>
-
-<span id="envioDepNombre" class="font-bold text-slate-900"></span>
-
-<span id="envioDepDias" class="text-sm opacity-70 mb-2"></span>
-
-<span id="envioDepCosto" class="mt-auto font-bold"></span>
-
-</label>
-
-`);
-
-tarjeta = document.getElementById("tarjeta-envio-departamento");
-
-}
-
-// actualizar contenido
-document.getElementById("envioDepNombre").innerText =
-"Envío a " + envio.nombre_departamento;
-
-document.getElementById("envioDepDias").innerText =
-"Entrega estimada " + envio.dias_entrega + " días";
-
-document.getElementById("envioDepCosto").innerText =
-envio.costo_envio == 0 
-? "Gratis"
-: window._cfgMoneda + " " + envio.costo_envio;
-
-}catch(err){
-
-console.error("Error envío departamento",err);
-
-}
-
-}
-function seleccionarEnvio(costo, radio) {
-
+if(checkbox.checked){
     envioMetodo = parseFloat(costo);
 
-    const tarjetas = document.querySelectorAll("#checkout-metodos-envio label");
+    checkbox.closest("label").classList.remove("border","border-slate-200","dark:border-slate-700");
+    checkbox.closest("label").classList.add("border-2","border-primary","bg-primary/5");
 
-    tarjetas.forEach(t => {
-        t.classList.remove("border-2","border-primary","bg-primary/5");
-        t.classList.add("border","border-slate-200","dark:border-slate-700");
-    });
+}else{
+    envioMetodo = 0;
 
-    const tarjeta = radio.closest("label");
+    checkbox.closest("label").classList.remove("border-2","border-primary","bg-primary/5");
+    checkbox.closest("label").classList.add("border","border-slate-200","dark:border-slate-700");
+}
 
-    tarjeta.classList.remove("border","border-slate-200","dark:border-slate-700");
-    tarjeta.classList.add("border-2","border-primary","bg-primary/5");
-
-    cargarResumenPedido();
+cargarResumenPedido();
 }
 
 function actualizarTotalConEnvio(subtotal, impuestos) {
 
-    let envioTotal = 0;
+let envioTotal = envioDepartamento + envioMetodo;
 
-    // Si se selecciona envío por departamento
-    if (obtenerEnvioSeleccionado() === "departamento") {
-        envioTotal = envioDepartamento;
-        envioMetodo = 0;
-    } else {
-        envioTotal = envioMetodo;
-    }
+const total = subtotal + impuestos + envioTotal;
 
-    const total = subtotal + impuestos + envioTotal;
+document.getElementById("shippingDepartment").innerText =
+envioDepartamento > 0
+? window._cfgMoneda + ' ' + envioDepartamento.toFixed(2)
+: "Sin envío";
 
-    document.getElementById("shippingDepartment").innerText =
-        envioDepartamento > 0 ? window._cfgMoneda + ' ' + envioDepartamento.toFixed(2) : "Sin envío";
+document.getElementById("shippingExtra").innerText =
+envioMetodo > 0
+? window._cfgMoneda + ' ' + envioMetodo.toFixed(2)
+: "Sin envío adicional";
 
-    document.getElementById("shippingExtra").innerText =
-        envioMetodo > 0 ? window._cfgMoneda + ' ' + envioMetodo.toFixed(2) : "Sin envío adicional";
-
-    document.getElementById("totalPrice").innerText =
-        window._cfgMoneda + ' ' + total.toFixed(2);
+document.getElementById("totalPrice").innerText =
+window._cfgMoneda + ' ' + total.toFixed(2);
 }
-
 async function cargarBancos() {
 
 const contenedor = document.getElementById("contenedor-bancos");

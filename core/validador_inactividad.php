@@ -40,8 +40,8 @@ if ($tiempo_inactividad > $TIEMPO_MAXIMO_INACTIVIDAD) {
     // Destruir la sesión
     session_destroy();
     
-    // Redirigir a página de sesión expirada
-    header("Location: ../pages/sesion_expirada.php");
+    // Redirigir a página de inicio
+    header("Location: ../index.php");
     exit();
 }
 

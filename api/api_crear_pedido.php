@@ -18,7 +18,6 @@ $id_cliente = $usuario['id_cliente'];
 
 if (
     !isset($_POST['id_direccion']) ||
-    !isset($_POST['id_envio']) ||
     !isset($_POST['id_metodo_pago'])
 ) {
     echo json_encode(["exito" => false, "error" => "Datos incompletos"]);
@@ -26,7 +25,7 @@ if (
 }
 
 $id_direccion = intval($_POST['id_direccion']);
-$id_envio = intval($_POST['id_envio']);
+$id_envio = !empty($_POST['id_envio']) ? intval($_POST['id_envio']) : null;
 $id_metodo_pago = intval($_POST['id_metodo_pago']);
 
 $nombreComprobante = null;
@@ -147,18 +146,20 @@ $envio_departamento = $rowEnvio ? $rowEnvio['costo_envio'] : 0;
    OBTENER ENVIO METODO
 ================================ */
 
-$stmtMetodo = $conexion->prepare("
-    SELECT costo
-    FROM metodos_envio
-    WHERE id_envio = ?
-");
+$envio_metodo = 0;
+if ($id_envio) {
+    $stmtMetodo = $conexion->prepare("
+        SELECT costo
+        FROM metodos_envio
+        WHERE id_envio = ?
+    ");
 
-$stmtMetodo->bind_param("i", $id_envio);
-$stmtMetodo->execute();
-$resMetodo = $stmtMetodo->get_result();
-$rowMetodo = $resMetodo->fetch_assoc();
-
-$envio_metodo = $rowMetodo ? $rowMetodo['costo'] : 0;
+    $stmtMetodo->bind_param("i", $id_envio);
+    $stmtMetodo->execute();
+    $resMetodo = $stmtMetodo->get_result();
+    $rowMetodo = $resMetodo->fetch_assoc();
+    $envio_metodo = $rowMetodo ? $rowMetodo['costo'] : 0;
+}
 
 /* ================================
    TOTAL

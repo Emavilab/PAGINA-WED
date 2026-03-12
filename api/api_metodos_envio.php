@@ -2,7 +2,7 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../core/conexion.php';
 
-$sql = "SELECT id_envio, nombre, descripcion, costo, tiempo_estimado 
+$sql = "SELECT id_envio, nombre, descripcion, costo, reduccion_dias 
         FROM metodos_envio 
         WHERE estado = 'activo'";
 

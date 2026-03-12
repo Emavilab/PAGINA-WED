@@ -18,7 +18,7 @@ if (!$usuario || !isset($usuario['id_cliente'])) {
 
 $id_cliente = $usuario['id_cliente'];
 
-$query = "SELECT d.*, dep.nombre_departamento, dep.costo_envio 
+$query = "SELECT d.*, dep.nombre_departamento, dep.costo_envio, dep.dias_entrega 
           FROM direcciones_cliente d 
           LEFT JOIN departamentos_envio dep ON d.id_departamento = dep.id_departamento 
           WHERE d.id_cliente = ? 

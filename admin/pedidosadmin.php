@@ -23,37 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'])) {
 }
 ?>
 
-<!DOCTYPE html>
-<html class="light" lang="es">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Administración de Lista de Pedidos</title>
-
-<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-
-<script>
-tailwind.config = {
-    darkMode: "class",
-    theme: {
-        extend: {
-            colors: {
-                primary: "#D9480F",
-                "background-light": "#F8FAFC",
-                "background-dark": "#0F172A",
-            },
-            fontFamily: {
-                display: ["Inter", "sans-serif"],
-            },
-            borderRadius: {
-                DEFAULT: "0.5rem",
-            },
-        },
-    },
-};
-</script>
 
 <style>
 body { font-family: 'Inter', sans-serif; }
@@ -61,18 +31,56 @@ body { font-family: 'Inter', sans-serif; }
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1),
                 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
+main {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 24px !important;
+}
+
+main header {
+    margin-bottom: 24px !important;
+}
+
+main header h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+main > div {
+    border-radius: 12px;
+}
+
+.material-icons-outlined {
+    font-size: 28px;
+}
+
+@media (max-width: 768px) {
+    main {
+        padding: 16px !important;
+    }
+    
+    main header h2 {
+        font-size: 20px !important;
+    }
+    
+    .flex-col .flex-1 {
+        width: 100% !important;
+    }
+}
 </style>
 <script>
     window._cfgMoneda = '<?php echo addslashes($cfg_moneda); ?>';
 </script>
-</head>
-
-<body class="bg-slate-100 dark:bg-slate-900">
 
 <main class="max-w-7xl mx-auto px-6 pb-12">
 
 <header class="mb-8 flex justify-between items-end">
-    <h2 class="text-3xl font-bold">Administración de Lista de Pedidos</h2>
+    <h2 class="text-3xl font-bold">
+        <span class="material-icons-outlined">shopping_cart</span>
+        Administración de Pedidos
+    </h2>
 </header>
 
 <!-- FILTROS Y BÚSQUEDA -->
@@ -418,6 +426,3 @@ function cerrarModalImagen(){
     modal.style.display = "none";
 }
 </script>
-
-</body>
-</html>

@@ -280,5 +280,155 @@ $admin_sidebar_dark = '#1e293b';
 ==================================================== */
 
 $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
+?>
+<!DOCTYPE html>
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard Administrativo Profesional</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "<?php echo $admin_primary; ?>",
+              "background-light": "<?php echo $admin_bg_light; ?>",
+              "background-dark": "<?php echo $admin_bg_dark; ?>",
+              "sidebar-dark": "<?php echo $admin_sidebar_dark; ?>",
+            },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.75rem",
+            },
+          },
+        },
+      };
+      function toggleDarkMode() {
+        document.documentElement.classList.toggle('dark');
+      }
+      
+      // ===================== FUNCIONES SIDEBAR MÓVIL =====================
+      function toggleSidebarMobile() {
+          const sidebar = document.getElementById('sidebarMobile');
+          const overlay = document.getElementById('sidebarOverlay');
+          
+          if (sidebar && overlay) {
+              if (sidebar.classList.contains('translate-x-0')) {
+                  // Cerrar
+                  sidebar.classList.remove('translate-x-0');
+                  sidebar.classList.add('-translate-x-full');
+                  overlay.classList.add('hidden');
+                  document.body.style.overflow = '';
+              } else {
+                  // Abrir
+                  sidebar.classList.remove('-translate-x-full');
+                  sidebar.classList.add('translate-x-0');
+                  overlay.classList.remove('hidden');
+                  document.body.style.overflow = 'hidden';
+              }
+          }
+      }
+      
+      function closeSidebarMobile() {
+          const sidebar = document.getElementById('sidebarMobile');
+          const overlay = document.getElementById('sidebarOverlay');
+          if (sidebar && overlay) {
+              sidebar.classList.add('-translate-x-full');
+              sidebar.classList.remove('translate-x-0');
+              overlay.classList.add('hidden');
+              document.body.style.overflow = '';
+          }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-active {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid <?php echo $admin_primary; ?>;
+            color: <?php echo $admin_primary; ?>;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
+<div class="flex h-screen overflow-hidden">
+<!-- SIDEBAR DESKTOP -->
+<aside class="w-64 bg-sidebar-dark text-white flex-shrink-0 flex flex-col hidden lg:flex">
+<div class="p-6 flex items-center gap-3">
+<div class="bg-primary p-2 rounded-lg">
+<span class="material-icons-round text-white">store</span>
+</div>
+<div>
+<h1 class="font-bold text-lg leading-tight"><?php echo $admin_nombre; ?></h1>
+<p class="text-xs text-slate-400">Admin Panel</p>
+</div>
+</div>
+<nav class="flex-1 mt-4 px-3 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 sidebar-active rounded-r-none rounded-lg transition-all nav-link" href="#" onclick="loadPage('Dashboard.php', event)">
+<span class="material-icons-round">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<?php if ($_SESSION['id_rol'] == 1): // Solo para administrador ?>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../admin/gestion_productos.php', event)">
+<span class="material-icons-round">inventory_2</span>
+<span class="font-medium">Productos</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../client/categoria.php', event)">
+<span class="material-icons-round">category</span>
+<span class="font-medium">Categorías</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../client/clientes.php', event)">
+<span class="material-icons-round">people</span>
+<span class="font-medium">Clientes</span>
+</a>
+<?php endif; ?>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./pedidosadmin.php', event)">
+<span class="material-icons-round">shopping_cart</span>
+<span class="font-medium">Pedidos</span>
+</a>
+<?php if ($_SESSION['id_rol'] == 1): // Solo para administrador ?>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./usuarios.php', event)">
+<span class="material-icons-round">manage_accounts</span>
+<span class="font-medium">Usuarios</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../client/mensajeria.php', event)">
+<span class="material-icons-round">mail</span>
+<span class="font-medium">Mensajería</span>
+</a>
+<!-- MODULO COMPRAS -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link"
+href="#"
+onclick="loadPage('./admin_compras.php', event)">
+<span class="material-icons-round">shopping_cart</span>
+<span class="font-medium">Compras</span>
+</a>
+<!-- MODULO REPORTES -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link"
+href="#"
+onclick="loadPage('./admin_reportes.php', event)">
+<span class="material-icons-round">bar_chart</span>
+<span class="font-medium">Reportes</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('configuracion.php', event)">
+<span class="material-icons-round">settings</span>
+<span class="font-medium">Configuraciones</span>
+</a>
+<?php endif; ?>
+</nav>
+<div class="p-4 mt-auto">
+<button class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-red-400 w-full transition-all" onclick="cerrarSesion();">
+<span class="material-icons-round">logout</span>
+<span class="font-medium">Cerrar Sesión</span>
+</button>
+</div>
+</aside>
 
 ?>

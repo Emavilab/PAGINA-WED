@@ -618,7 +618,7 @@ CREATE TABLE compras (
     fecha DATETIME NOT NULL
 );
 
--- Tabla de detalle de compras
+-- Tabla de detalle de compras 
 CREATE TABLE detalle_compra (
     id INT(11) AUTO_INCREMENT PRIMARY KEY,
     compra_id INT(11) NOT NULL,

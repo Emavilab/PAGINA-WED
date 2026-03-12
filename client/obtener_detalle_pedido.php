@@ -56,7 +56,7 @@ $puedeCancelar = ($pedido['estado'] === 'pendiente' && (time() - strtotime($pedi
 ================================ */
 
 $sqlDetalle = "
-SELECT dp.cantidad, p.nombre, p.precio
+SELECT dp.cantidad, dp.precio_unitario, dp.subtotal, p.nombre
 FROM detalle_pedido dp
 INNER JOIN productos p ON dp.id_producto = p.id_producto
 WHERE dp.id_pedido = ?
@@ -104,13 +104,13 @@ $total = $pedido['total'];
         <tr class="border-t">
             <td class="p-2"><?php echo $item['nombre']; ?></td>
             <td class="p-2 text-center">
-                L <?php echo number_format($item['precio'], 2); ?>
+                L <?php echo number_format($item['precio_unitario'], 2); ?>
             </td>
             <td class="p-2 text-center">
                 <?php echo $item['cantidad']; ?>
             </td>
             <td class="p-2 text-center font-semibold">
-                L <?php echo number_format($item['precio'] * $item['cantidad'], 2); ?>
+                L <?php echo number_format($item['subtotal'], 2); ?>
             </td>
         </tr>
     <?php endwhile; ?>

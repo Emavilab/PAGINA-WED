@@ -1,218 +1,106 @@
 <?php
 /*
-========================================================
-MODULO ADMINISTRADOR DE COMPRAS
-========================================================
+=====================================================
+MODULO DE COMPRAS
+=====================================================
 
-Este módulo permite gestionar las compras del sistema.
+Este módulo permite registrar compras de productos
+en el sistema de inventario y mostrar los datos
+guardados en la misma página automáticamente.
 
 FUNCIONES:
-✔ Mostrar lista de compras
-✔ Registrar nueva compra
-✔ Eliminar compra
-✔ Interfaz sencilla para administrador
+✔ Mostrar lista de productos disponibles
+✔ Registrar la cantidad comprada
+✔ Guardar la compra en la base de datos
+✔ Actualizar el stock del producto
+✔ Mostrar confirmación con los datos guardados
 
-TABLA UTILIZADA:
-compras
-- id
-- fecha
-- proveedor
+TABLAS RELACIONADAS:
+- productos
+- compras
+- detalle_compra
 
-AUTOR: Sistema Inventario
-========================================================
+Autor: Sistema de Inventario
 */
 
-/* CONEXION A BASE DE DATOS */
-include("../core/conexion.php");
+# =====================================================
+# CONEXIÓN A BASE DE DATOS
+# =====================================================
+require_once '../core/conexion.php'; // ✅ Ajusta la ruta según tu proyecto
 
-
-/* =====================================================
-REGISTRAR NUEVA COMPRA
-=====================================================*/
-
-if(isset($_POST['guardar']))
-{
-
-    $fecha = $_POST['fecha'];
-    $proveedor = $_POST['proveedor'];
-
-    $sql = "INSERT INTO compras (fecha, proveedor)
-            VALUES ('$fecha','$proveedor')";
-
-    mysqli_query($conexion,$sql);
-
-}
-
-
-/* =====================================================
-ELIMINAR COMPRA
-=====================================================*/
-
-if(isset($_GET['eliminar']))
-{
-
-$id = $_GET['eliminar'];
-
-$sql = "DELETE FROM compras WHERE id='$id'";
-
-mysqli_query($conexion,$sql);
-
-}
-
-
-/* =====================================================
-CONSULTAR COMPRAS
-=====================================================*/
-
-$compras = mysqli_query($conexion,"SELECT * FROM compras ORDER BY id DESC");
-
+# =====================================================
+# CONSULTAR PRODUCTOS
+# =====================================================
+$query = mysqli_query($conexion,"SELECT id_producto, nombre, stock FROM productos");
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-
-<meta charset="UTF-8">
-<title>Administrador de Compras</title>
-
-<style>
-
-/* ===============================
-DISEÑO SIMPLE ADMIN
-===============================*/
-
-body{
-font-family: Arial;
-background:#f4f6f9;
-margin:40px;
-}
-
-h1{
-color:#333;
-}
-
-.contenedor{
-background:white;
-padding:20px;
-border-radius:8px;
-box-shadow:0px 0px 10px rgba(0,0,0,0.1);
-}
-
-input,button{
-padding:8px;
-margin:5px;
-}
-
-button{
-background:#28a745;
-color:white;
-border:none;
-cursor:pointer;
-}
-
-button:hover{
-background:#218838;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:20px;
-}
-
-table th{
-background:#343a40;
-color:white;
-padding:10px;
-}
-
-table td{
-padding:10px;
-border-bottom:1px solid #ddd;
-}
-
-.eliminar{
-background:red;
-padding:5px 10px;
-color:white;
-text-decoration:none;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div class="contenedor">
-
-<h1>📦 Módulo de Compras</h1>
-
 <!-- =====================================================
-FORMULARIO REGISTRAR COMPRA
+CONTENEDOR PRINCIPAL DEL MODULO
 ===================================================== -->
+<div class="container" style="border:1px solid #ccc; padding:20px; border-radius:10px; background:#f9f9f9;">
 
-<h3>Registrar Nueva Compra</h3>
+    <!-- TITULO DEL MODULO -->
+    <h2 style="font-size:24px; font-weight:bold; margin-bottom:20px; color:#2563eb;">
+        📦 Módulo de Compras
+    </h2>
 
-<form method="POST">
+    <!-- DESCRIPCIÓN -->
+    <p style="margin-bottom:10px;">
+        Gestiona y registra compras de productos para actualizar el inventario.
+    </p>
 
-<label>Fecha:</label><br>
-<input type="datetime-local" name="fecha" required>
+    <!-- FORMULARIO DE REGISTRO DE COMPRA -->
+    <form id="formCompra" action="admin_guardar_compra.php" method="POST"
+          style="border:1px solid #ddd; padding:20px; border-radius:10px; background:#ffffff;">
 
-<br>
+        <!-- SELECT PRODUCTOS -->
+        <label style="font-weight:bold;">Producto</label>
+        <select name="producto_id" required
+                style="width:100%; padding:8px; border:1px solid #ccc; border-radius:5px; margin-bottom:15px;">
+            <option value="">Seleccione un producto</option>
+            <?php
+            while($row = mysqli_fetch_array($query)){
+                echo "<option value='".$row['id_producto']."'>";
+                echo $row['nombre']." (Stock actual: ".$row['stock'].")";
+                echo "</option>";
+            }
+            ?>
+        </select>
 
-<label>Proveedor:</label><br>
-<input type="text" name="proveedor" placeholder="Nombre proveedor" required>
+        <!-- CANTIDAD COMPRADA -->
+        <label style="font-weight:bold;">Cantidad comprada</label>
+        <input type="number"
+               name="cantidad"
+               required
+               min="1"
+               style="width:100%; padding:8px; border:1px solid #ccc; border-radius:5px; margin-bottom:20px;">
 
-<br><br>
+        <!-- BOTÓN GUARDAR COMPRA -->
+        <button type="submit"
+                style="background:#2563eb; color:white; padding:10px 20px; border:none; border-radius:5px; font-weight:bold;">
+            Guardar Compra
+        </button>
+    </form>
 
-<button type="submit" name="guardar">Guardar Compra</button>
-
-</form>
-
-
-<!-- =====================================================
-TABLA DE COMPRAS
-===================================================== -->
-
-<h3>Lista de Compras</h3>
-
-<table>
-
-<tr>
-<th>ID</th>
-<th>Fecha</th>
-<th>Proveedor</th>
-<th>Acción</th>
-</tr>
-
-<?php while($row = mysqli_fetch_assoc($compras)){ ?>
-
-<tr>
-
-<td><?php echo $row['id']; ?></td>
-
-<td><?php echo $row['fecha']; ?></td>
-
-<td><?php echo $row['proveedor']; ?></td>
-
-<td>
-
-<a class="eliminar"
-href="admin_compras.php?eliminar=<?php echo $row['id']; ?>"
-onclick="return confirm('¿Eliminar compra?')">
-Eliminar
-</a>
-
-</td>
-
-</tr>
-
-<?php } ?>
-
-</table>
-
+    <!-- CONTENEDOR PARA RESULTADO -->
+    <div id="resultado"></div>
 </div>
 
-</body>
-</html>
+<!-- =====================================================
+SCRIPT AJAX PARA PROCESAR COMPRA
+===================================================== -->
+<script>
+document.getElementById('formCompra').onsubmit = function(e){
+    e.preventDefault(); // Evita que se recargue la página
+    var formData = new FormData(this);
+
+    fetch('admin_guardar_compra.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.text())
+    .then(data => {
+        document.getElementById('resultado').innerHTML = data;
+    });
+};
+</script>

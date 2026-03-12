@@ -12,9 +12,11 @@ FUNCIONES PRINCIPALES:
 ✔ Mostrar total de productos
 ✔ Mostrar total de unidades en inventario
 ✔ Mostrar productos con bajo stock
-✔ Buscar productos (redirige al módulo productos)
 ✔ Mostrar tabla completa de productos
 ✔ Exportar datos a Excel
+
+NOTA:
+Se eliminó el buscador de productos según requerimiento.
 
 AUTOR: Sistema Inventario
 */
@@ -36,38 +38,33 @@ $row1 = $totalProductos->fetch_assoc();
 $totalStock = $conexion->query("SELECT SUM(stock) as total FROM productos");
 $row2 = $totalStock->fetch_assoc();
 
+
 /*
 ========================================================
 CONSULTA PRODUCTOS CON STOCK BAJO
 ========================================================
 */
+
 $consultaStockBajo = "
 SELECT * FROM productos
 WHERE stock < 5
 ORDER BY nombre ASC
 ";
+
 $resultadoStockBajo = $conexion->query($consultaStockBajo);
+
 
 /*
 ========================================================
 CONSULTA TABLA COMPLETA DE PRODUCTOS
 ========================================================
-Si se usa el buscador filtra resultados
-========================================================
 */
-if(isset($_GET['buscar']) && $_GET['buscar'] != ""){
-    $buscar = $conexion->real_escape_string($_GET['buscar']);
-    $consultaProductos = "
-    SELECT * FROM productos
-    WHERE nombre LIKE '%$buscar%'
-    ORDER BY nombre ASC
-    ";
-}else{
-    $consultaProductos = "
-    SELECT * FROM productos
-    ORDER BY nombre ASC
-    ";
-}
+
+$consultaProductos = "
+SELECT * FROM productos
+ORDER BY nombre ASC
+";
+
 $resultadoProductos = $conexion->query($consultaProductos);
 
 ?>
@@ -83,6 +80,7 @@ box-shadow:0px 5px 15px rgba(0,0,0,0.1);
 <!-- ===================================================== -->
 <!-- TITULO DEL MODULO -->
 <!-- ===================================================== -->
+
 <h2 style="font-size:26px;font-weight:bold;margin-bottom:5px;">
 📊 Reportes del Sistema
 </h2>
@@ -91,176 +89,232 @@ box-shadow:0px 5px 15px rgba(0,0,0,0.1);
 Visualiza estadísticas y estado del inventario.
 </p>
 
+
 <!-- ===================================================== -->
-<!-- FORMULARIO BUSCADOR -->
+<!-- BOTON EXPORTAR EXCEL -->
 <!-- ===================================================== -->
-<form method="GET" action="productos.php">
 
-  <!-- CAMPO DE BUSQUEDA -->
-  <input 
-    type="text" 
-    name="buscar"
-    value="<?php echo isset($_GET['buscar']) ? $_GET['buscar'] : ''; ?>"
-    placeholder="Buscar producto por nombre, estado o stock..."
-    style="
-      padding:10px;
-      width:300px;
-      border:1px solid #ccc;
-      border-radius:5px;
-    ">
+<a href="exportar_excel.php">
+<button 
+type="button"
+style="
+background:#065f46;
+color:white;
+padding:10px 15px;
+border:none;
+border-radius:5px;
+cursor:pointer;
+">
+Exportar Excel
+</button>
+</a>
 
-  <!-- ===================================================== -->
-  <!-- BOTON EXPORTAR EXCEL -->
-  <!-- ===================================================== -->
-  <a href="exportar_excel.php">
-    <button 
-      type="button"
-      style="
-        background:#065f46;
-        color:white;
-        padding:10px 15px;
-        border:none;
-        border-radius:5px;
-        cursor:pointer;
-      ">
-      Exportar Excel
-    </button>
-  </a>
+<br><br>
 
-</form>
-
-<br>
 
 <!-- ===================================================== -->
 <!-- TARJETAS DE ESTADISTICAS -->
 <!-- ===================================================== -->
+
 <div style="display:flex;gap:20px;flex-wrap:wrap;">
 
-  <!-- TARJETA TOTAL PRODUCTOS -->
-  <div style="
-  flex:1;
-  min-width:200px;
-  background:#eff6ff;
-  border-left:5px solid #1e3a8a;
-  padding:20px;
-  border-radius:8px;
-  ">
-    <p>Total de productos</p>
-    <h3 style="font-size:28px;font-weight:bold;color:#1e3a8a;">
-      <?php echo $row1['total']; ?>
-    </h3>
-  </div>
+<!-- TARJETA TOTAL PRODUCTOS -->
 
-  <!-- TARJETA TOTAL INVENTARIO -->
-  <div style="
-  flex:1;
-  min-width:200px;
-  background:#ecfdf5;
-  border-left:5px solid #065f46;
-  padding:20px;
-  border-radius:8px;
-  ">
-    <p>Unidades en inventario</p>
-    <h3 style="font-size:28px;font-weight:bold;color:#065f46;">
-      <?php echo $row2['total']; ?>
-    </h3>
-  </div>
+<div style="
+flex:1;
+min-width:200px;
+background:#eff6ff;
+border-left:5px solid #1e3a8a;
+padding:20px;
+border-radius:8px;
+">
+<p>Total de productos</p>
+
+<h3 style="font-size:28px;font-weight:bold;color:#1e3a8a;">
+<?php echo $row1['total']; ?>
+</h3>
+
+</div>
+
+
+<!-- TARJETA TOTAL INVENTARIO -->
+
+<div style="
+flex:1;
+min-width:200px;
+background:#ecfdf5;
+border-left:5px solid #065f46;
+padding:20px;
+border-radius:8px;
+">
+
+<p>Unidades en inventario</p>
+
+<h3 style="font-size:28px;font-weight:bold;color:#065f46;">
+<?php echo $row2['total']; ?>
+</h3>
+
+</div>
 
 </div>
 
 <br>
 
+
 <!-- ===================================================== -->
 <!-- TABLA PRODUCTOS CON STOCK BAJO -->
 <!-- ===================================================== -->
+
 <h3 style="margin-bottom:10px;">
 ⚠ Productos con Stock Bajo
 </h3>
 
 <table style="width:100%;border-collapse:collapse;border:1px solid #ccc;">
+
 <thead style="background:#7f1d1d;color:white;">
+
 <tr>
-  <th style="padding:10px;">Producto</th>
-  <th style="padding:10px;">Stock</th>
-  <th style="padding:10px;">Estado</th>
+<th style="padding:10px;">Producto</th>
+<th style="padding:10px;">Stock</th>
+<th style="padding:10px;">Estado</th>
 </tr>
+
 </thead>
+
 <tbody>
+
 <?php while($row = $resultadoStockBajo->fetch_assoc()){ ?>
+
 <tr style="border-bottom:1px solid #ddd;">
-  <td style="padding:10px;"><?php echo $row['nombre']; ?></td>
-  <td style="padding:10px;color:red;font-weight:bold;"><?php echo $row['stock']; ?></td>
-  <td style="padding:10px;">
-    <span style="
-    background:#fee2e2;
-    color:#b91c1c;
-    padding:5px 10px;
-    border-radius:20px;
-    font-size:12px;
-    ">
-    Stock Bajo
-    </span>
-  </td>
+
+<td style="padding:10px;">
+<?php echo $row['nombre']; ?>
+</td>
+
+<td style="padding:10px;color:red;font-weight:bold;">
+<?php echo $row['stock']; ?>
+</td>
+
+<td style="padding:10px;">
+
+<span style="
+background:#fee2e2;
+color:#b91c1c;
+padding:5px 10px;
+border-radius:20px;
+font-size:12px;
+">
+
+Stock Bajo
+
+</span>
+
+</td>
+
 </tr>
+
 <?php } ?>
+
 </tbody>
 </table>
 
 <br><br>
 
+
 <!-- ===================================================== -->
-<!-- TABLA COMPLETA DE PRODUCTOS -->
-<!-- ===================================================== -->
+<!-- TABLA COMPLETA DE PRODUCTOS
+===================================================== -->
+
 <h3 style="margin-bottom:10px;">
 📦 Tabla Completa de Productos
 </h3>
 
 <table style="width:100%;border-collapse:collapse;border:1px solid #ccc;">
+
 <thead style="background:#0f172a;color:white;">
+
 <tr>
-  <th style="padding:10px;">Producto</th>
-  <th style="padding:10px;">Stock</th>
-  <th style="padding:10px;">Estado</th>
+
+<th style="padding:10px;">Producto</th>
+<th style="padding:10px;">Stock</th>
+<th style="padding:10px;">Estado</th>
+
 </tr>
+
 </thead>
+
 <tbody>
+
 <?php while($row = $resultadoProductos->fetch_assoc()){ ?>
+
 <tr style="border-bottom:1px solid #ddd;">
-  <td style="padding:10px;"><?php echo $row['nombre']; ?></td>
-  <td style="padding:10px;font-weight:bold;"><?php echo $row['stock']; ?></td>
-  <td style="padding:10px;">
-    <?php
-    /*
-    ========================================================
-    VERIFICAR ESTADO DEL INVENTARIO
-    ========================================================
-    */
-    if($row['stock'] < 5){
-      echo '<span style="
-      background:#fee2e2;
-      color:#b91c1c;
-      padding:5px 10px;
-      border-radius:20px;
-      font-size:12px;
-      ">
-      Stock Bajo
-      </span>';
-    }else{
-      echo '<span style="
-      background:#dcfce7;
-      color:#166534;
-      padding:5px 10px;
-      border-radius:20px;
-      font-size:12px;
-      ">
-      Disponible
-      </span>';
-    }
-    ?>
-  </td>
+
+<td style="padding:10px;">
+<?php echo $row['nombre']; ?>
+</td>
+
+<td style="padding:10px;font-weight:bold;">
+<?php echo $row['stock']; ?>
+</td>
+
+<td style="padding:10px;">
+
+<?php
+
+/*
+========================================================
+VERIFICAR ESTADO DEL INVENTARIO
+========================================================
+*/
+
+if($row['stock'] < 5){
+
+echo '
+
+<span style="
+background:#fee2e2;
+color:#b91c1c;
+padding:5px 10px;
+border-radius:20px;
+font-size:12px;
+">
+
+Stock Bajo
+
+</span>
+
+';
+
+}else{
+
+echo '
+
+<span style="
+background:#dcfce7;
+color:#166534;
+padding:5px 10px;
+border-radius:20px;
+font-size:12px;
+">
+
+Disponible
+
+</span>
+
+';
+
+}
+
+?>
+
+</td>
+
 </tr>
+
 <?php } ?>
+
 </tbody>
+
 </table>
 
 </div>

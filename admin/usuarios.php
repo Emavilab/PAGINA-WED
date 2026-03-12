@@ -27,47 +27,14 @@ if ($count_row = $count_result->fetch_assoc()) {
     $total_usuarios = $count_row['total'];
 }
 ?>
-<!DOCTYPE html>
-<html class="light" lang="es"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Gestión Avanzada de Usuarios con Filtros</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#3b82f6",
-                        "brand-dark": "#0f172a",
-                    },
-                    fontFamily: {
-                        sans: ["Inter", "sans-serif"],
-                    },
-                },
-            },
-        };
-        function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-        }
-    </script>
-<style type="text/tailwindcss">
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
-            font-size: 20px;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+        font-size: 20px;
+    }
+</style>
 
-</div>
-</div>
-</nav>
-<main class="container mx-auto px-6 py-8 max-w-7xl">
+<div class="container mx-auto max-w-7xl">
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
 <div>
 <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Lista de Usuarios</h2>
@@ -638,5 +605,3 @@ setTimeout(() => {
 // Cerrar IIFE
 })();
 </script>
-
-</body></html>

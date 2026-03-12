@@ -138,6 +138,27 @@ while($m = mysqli_fetch_assoc($metodos)){
 </select>
 </div>
 
+<!-- Filtro método de envío -->
+<div class="flex-1">
+<label class="block text-sm font-semibold mb-2">Filtrar por Método de Envío</label>
+<select 
+id="selectMetodoEnvio"
+class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:border-primary"
+>
+<option value="">-- Todos --</option>
+<option value="con_envio">Con envío adicional (prioridad)</option>
+<?php
+$metodos_envio = mysqli_query($conexion,"SELECT * FROM metodos_envio WHERE estado='activo' ORDER BY nombre");
+while($me = mysqli_fetch_assoc($metodos_envio)){
+?>
+<option value="<?php echo $me['id_envio']; ?>">
+<?php echo htmlspecialchars($me['nombre']); ?>
+</option>
+<?php } ?>
+<option value="sin_envio">Sin envío adicional</option>
+</select>
+</div>
+
 </div>
 </div>
 
@@ -163,6 +184,7 @@ while($m = mysqli_fetch_assoc($metodos)){
         const selectEstado = document.getElementById('selectEstado');
         const tablasResultados = document.getElementById('tablasResultados');
         const selectMetodoPago = document.getElementById('selectMetodoPago');
+        const selectMetodoEnvio = document.getElementById('selectMetodoEnvio');
 
         if (!inputBusqueda || !selectEstado || !tablasResultados) {
             console.log('Esperando elementos...');
@@ -179,6 +201,7 @@ while($m = mysqli_fetch_assoc($metodos)){
         inputBusqueda.addEventListener('input', cargarResultados);
         selectEstado.addEventListener('change', cargarResultados);
         selectMetodoPago.addEventListener('change', cargarResultados);
+        selectMetodoEnvio.addEventListener('change', cargarResultados);
     }
 
     window.cargarResultados = async function(pagina = 1) {
@@ -191,11 +214,13 @@ while($m = mysqli_fetch_assoc($metodos)){
         const numero_pedido = inputBusqueda.value;
         const estado_filtro = selectEstado.value;
         const metodo_pago_filtro = document.getElementById('selectMetodoPago').value;
+        const metodo_envio_filtro = document.getElementById('selectMetodoEnvio').value;
 
         const formData = new FormData();
        formData.append('numero_pedido', numero_pedido);
         formData.append('estado_filtro', estado_filtro);
         formData.append('metodo_pago_filtro', metodo_pago_filtro);
+        formData.append('metodo_envio_filtro', metodo_envio_filtro);
         formData.append('pagina', pagina);
         try {
             tablasResultados.innerHTML = '<p class="text-center py-10 text-gray-500">Cargando...</p>';
@@ -227,12 +252,14 @@ while($m = mysqli_fetch_assoc($metodos)){
         const numero_pedido = inputBusqueda.value;
         const estado_filtro = selectEstado.value;
         const metodo_pago_filtro = document.getElementById('selectMetodoPago').value;
+        const metodo_envio_filtro = document.getElementById('selectMetodoEnvio').value;
 
         const formData = new FormData();
         formData.append('numero_pedido', numero_pedido);
         formData.append('estado_filtro', estado_filtro);
         formData.append('pagina', pagina);
         formData.append('metodo_pago_filtro', metodo_pago_filtro);
+        formData.append('metodo_envio_filtro', metodo_envio_filtro);
 
         fetch('pedidos_contenido.php', {
             method: 'POST',

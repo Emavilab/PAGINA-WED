@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'])) {
     $estadoFiltro = isset($_POST['estado_filtro']) && $_POST['estado_filtro'] !== '' ? $_POST['estado_filtro'] : null;
     $pagina = isset($_POST['pagina']) && is_numeric($_POST['pagina']) ? (int)$_POST['pagina'] : 1;
     $metodoPagoFiltro = isset($_POST['metodo_pago_filtro']) && $_POST['metodo_pago_filtro'] !== '' ? $_POST['metodo_pago_filtro'] : null;
+    $metodoEnvioFiltro = isset($_POST['metodo_envio_filtro']) && $_POST['metodo_envio_filtro'] !== '' ? $_POST['metodo_envio_filtro'] : null;
 
     $porPagina = 10;
     $offset = ($pagina - 1) * $porPagina;
@@ -42,6 +43,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'])) {
     $params[] = $metodoPagoFiltro;
     }
 
+    if ($metodoEnvioFiltro !== null) {
+        if ($metodoEnvioFiltro === 'con_envio') {
+            $whereClauses[] = "p.id_envio IS NOT NULL";
+        } elseif ($metodoEnvioFiltro === 'sin_envio') {
+            $whereClauses[] = "p.id_envio IS NULL";
+        } else {
+            $whereClauses[] = "p.id_envio = ?";
+            $params[] = $metodoEnvioFiltro;
+        }
+    }
+
     $whereSQL = !empty($whereClauses) ? "WHERE " . implode(" AND ", $whereClauses) : "";
 
     $sqlTotal = "SELECT COUNT(*) AS total FROM pedidos p " . $whereSQL;
@@ -56,6 +68,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'])) {
     $totalPedidos = $stmtTotal->get_result()->fetch_assoc()['total'];
     $totalPaginas = ceil($totalPedidos / $porPagina) ?: 1;
 
+    $orderBy = "ORDER BY ";
+    if ($metodoEnvioFiltro === 'con_envio') {
+        $orderBy .= "me.nombre ASC, p.fecha_pedido DESC";
+    } else {
+        $orderBy .= "p.fecha_pedido DESC";
+    }
+
     $sql = "
   SELECT 
     p.id_pedido,
@@ -64,12 +83,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'])) {
     p.subtotal,
     p.total,
     p.estado,
-    mp.nombre AS metodo_pago
+    mp.nombre AS metodo_pago,
+    me.nombre AS metodo_envio
 FROM pedidos p
 INNER JOIN clientes c ON p.id_cliente = c.id_cliente
 LEFT JOIN metodos_pago mp ON p.id_metodo_pago = mp.id_metodo_pago
+LEFT JOIN metodos_envio me ON p.id_envio = me.id_envio
     " . $whereSQL . "
-    ORDER BY p.fecha_pedido DESC
+    " . $orderBy . "
     LIMIT ?, ?
     ";
 
@@ -96,6 +117,7 @@ LEFT JOIN metodos_pago mp ON p.id_metodo_pago = mp.id_metodo_pago
 <th class="px-6 py-4 text-xs font-bold uppercase">Subtotal</th>
 <th class="px-6 py-4 text-xs font-bold uppercase">Total</th>
 <th class="px-6 py-4 text-xs font-bold uppercase">Método Pago</th>
+<th class="px-6 py-4 text-xs font-bold uppercase">Método Envío</th>
 <th class="px-6 py-4 text-xs font-bold uppercase">Estado</th>
 <th class="px-6 py-4 text-xs font-bold uppercase text-center">Acciones</th>
 </tr>
@@ -131,6 +153,16 @@ LEFT JOIN metodos_pago mp ON p.id_metodo_pago = mp.id_metodo_pago
 
 <td class="px-6 py-5">
     <?php echo htmlspecialchars($pedido['metodo_pago'] ?? 'No definido'); ?>
+</td>
+
+<td class="px-6 py-5">
+    <?php if (!empty($pedido['metodo_envio'])): ?>
+    <span class="inline-flex px-3 py-1 rounded-full text-xs font-bold bg-cyan-100 text-cyan-700">
+        <i class="fas fa-truck mr-1"></i> <?php echo htmlspecialchars($pedido['metodo_envio']); ?>
+    </span>
+    <?php else: ?>
+    <span class="text-slate-400 text-sm">Estándar</span>
+    <?php endif; ?>
 </td>
 
 <td class="px-6 py-5">
@@ -175,7 +207,7 @@ data-id="<?php echo $pedido['id_pedido']; ?>">
 <?php else: ?>
 
 <tr>
-<td colspan="7" class="px-6 py-20 text-center text-gray-500">
+<td colspan="9" class="px-6 py-20 text-center text-gray-500">
     No se encontraron pedidos
 </td>
 </tr>

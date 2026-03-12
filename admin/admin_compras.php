@@ -239,7 +239,7 @@ $compras = mysqli_query($conexion,"SELECT * FROM compras ORDER BY id DESC");
 
 <h1>
   <span class="material-icons-round">shopping_bag</span>
-  MÃ³dulo de Compras
+  Modulo de Compras
 </h1>
 
 <!-- ===================================================== -->

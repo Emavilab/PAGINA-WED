@@ -157,6 +157,18 @@ $cfg_moneda = $simbolos_moneda[$cfg_moneda_cod] ?? $cfg_moneda_cod;
 <span class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">2</span>
 <h2 class="text-xl font-bold">Método de Envío</h2>
 </div>
+
+<!-- Envío por departamento (automático) -->
+<div id="envio-departamento-info" class="p-4 rounded-xl border-2 border-primary bg-primary/5 mb-4">
+    <div class="flex items-center gap-2 mb-1">
+        <span class="material-icons text-primary">local_shipping</span>
+        <span class="font-bold text-slate-900 dark:text-white">Envío a tu departamento</span>
+    </div>
+    <p class="text-sm text-slate-500" id="envio-depto-detalle">Selecciona una dirección para ver el costo de envío</p>
+</div>
+
+<!-- Métodos de envío adicionales (opcionales) -->
+<p class="text-sm font-semibold text-slate-500 mb-3">Métodos de envío adicionales (opcional)</p>
 <div id="checkout-metodos-envio" class="grid grid-cols-1 md:grid-cols-2 gap-4">
 </div>
 </section>
@@ -337,6 +349,7 @@ async function cargarDireccionesCheckout() {
 
         data.direcciones.forEach((dir, index) => {
             const costoEnvio = dir.costo_envio != null ? parseFloat(dir.costo_envio) : 0;
+            const diasEntrega = dir.dias_entrega != null ? parseInt(dir.dias_entrega) : 0;
             const nombreDep = (dir.nombre_departamento || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
             const ref = (dir.referencia || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
             const direccionEsc = (dir.direccion || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
@@ -345,7 +358,7 @@ async function cargarDireccionesCheckout() {
             const telEsc = (dir.telefono || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
             contenedor.innerHTML += `
-                <label class="relative group" onclick="mostrarDireccionSeleccionada('${direccionEsc}', '${ciudadEsc}', '${cpEsc}', '${telEsc}', '${ref}', '${nombreDep}', ${costoEnvio})">  
+                <label class="relative group" onclick="mostrarDireccionSeleccionada('${direccionEsc}', '${ciudadEsc}', '${cpEsc}', '${telEsc}', '${ref}', '${nombreDep}', ${costoEnvio}, ${diasEntrega})">  
                     <input 
                         class="peer hidden" 
                         name="saved_address" 
@@ -387,9 +400,10 @@ async function cargarDireccionesCheckout() {
         if (data.direcciones.length > 0) {
             const primera = data.direcciones[0];
             const costoEnvio = primera.costo_envio != null ? parseFloat(primera.costo_envio) : 0;
+            const diasEntrega = primera.dias_entrega != null ? parseInt(primera.dias_entrega) : 0;
             mostrarDireccionSeleccionada(
                 primera.direccion, primera.ciudad, primera.codigo_postal || '', primera.telefono || '',
-                primera.referencia || '', primera.nombre_departamento || '', costoEnvio
+                primera.referencia || '', primera.nombre_departamento || '', costoEnvio, diasEntrega
             );
         }
 
@@ -566,13 +580,15 @@ codigoPostal,
 telefono,
 referencia,
 nombreDepartamento,
-costoEnvio
+costoEnvio,
+diasEntrega
 ) {
 
 const display = document.getElementById('direccionDisplay');
 if (!display) return;
 
 envioDepartamento = parseFloat(costoEnvio) || 0;
+diasEntregaDepartamento = parseInt(diasEntrega) || 0;
 
 // actualizar etiqueta
 const label = document.getElementById("shippingDepartmentLabel");
@@ -580,7 +596,22 @@ if(label){
 label.innerText = "Envío a tu departamento (" + nombreDepartamento + ")";
 }
 
+// Actualizar info de envío por departamento
+const deptoInfo = document.getElementById('envio-depto-detalle');
+if (deptoInfo) {
+    const costoTexto = envioDepartamento > 0 
+        ? window._cfgMoneda + ' ' + envioDepartamento.toFixed(2) 
+        : 'Gratis';
+    const diasTexto = diasEntrega > 0 
+        ? (diasEntrega === 1 ? '1 día' : diasEntrega + ' días') 
+        : '';
+    deptoInfo.innerHTML = '<span class="font-bold text-slate-900 dark:text-white">' + costoTexto + '</span>' +
+        (diasTexto ? ' · <span class="text-slate-600">Entrega estimada: ' + diasTexto + '</span>' : '') +
+        (nombreDepartamento ? ' · <span class="text-slate-600">' + nombreDepartamento + '</span>' : '');
+}
+
 cargarResumenPedido();
+cargarMetodosEnvio();
 
 display.innerHTML = `
 <div class="space-y-2">
@@ -650,12 +681,9 @@ async function confirmarPedido() {
         return;
     }
 
-    // ✓ 3. Validar método de envío
+    // ✓ 3. Validar método de envío (opcional - puede no seleccionar ninguno)
     const envioId = obtenerEnvioSeleccionado();
-    if (!envioId) {
-        alert("⚠️ Debes seleccionar un método de envío.");
-        return;
-    }
+    // No se requiere validación, el envío adicional es opcional
 
     // ✓ 4. Validar método de pago
     const metodoPagoId = metodoPagoSeleccionado;
@@ -711,7 +739,7 @@ async function confirmarPedido() {
 
     const formData = new FormData();
     formData.append("id_direccion", direccionId);
-    formData.append("id_envio", envioId);
+    formData.append("id_envio", envioId || '');  
     formData.append("id_metodo_pago", metodoPagoId);
 
     if (inputComprobante && inputComprobante.files.length > 0) {
@@ -748,6 +776,7 @@ async function confirmarPedido() {
 }
 let envioDepartamento = 0;
 let envioMetodo = 0;
+let diasEntregaDepartamento = 0;
 
 async function cargarMetodosEnvio() {
 
@@ -760,39 +789,28 @@ async function cargarMetodosEnvio() {
         const data = await response.json();
 
         if (!data.success || !data.metodos.length) {
-            contenedor.innerHTML = "<p>No hay métodos adicionales disponibles</p>";
+            contenedor.innerHTML = "<p class='text-sm text-slate-500'>No hay métodos adicionales disponibles</p>";
             return;
         }
     
-
         contenedor.innerHTML = "";
 
-        data.metodos.forEach((metodo, index) => {
+        data.metodos.forEach((metodo) => {
 
-            const checked = index === 0 ? "checked" : "";
-            const border = index === 0 ? 
-                "border-2 border-primary bg-primary/5" : 
-                "border border-slate-200 dark:border-slate-700";
-
-                if(index === 0) {
-            envioMetodo = parseFloat(metodo.costo);
-
-            setTimeout(() => {
-                const radio = document.querySelector('input[name="shipping"]:checked');
-                if(radio){
-                    seleccionarEnvio(envioMetodo, radio);
-                }
-            }, 50);
-        }
+            const reduccion = parseInt(metodo.reduccion_dias) || 0;
+            const diasEstimados = Math.max(1, diasEntregaDepartamento - reduccion);
+            const diasTexto = diasEntregaDepartamento > 0 
+                ? (diasEstimados === 1 ? 'Entrega en ~1 día' : 'Entrega en ~' + diasEstimados + ' días')
+                : '';
 
             contenedor.innerHTML += `
-                <label class="relative flex flex-col p-4 ${border} rounded-xl cursor-pointer hover:border-primary/50 transition-colors">
+                <label class="relative flex flex-col p-4 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:border-primary/50 transition-colors">
                     
                     <input 
                     type="checkbox"
                     name="shipping"
                     value="${metodo.id_envio}"
-                    class="absolute top-4 right-4 w-5 h-5 rounded-full border-2 border-slate-300 text-primary focus:ring-primary"
+                    class="absolute top-4 right-4 w-5 h-5 rounded border-2 border-slate-300 text-primary focus:ring-primary"
                     onclick="seleccionarEnvio(${metodo.costo}, this)"
                     />
 
@@ -800,8 +818,8 @@ async function cargarMetodosEnvio() {
                         ${metodo.nombre}
                     </span>
 
-                    <span class="text-sm opacity-70 mb-2">
-                        ${metodo.tiempo_estimado || ""}
+                    <span class="text-sm text-emerald-600 font-medium mb-2">
+                        ${diasTexto}
                     </span>
 
                     <span class="mt-auto font-bold ${metodo.costo == 0 ? 'text-emerald-500' : ''}">
@@ -823,8 +841,17 @@ async function cargarMetodosEnvio() {
 function seleccionarEnvio(costo, checkbox) {
 
 if(checkbox.checked){
-    envioMetodo = parseFloat(costo);
+    // Desmarcar todos los demás checkboxes
+    const todos = document.querySelectorAll('input[name="shipping"]');
+    todos.forEach(cb => {
+        if (cb !== checkbox) {
+            cb.checked = false;
+            cb.closest("label").classList.remove("border-2","border-primary","bg-primary/5");
+            cb.closest("label").classList.add("border","border-slate-200","dark:border-slate-700");
+        }
+    });
 
+    envioMetodo = parseFloat(costo);
     checkbox.closest("label").classList.remove("border","border-slate-200","dark:border-slate-700");
     checkbox.closest("label").classList.add("border-2","border-primary","bg-primary/5");
 
@@ -1071,7 +1098,7 @@ const contenedor = document.getElementById("contenedor-comprobante");
 const input = document.getElementById("input-comprobante");
 const bancos = document.getElementById("contenedor-bancos");
 
-if (idMetodo == 20) {
+if (idMetodo == 20) { // Transferencia
 
     if(contenedor) contenedor.classList.remove("hidden");
 

@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $id = $_POST['id_envio'] ?? '';
         $nombre = mysqli_real_escape_string($conexion, $_POST['nombre']);
         $costo = mysqli_real_escape_string($conexion, $_POST['costo']);
-        $tiempo = mysqli_real_escape_string($conexion, $_POST['tiempo']);
+        $reduccion_dias = intval($_POST['reduccion_dias'] ?? 0);
         $estado = $_POST['estado'] ?? 'activo';
         $descripcion = mysqli_real_escape_string($conexion, $_POST['descripcion'] ?? '');
 
@@ -104,14 +104,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         if (empty($id)) {
-            $sql = "INSERT INTO metodos_envio (nombre, costo, tiempo_estimado, estado, descripcion) 
-                    VALUES ('$nombre', '$costo', '$tiempo', '$estado', '$descripcion')";
+            $sql = "INSERT INTO metodos_envio (nombre, costo, reduccion_dias, estado, descripcion) 
+                    VALUES ('$nombre', '$costo', $reduccion_dias, '$estado', '$descripcion')";
         } else {
             $id = intval($id);
             $sql = "UPDATE metodos_envio SET 
                     nombre = '$nombre', 
                     costo = '$costo', 
-                    tiempo_estimado = '$tiempo', 
+                    reduccion_dias = $reduccion_dias, 
                     estado = '$estado', 
                     descripcion = '$descripcion' 
                     WHERE id_envio = $id";
@@ -624,36 +624,21 @@ if (isset($_GET['eliminar_envio'])) {
     }
     
     try {
-        // Verificar si hay pedidos asociados a este método de envío
-        $stmtCheck = $conexion->prepare("SELECT COUNT(*) as count FROM pedidos WHERE id_envio = ?");
-        $stmtCheck->bind_param("i", $id);
-        $stmtCheck->execute();
-        $resCheck = $stmtCheck->get_result();
-        $rowCheck = $resCheck->fetch_assoc();
-        
-        if ($rowCheck['count'] > 0) {
-            responder(false, 'No se puede eliminar este método de envío porque tiene ' . $rowCheck['count'] . ' pedido(s) asociado(s). Primero debes cambiar el método de envío de esos pedidos.');
-        }
-        
-        // Desactivar foreign key checks temporalmente
-        mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=0");
+        // Desvincular pedidos asociados (poner id_envio en NULL)
+        $stmtUpdate = $conexion->prepare("UPDATE pedidos SET id_envio = NULL WHERE id_envio = ?");
+        $stmtUpdate->bind_param("i", $id);
+        $stmtUpdate->execute();
         
         // Eliminar método de envío
         $stmt = $conexion->prepare("DELETE FROM metodos_envio WHERE id_envio = ?");
         $stmt->bind_param("i", $id);
         
         if ($stmt->execute()) {
-            // Reactivar foreign key checks
-            mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=1");
             responder(true, 'Método de envío eliminado exitosamente');
         } else {
-            // Reactivar foreign key checks
-            mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=1");
             responder(false, 'Error al eliminar método de envío: ' . $stmt->error);
         }
     } catch (Exception $e) {
-        // Reactivar foreign key checks en caso de error
-        mysqli_query($conexion, "SET FOREIGN_KEY_CHECKS=1");
         responder(false, 'Error: ' . $e->getMessage());
     }
 }

@@ -231,8 +231,9 @@ $moneda_global = $config['moneda'] ?? 'USD';
                             <input type="number" name="costo" id="envio_costo" step="0.01" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none" placeholder="0.00">
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Tiempo Estimado</label>
-                            <input type="text" name="tiempo" id="envio_tiempo" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none" placeholder="Ej: 1-2 días">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Reducción de Días</label>
+                            <input type="number" name="reduccion_dias" id="envio_reduccion_dias" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none" placeholder="Ej: 2">
+                            <p class="text-xs text-gray-500 mt-1">Días que se restan al tiempo de entrega del departamento. Si el depto tiene 5 días y aquí pones 2, el estimado será 3 días.</p>
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Estado</label>
@@ -267,7 +268,7 @@ $moneda_global = $config['moneda'] ?? 'USD';
                                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
                                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
                                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Costo</th>
-                                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Tiempo</th>
+                                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Reducción Días</th>
                                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
                                     <th class="px-6 py-3 text-center text-sm font-semibold text-gray-700">Acciones</th>
                                 </tr>
@@ -278,7 +279,7 @@ $moneda_global = $config['moneda'] ?? 'USD';
                                     <td class="px-6 py-4 text-sm text-gray-700">#<?php echo $env['id_envio']; ?></td>
                                     <td class="px-6 py-4 text-sm text-gray-700 font-semibold"><?php echo htmlspecialchars($env['nombre']); ?></td>
                                     <td class="px-6 py-4 text-sm text-green-600 font-bold"><?php echo htmlspecialchars($moneda_global); ?> <?php echo number_format($env['costo'], 2); ?></td>
-                                    <td class="px-6 py-4 text-sm text-gray-600"><?php echo htmlspecialchars($env['tiempo_estimado']); ?></td>
+                                    <td class="px-6 py-4 text-sm text-gray-600 font-semibold">-<?php echo intval($env['reduccion_dias']); ?> días</td>
                                     <td class="px-6 py-4 text-sm">
                                         <span class="px-3 py-1 rounded-full text-xs font-bold <?php echo ($env['estado'] == 'activo') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'; ?>">
                                             <?php echo ucfirst($env['estado']); ?>
@@ -1686,7 +1687,7 @@ function prepararNuevoEnvio() {
     document.getElementById('envio_id').value = '';
     document.getElementById('envio_nombre').value = '';
     document.getElementById('envio_costo').value = '';
-    document.getElementById('envio_tiempo').value = '';
+    document.getElementById('envio_reduccion_dias').value = '';
     document.getElementById('envio_estado').value = 'activo';
     document.getElementById('envio_descripcion').value = '';
     document.getElementById('titulo-envio').innerText = 'Crear Nuevo Método de Envío';
@@ -1698,7 +1699,7 @@ function editarEnvio(datos) {
     document.getElementById('envio_id').value = datos.id_envio;
     document.getElementById('envio_nombre').value = datos.nombre;
     document.getElementById('envio_costo').value = datos.costo;
-    document.getElementById('envio_tiempo').value = datos.tiempo_estimado;
+    document.getElementById('envio_reduccion_dias').value = datos.reduccion_dias;
     document.getElementById('envio_estado').value = datos.estado;
     document.getElementById('envio_descripcion').value = datos.descripcion || '';
     document.getElementById('titulo-envio').innerText = 'Editando: ' + datos.nombre;

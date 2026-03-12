@@ -189,6 +189,7 @@ if ($metodo === 'POST') {
         $nombre = trim($_POST['nombre'] ?? '');
         $descripcion = trim($_POST['descripcion'] ?? '');
         $precio = floatval($_POST['precio'] ?? 0);
+        $precio_costo = floatval($_POST['precio_costo'] ?? 0);
         $stock = intval($_POST['stock'] ?? 0);
         $id_categoria = intval($_POST['id_categoria'] ?? 0);
         $id_marca = intval($_POST['id_marca'] ?? 0);
@@ -216,7 +217,7 @@ if ($metodo === 'POST') {
             exit();
         }
         if ($precio <= 0) {
-            echo json_encode(['exito' => false, 'error' => 'El precio debe ser mayor a 0']);
+            echo json_encode(['exito' => false, 'error' => 'El precio de venta debe ser mayor a 0']);
             exit();
         }
         if ($id_categoria <= 0) {
@@ -237,11 +238,11 @@ if ($metodo === 'POST') {
         }
 
         $stmt = $conexion->prepare(
-            "INSERT INTO productos (codigo, nombre, descripcion, precio, stock, id_categoria, id_marca, estado, precio_descuento, en_oferta, fecha_inicio_oferta, fecha_fin_oferta, fecha_creacion)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())"
+            "INSERT INTO productos (codigo, nombre, descripcion, precio, precio_costo, stock, id_categoria, id_marca, estado, precio_descuento, en_oferta, fecha_inicio_oferta, fecha_fin_oferta, fecha_creacion)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())"
         );
-        $stmt->bind_param("sssdiiisdiss",
-            $codigo, $nombre, $descripcion, $precio, $stock,
+        $stmt->bind_param("sssddiiisdiss",
+            $codigo, $nombre, $descripcion, $precio, $precio_costo, $stock,
             $id_categoria, $id_marca, $estado, $precio_descuento, $en_oferta,
             $fecha_inicio_oferta, $fecha_fin_oferta
         );
@@ -268,6 +269,7 @@ if ($metodo === 'POST') {
         $nombre = trim($_POST['nombre'] ?? '');
         $descripcion = trim($_POST['descripcion'] ?? '');
         $precio = floatval($_POST['precio'] ?? 0);
+        $precio_costo = floatval($_POST['precio_costo'] ?? 0);
         $stock = intval($_POST['stock'] ?? 0);
         $id_categoria = intval($_POST['id_categoria'] ?? 0);
         $id_marca = intval($_POST['id_marca'] ?? 0);
@@ -315,10 +317,10 @@ if ($metodo === 'POST') {
         }
 
         $stmt = $conexion->prepare(
-            "UPDATE productos SET codigo=?, nombre=?, descripcion=?, precio=?, stock=?, id_categoria=?, id_marca=?, estado=?, precio_descuento=?, en_oferta=?, fecha_inicio_oferta=?, fecha_fin_oferta=? WHERE id_producto=?"
+            "UPDATE productos SET codigo=?, nombre=?, descripcion=?, precio=?, precio_costo=?, stock=?, id_categoria=?, id_marca=?, estado=?, precio_descuento=?, en_oferta=?, fecha_inicio_oferta=?, fecha_fin_oferta=? WHERE id_producto=?"
         );
-        $stmt->bind_param("sssdiiisdissi",
-            $codigo, $nombre, $descripcion, $precio, $stock,
+        $stmt->bind_param("sssddiiisdissi",
+            $codigo, $nombre, $descripcion, $precio, $precio_costo, $stock,
             $id_categoria, $id_marca, $estado, $precio_descuento, $en_oferta,
             $fecha_inicio_oferta, $fecha_fin_oferta, $id
         );

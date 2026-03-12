@@ -1,135 +1,84 @@
 <?php
-
 /*
 =====================================================
 GUARDAR COMPRA EN LA BASE DE DATOS
 =====================================================
-
-Este archivo recibe los datos enviados desde
-el formulario del módulo de compras y realiza
-las siguientes acciones:
-
-1️⃣ Crea un registro en la tabla "compras"
-2️⃣ Obtiene el ID de la compra creada
-3️⃣ Inserta el detalle en la tabla "detalle_compra"
-4️⃣ Actualiza el stock del producto comprado
-5️⃣ Redirige al módulo de compras
-
-TABLAS UTILIZADAS
------------------------------------------------------
-productos
-compras
-detalle_compra
-
-FLUJO DEL SISTEMA
------------------------------------------------------
-Formulario Compras
-        │
-        ▼
-admin_guardar_compra.php
-        │
-        ▼
-1 Insertar compra
-2 Insertar detalle compra
-3 Actualizar stock
-4 Redirigir
-
-Autor: Sistema de Inventario
+Recibe datos por AJAX desde admin_compras.php
+1. Crea registro en tabla "compras"
+2. Inserta detalle en "detalle_compra"
+3. Actualiza stock del producto
+4. Retorna respuesta JSON
+=====================================================
 */
 
-# =====================================================
-# CONEXIÓN A LA BASE DE DATOS
-# =====================================================
+require_once '../core/conexion.php';
 
-require('../../database/conexion.php');
+header('Content-Type: application/json; charset=utf-8');
 
+// Validar datos recibidos
+if (!isset($_POST['producto_id'], $_POST['cantidad'], $_POST['proveedor'], $_POST['precio'])) {
+    echo json_encode(['exito' => false, 'mensaje' => 'Datos incompletos']);
+    exit;
+}
 
-# =====================================================
-# RECIBIR DATOS DEL FORMULARIO
-# =====================================================
+$producto_id = intval($_POST['producto_id']);
+$cantidad    = intval($_POST['cantidad']);
+$proveedor   = trim($_POST['proveedor']);
+$precio      = floatval($_POST['precio']);
 
-/*
-Datos enviados desde admin_compras.php
-*/
+if ($producto_id <= 0 || $cantidad <= 0 || $proveedor === '') {
+    echo json_encode(['exito' => false, 'mensaje' => 'Datos inválidos']);
+    exit;
+}
 
-$producto_id = $_POST['producto_id'];   // ID del producto seleccionado
-$cantidad    = $_POST['cantidad'];      // Cantidad comprada
+// Iniciar transacción para garantizar integridad
+$conexion->begin_transaction();
 
+try {
+    // 1. Crear registro en tabla compras
+    $stmt = $conexion->prepare("INSERT INTO compras (proveedor, fecha) VALUES (?, NOW())");
+    $stmt->bind_param("s", $proveedor);
+    $stmt->execute();
+    $compra_id = $conexion->insert_id;
+    $stmt->close();
 
-# =====================================================
-# 1 CREAR REGISTRO EN TABLA COMPRAS
-# =====================================================
+    // 2. Insertar detalle de la compra
+    $stmt = $conexion->prepare("INSERT INTO detalle_compra (compra_id, producto_id, cantidad, precio) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("iiid", $compra_id, $producto_id, $cantidad, $precio);
+    $stmt->execute();
+    $stmt->close();
 
-/*
-Se crea una nueva compra.
-Aquí solo se guarda la fecha.
-Los productos se guardan en detalle_compra.
-*/
+    // 3. Actualizar stock y precio_costo del producto
+    $stmt = $conexion->prepare("UPDATE productos SET stock = stock + ?, precio_costo = ? WHERE id_producto = ?");
+    $stmt->bind_param("idi", $cantidad, $precio, $producto_id);
+    $stmt->execute();
+    $stmt->close();
 
-mysqli_query($conexion,"
-INSERT INTO compras(fecha)
-VALUES(NOW())
-");
+    $conexion->commit();
 
+    // Obtener nombre del producto para la respuesta
+    $stmt = $conexion->prepare("SELECT nombre, stock FROM productos WHERE id_producto = ?");
+    $stmt->bind_param("i", $producto_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $producto = $result->fetch_assoc();
+    $stmt->close();
 
-# =====================================================
-# 2 OBTENER ID DE LA COMPRA
-# =====================================================
+    echo json_encode([
+        'exito' => true,
+        'mensaje' => 'Compra registrada correctamente',
+        'datos' => [
+            'compra_id'   => $compra_id,
+            'producto'    => $producto['nombre'],
+            'cantidad'    => $cantidad,
+            'precio'      => $precio,
+            'proveedor'   => $proveedor,
+            'nuevo_stock' => $producto['stock']
+        ]
+    ]);
 
-/*
-mysqli_insert_id obtiene el ID generado
-por la última consulta INSERT.
-*/
-
-$compra_id = mysqli_insert_id($conexion);
-
-
-# =====================================================
-# 3 INSERTAR DETALLE DE LA COMPRA
-# =====================================================
-
-/*
-Se guarda la relación entre:
-
-compra
-producto
-cantidad
-*/
-
-mysqli_query($conexion,"
-INSERT INTO detalle_compra
-(compra_id, producto_id, cantidad)
-
-VALUES
-('$compra_id', '$producto_id', '$cantidad')
-");
-
-
-# =====================================================
-# 4 ACTUALIZAR STOCK DEL PRODUCTO
-# =====================================================
-
-/*
-Cada compra aumenta el stock del inventario
-del producto seleccionado.
-*/
-
-mysqli_query($conexion,"
-UPDATE productos
-SET stock = stock + $cantidad
-WHERE id = $producto_id
-");
-
-
-# =====================================================
-# 5 REDIRECCIONAR AL MODULO DE COMPRAS
-# =====================================================
-
-/*
-Después de guardar la compra
-el sistema vuelve al módulo de compras.
-*/
-
-header("Location: admin_compras.php");
-
+} catch (Exception $e) {
+    $conexion->rollback();
+    echo json_encode(['exito' => false, 'mensaje' => 'Error al guardar la compra']);
+}
 ?>

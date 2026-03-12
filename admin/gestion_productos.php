@@ -75,14 +75,15 @@
                         <th class="px-5 py-4">Producto</th>
                         <th class="px-5 py-4">Categoría</th>
                         <th class="px-5 py-4">Marca</th>
-                        <th class="px-5 py-4">Precio</th>
+                        <th class="px-5 py-4">P. Costo</th>
+                        <th class="px-5 py-4">P. Venta</th>
                         <th class="px-5 py-4">Stock</th>
                         <th class="px-5 py-4">Estado</th>
                         <th class="px-5 py-4 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="prod-tabla-body" class="divide-y divide-gray-100">
-                    <tr><td colspan="7"><div class="prod-loading"></div></td></tr>
+                    <tr><td colspan="9"><div class="prod-loading"></div></td></tr>
                 </tbody>
             </table>
         </div>
@@ -153,11 +154,19 @@
                 </div>
             </div>
 
-            <!-- Precio y Stock -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Precio Costo, Precio Venta y Stock -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
-                        <i class="fas fa-dollar-sign text-green-500 mr-1"></i> Precio <span class="text-red-500">*</span>
+                        <i class="fas fa-dollar-sign text-orange-500 mr-1"></i> Precio Costo
+                    </label>
+                    <input type="number" id="prod-precio-costo" step="0.01" min="0"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm"
+                        placeholder="0.00">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-dollar-sign text-green-500 mr-1"></i> Precio Venta <span class="text-red-500">*</span>
                     </label>
                     <input type="number" id="prod-precio" step="0.01" min="0" required
                         class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm"
@@ -321,7 +330,7 @@
         var estado = document.getElementById('prod-filtro-estado') ? document.getElementById('prod-filtro-estado').value : 'todos';
         var tbody = document.getElementById('prod-tabla-body');
         if (!tbody) return;
-        tbody.innerHTML = '<tr><td colspan="8"><div class="prod-loading"></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9"><div class="prod-loading"></div></td></tr>';
 
         var url = PROD_API + '?accion=listar';
         if (estado && estado !== 'todos') url += '&estado=' + encodeURIComponent(estado);
@@ -334,12 +343,12 @@
                     renderizarTabla(data.productos);
                     actualizarConteos(data.conteos);
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-red-500">' + (data.error || 'Error') + '</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-red-500">' + (data.error || 'Error') + '</td></tr>';
                 }
             })
             .catch(function(err) {
                 console.error('Error:', err);
-                    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-red-500">Error de conexión</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-red-500">Error de conexión</td></tr>';
             });
     }
 
@@ -347,7 +356,7 @@
     function renderizarTabla(productos) {
         var tbody = document.getElementById('prod-tabla-body');
         if (!productos || productos.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-16">' +
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-16">' +
                 '<i class="fas fa-box-open text-5xl text-gray-200 mb-4 block"></i>' +
                 '<p class="text-gray-500 font-semibold">No hay productos</p>' +
                 '<button onclick="window.abrirModalProducto()" class="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition">' +
@@ -392,6 +401,9 @@
             html += '</div></div></td>';
             html += '<td class="px-5 py-3.5 text-sm text-gray-600">' + esc(p.categoria_nombre || '—') + '</td>';
             html += '<td class="px-5 py-3.5 text-sm text-gray-600">' + esc(p.marca_nombre || '—') + '</td>';
+
+            var precioCosto = parseFloat(p.precio_costo) || 0;
+            html += '<td class="px-5 py-3.5 text-sm text-gray-600">$' + precioCosto.toFixed(2) + '</td>';
             html += '<td class="px-5 py-3.5 text-sm">' + precioHtml + '</td>';
             html += '<td class="px-5 py-3.5 text-sm ' + stockClass + '">' + p.stock + '</td>';
             html += '<td class="px-5 py-3.5">' + estadoBadge + ofertaBadge + '</td>';
@@ -475,6 +487,7 @@
         document.getElementById('prod-codigo').value = '';
         document.getElementById('prod-nombre').value = '';
         document.getElementById('prod-descripcion').value = '';
+        document.getElementById('prod-precio-costo').value = '';
         document.getElementById('prod-precio').value = '';
         document.getElementById('prod-descuento-pct').value = '';
         document.getElementById('prod-precio-descuento-preview').classList.add('hidden');
@@ -513,6 +526,7 @@
                 document.getElementById('prod-codigo').value = p.codigo || '';
                 document.getElementById('prod-nombre').value = p.nombre;
                 document.getElementById('prod-descripcion').value = p.descripcion || '';
+                document.getElementById('prod-precio-costo').value = p.precio_costo || '';
                 document.getElementById('prod-precio').value = p.precio;
                 // Calcular % de descuento a partir de precio y precio_descuento guardados
                 if (p.precio_descuento && parseFloat(p.precio_descuento) > 0 && parseFloat(p.precio) > 0) {
@@ -610,6 +624,7 @@
         formData.append('descripcion', document.getElementById('prod-descripcion').value.trim());
         formData.append('id_categoria', categoria);
         formData.append('id_marca', marca);
+        formData.append('precio_costo', document.getElementById('prod-precio-costo').value || '0');
         formData.append('precio', precio);
         // Calcular precio_descuento desde el porcentaje
         var pctVal = parseFloat(document.getElementById('prod-descuento-pct').value) || 0;

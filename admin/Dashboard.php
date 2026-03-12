@@ -375,7 +375,6 @@ $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
 <span class="material-icons-round">dashboard</span>
 <span class="font-medium">Dashboard</span>
 </a>
-<?php if ($_SESSION['id_rol'] == 1): // Solo para administrador ?>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../admin/gestion_productos.php', event)">
 <span class="material-icons-round">inventory_2</span>
 <span class="font-medium">Productos</span>
@@ -388,19 +387,18 @@ $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
 <span class="material-icons-round">people</span>
 <span class="font-medium">Clientes</span>
 </a>
-<?php endif; ?>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./pedidosadmin.php', event)">
 <span class="material-icons-round">shopping_cart</span>
 <span class="font-medium">Pedidos</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../client/mensajeria.php', event)">
+<span class="material-icons-round">mail</span>
+<span class="font-medium">Mensajería</span>
 </a>
 <?php if ($_SESSION['id_rol'] == 1): // Solo para administrador ?>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./usuarios.php', event)">
 <span class="material-icons-round">manage_accounts</span>
 <span class="font-medium">Usuarios</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../client/mensajeria.php', event)">
-<span class="material-icons-round">mail</span>
-<span class="font-medium">Mensajería</span>
 </a>
 <!-- MODULO COMPRAS -->
 <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link"
@@ -449,7 +447,6 @@ onclick="loadPage('./admin_reportes.php', event)">
 <span class="material-icons-round">dashboard</span>
 <span class="font-medium">Dashboard</span>
 </a>
-<?php if ($_SESSION['id_rol'] == 1): // Solo para administrador ?>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../admin/gestion_productos.php', event); toggleSidebarMobile();">
 <span class="material-icons-round">inventory_2</span>
 <span class="font-medium">Productos</span>
@@ -462,19 +459,18 @@ onclick="loadPage('./admin_reportes.php', event)">
 <span class="material-icons-round">people</span>
 <span class="font-medium">Clientes</span>
 </a>
-<?php endif; ?>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./pedidosadmin.php', event); toggleSidebarMobile();">
 <span class="material-icons-round">shopping_cart</span>
 <span class="font-medium">Pedidos</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../client/mensajeria.php', event); toggleSidebarMobile();">
+<span class="material-icons-round">mail</span>
+<span class="font-medium">Mensajería</span>
 </a>
 <?php if ($_SESSION['id_rol'] == 1): // Solo para administrador ?>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./usuarios.php', event); toggleSidebarMobile();">
 <span class="material-icons-round">manage_accounts</span>
 <span class="font-medium">Usuarios</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../client/mensajeria.php', event); toggleSidebarMobile();">
-<span class="material-icons-round">mail</span>
-<span class="font-medium">Mensajería</span>
 </a>
 <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./admin_compras.php', event); toggleSidebarMobile();">
 <span class="material-icons-round">shopping_cart</span>

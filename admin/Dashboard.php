@@ -6,7 +6,6 @@
 
 require_once '../core/sesiones.php';
 require_once '../core/conexion.php';
-require_once '../core/validador_inactividad.php';
 
 // Verificar autenticación
 if (!usuarioAutenticado()) {
@@ -789,7 +788,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- Modal de Advertencia de Sesión -->
 <?php include '../core/modal_advertencia_sesion.html'; ?>
 
-<!-- Script de Sistema de Advertencia de Sesión -->
-<script src="../js/advertencia_sesion.js"></script>
+<!-- Script de Sistema de Advertencia de Sesión (sin caché) -->
+<script src="../js/advertencia_sesion.js?v=<?php echo time(); ?>"></script>
 
 </body></html>

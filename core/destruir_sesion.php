@@ -24,7 +24,7 @@ if (ini_get("session.use_cookies")) {
 
 session_destroy();
 
-// Redirigir a página de sesión expirada
-header("Location: ../pages/sesion_expirada.php");
+// Redirigir a página de inicio
+header("Location: ../index.php");
 exit();
 ?>

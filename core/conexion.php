@@ -32,3 +32,6 @@ $conexion->query("SET sql_mode='STRICT_TRANS_TABLES'");
 
 // Variable para verificar que la conexión fue exitosa
 $conexion_establecida = true;
+
+// Desactivar ofertas vencidas automáticamente
+$conexion->query("UPDATE productos SET en_oferta = 0, precio_descuento = NULL WHERE en_oferta = 1 AND fecha_fin_oferta < CURDATE()");

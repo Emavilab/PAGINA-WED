@@ -325,7 +325,7 @@ $colores = [
 $color = $colores[$pedido['estado']] ?? 'bg-gray-100 text-gray-700';
 ?>
 
-<span class="inline-flex px-3 py-1 rounded-full text-xs font-bold <?php echo $color; ?>">
+<span class="badge-estado inline-flex px-3 py-1 rounded-full text-xs font-bold <?php echo $color; ?>">
 <?php echo ucfirst($pedido['estado']); ?>
 </span>
 

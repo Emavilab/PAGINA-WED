@@ -351,7 +351,7 @@ function guardarCambioEstado(){
         if(data.exito){
 
            const fila = document.querySelector('button[data-id="' + pedidoActual + '"]').closest("tr");
-            const badge = fila.querySelector("span");
+            const badge = fila.querySelector("span.badge-estado");
 
             const colores = {
                 pendiente: "bg-blue-100 text-blue-700",

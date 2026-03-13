@@ -31,12 +31,17 @@ AUTOR: Sistema Web
 ========================================================
 */
 
+// Evitar que warnings/notices rompan la respuesta JSON
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
 
 /* ====================================================
    CONEXION A LA BASE DE DATOS
 ==================================================== */
 
 require_once '../core/conexion.php';
+require_once '../core/smtp_config.php';
 
 
 /* ====================================================
@@ -53,7 +58,7 @@ require_once '../core/sesiones.php';
 ==================================================== */
 
 header('Content-Type: application/json; charset=utf-8');
-
+ob_start();
 
 
 /* ====================================================
@@ -63,7 +68,9 @@ header('Content-Type: application/json; charset=utf-8');
 ==================================================== */
 
 if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2)) {
+    ob_clean();
     echo json_encode(["exito" => false, "error" => "No autorizado"]);
+    ob_end_flush();
     exit();
 }
 
@@ -76,7 +83,9 @@ if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] !=
 ==================================================== */
 
 if (!isset($_POST['id'], $_POST['estado'])) {
+    ob_clean();
     echo json_encode(["exito" => false, "error" => "Datos incompletos"]);
+    ob_end_flush();
     exit();
 }
 
@@ -105,9 +114,34 @@ $estadosValidos = ['pendiente','confirmado','enviado','entregado','cancelado'];
 ==================================================== */
 
 if (!in_array($estado, $estadosValidos)) {
+    ob_clean();
     echo json_encode(["exito" => false, "error" => "Estado inválido"]);
+    ob_end_flush();
     exit();
 }
+
+
+
+/* ====================================================
+   OBTENER ESTADO ACTUAL Y DATOS DEL CLIENTE (antes del UPDATE)
+   Para notificar por correo solo cuando el estado cambie
+==================================================== */
+
+$sqlDatos = "SELECT p.estado AS estado_actual, c.nombre AS nombre_cliente, u.correo AS correo_cliente
+    FROM pedidos p
+    INNER JOIN clientes c ON p.id_cliente = c.id_cliente
+    INNER JOIN usuarios u ON c.id_usuario = u.id_usuario
+    WHERE p.id_pedido = ?";
+$stmtDatos = $conexion->prepare($sqlDatos);
+$stmtDatos->bind_param("i", $id);
+$stmtDatos->execute();
+$resDatos = $stmtDatos->get_result();
+$datosPedido = $resDatos->fetch_assoc();
+$stmtDatos->close();
+
+$estado_anterior = $datosPedido ? $datosPedido['estado_actual'] : null;
+$nombre_cliente = $datosPedido ? trim($datosPedido['nombre_cliente']) : '';
+$correo_cliente = $datosPedido ? trim($datosPedido['correo_cliente']) : '';
 
 
 
@@ -127,7 +161,9 @@ $stmt = $conexion->prepare($sql);
 ==================================================== */
 
 if (!$stmt) {
+    ob_clean();
     echo json_encode(["exito" => false, "error" => $conexion->error]);
+    ob_end_flush();
     exit();
 }
 
@@ -145,10 +181,22 @@ $stmt->execute();
 
 
 /* ====================================================
+   NOTIFICAR AL CLIENTE POR CORREO SI EL ESTADO CAMBIÓ
+   Solo para estados: confirmado, enviado, entregado, cancelado
+==================================================== */
+
+if ($estado_anterior !== null && $estado_anterior !== $estado) {
+    notificarCambioEstadoPedido($id, $estado, $nombre_cliente, $correo_cliente);
+}
+
+
+
+/* ====================================================
    RESPUESTA FINAL
    Indica que la actualización fue exitosa
 ==================================================== */
 
+ob_clean();
 echo json_encode(["exito" => true]);
-
+ob_end_flush();
 exit();

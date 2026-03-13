@@ -156,3 +156,99 @@ function plantillaRespuestaContacto($nombreCliente, $asuntoOriginal, $mensajeOri
     </body>
     </html>';
 }
+
+/**
+ * Plantilla HTML para notificación de cambio de estado de pedido
+ *
+ * @param string $nombreCliente Nombre del cliente
+ * @param int $id_pedido Número de pedido
+ * @param string $estado Estado actual del pedido (confirmado, enviado, entregado, cancelado)
+ * @param string $mensajeInformativo Mensaje según el estado
+ * @return string HTML del correo
+ */
+function plantillaCorreoEstadoPedido($nombreCliente, $id_pedido, $estado, $mensajeInformativo) {
+    $nombreHtml = htmlspecialchars($nombreCliente);
+    $idPedidoHtml = (int) $id_pedido;
+    $estadoHtml = htmlspecialchars(ucfirst($estado));
+    $mensajeHtml = nl2br(htmlspecialchars($mensajeInformativo));
+
+    return '
+    <!DOCTYPE html>
+    <html lang="es">
+    <head><meta charset="UTF-8"></head>
+    <body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, Helvetica, sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8; padding:40px 0;">
+            <tr>
+                <td align="center">
+                    <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
+                        <tr>
+                            <td style="background: linear-gradient(135deg, #137fec, #0d66c2); padding:30px 40px; text-align:center;">
+                                <h1 style="color:#ffffff; margin:0; font-size:24px; font-weight:700;">ControlPlus</h1>
+                                <p style="color:rgba(255,255,255,0.85); margin:8px 0 0; font-size:14px;">Actualización de tu pedido</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding:40px;">
+                                <p style="color:#333; font-size:16px; margin:0 0 20px;">
+                                    Hola <strong>' . $nombreHtml . '</strong>,
+                                </p>
+                                <p style="color:#555; font-size:15px; line-height:1.6; margin:0 0 20px;">
+                                    ' . $mensajeHtml . '
+                                </p>
+                                <div style="background-color:#f0f9ff; border-left:4px solid #137fec; padding:20px; border-radius:0 8px 8px 0; margin:0 0 25px;">
+                                    <p style="color:#137fec; font-size:12px; font-weight:700; text-transform:uppercase; margin:0 0 4px;">Pedido</p>
+                                    <p style="color:#333; font-size:18px; font-weight:700; margin:0;">#' . $idPedidoHtml . ' &ndash; ' . $estadoHtml . '</p>
+                                </div>
+                                <p style="color:#555; font-size:14px; line-height:1.6; margin:0;">
+                                    Si tienes dudas, contáctanos desde nuestro sitio web.
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="background-color:#f9fafb; padding:25px 40px; text-align:center; border-top:1px solid #e5e7eb;">
+                                <p style="color:#9ca3af; font-size:12px; margin:0;">
+                                    &copy; ' . date('Y') . ' ControlPlus. Todos los derechos reservados.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>';
+}
+
+/**
+ * Notifica por correo al cliente un cambio de estado de pedido.
+ * Reutilizable desde admin (cambiar_estado.php) y desde cliente (api_cancelar_pedido.php).
+ *
+ * @param int $id_pedido ID del pedido
+ * @param string $estado_nuevo Estado actual del pedido (confirmado, enviado, entregado, cancelado)
+ * @param string $nombre_cliente Nombre del cliente
+ * @param string $correo_cliente Correo del cliente
+ */
+function notificarCambioEstadoPedido($id_pedido, $estado_nuevo, $nombre_cliente, $correo_cliente) {
+    $estadosNotificables = ['confirmado', 'enviado', 'entregado', 'cancelado'];
+    if (!in_array($estado_nuevo, $estadosNotificables)) {
+        return;
+    }
+    if (empty($correo_cliente) || !filter_var($correo_cliente, FILTER_VALIDATE_EMAIL)) {
+        return;
+    }
+
+    $mensajes = [
+        'confirmado' => "Tu pedido #{$id_pedido} ha sido confirmado y pronto será preparado.",
+        'enviado'    => "Tu pedido #{$id_pedido} ha sido enviado y está en camino.",
+        'entregado'  => "Tu pedido #{$id_pedido} ha sido entregado. Gracias por tu compra.",
+        'cancelado'  => "Tu pedido #{$id_pedido} ha sido cancelado correctamente. Si tienes alguna duda puedes contactarnos respondiendo a este correo. Gracias."
+    ];
+    $mensajeInformativo = $mensajes[$estado_nuevo];
+    $saludo = "Hola " . ($nombre_cliente !== '' ? $nombre_cliente : 'cliente') . ", ";
+    $mensajeCompleto = $saludo . $mensajeInformativo;
+
+    $asunto = "Actualización de tu pedido #{$id_pedido}";
+    $cuerpoHtml = plantillaCorreoEstadoPedido($nombre_cliente ?: 'Cliente', $id_pedido, $estado_nuevo, $mensajeCompleto);
+
+    enviarCorreo($correo_cliente, $asunto, $cuerpoHtml);
+}

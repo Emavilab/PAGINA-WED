@@ -45,15 +45,21 @@ AUTOR: Sistema de Tienda Online
 ========================================================
 */
 
+// Evitar que warnings/notices rompan la respuesta JSON
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
 // Establecer que la respuesta será en formato JSON
 header('Content-Type: application/json; charset=utf-8');
+ob_start();
 
 // Configurar zona horaria del sistema
 date_default_timezone_set('America/Tegucigalpa');
 
-// Incluir conexión a base de datos y sistema de sesiones
+// Incluir conexión a base de datos, sesiones y envío de correos
 require_once '../core/conexion.php';
 require_once '../core/sesiones.php';
+require_once '../core/smtp_config.php';
 
 /*
 ========================================================
@@ -62,7 +68,9 @@ VERIFICAR AUTENTICACIÓN DEL USUARIO
 Se valida que el usuario tenga sesión activa.
 */
 if (!usuarioAutenticado()) {
+    ob_clean();
     echo json_encode(['exito' => false, 'error' => 'No autorizado']);
+    ob_end_flush();
     exit;
 }
 
@@ -77,7 +85,9 @@ $id_cliente = $usuario['id_cliente'] ?? null;
 
 // Validar que el usuario tenga un cliente asociado
 if (!$id_cliente) {
+    ob_clean();
     echo json_encode(['exito' => false, 'error' => 'Debes iniciar sesión']);
+    ob_end_flush();
     exit;
 }
 
@@ -91,7 +101,9 @@ desde el formulario o solicitud AJAX.
 $id_pedido = isset($_POST['id_pedido']) ? intval($_POST['id_pedido']) : 0;
 
 if ($id_pedido <= 0) {
+    ob_clean();
     echo json_encode(['exito' => false, 'error' => 'Pedido inválido']);
+    ob_end_flush();
     exit;
 }
 
@@ -102,7 +114,14 @@ OBTENER INFORMACIÓN DEL PEDIDO
 Se consulta el pedido en la base de datos verificando
 que pertenezca al cliente autenticado.
 */
-$stmt = $conexion->prepare("SELECT id_pedido, estado, fecha_pedido FROM pedidos WHERE id_pedido = ? AND id_cliente = ? LIMIT 1");
+$stmt = $conexion->prepare("
+    SELECT p.id_pedido, p.estado, p.fecha_pedido,
+           c.nombre AS nombre_cliente, u.correo AS correo_cliente
+    FROM pedidos p
+    INNER JOIN clientes c ON p.id_cliente = c.id_cliente
+    INNER JOIN usuarios u ON c.id_usuario = u.id_usuario
+    WHERE p.id_pedido = ? AND p.id_cliente = ? LIMIT 1
+");
 
 $stmt->bind_param("ii", $id_pedido, $id_cliente);
 
@@ -114,7 +133,9 @@ if ($res->num_rows === 0) {
 
     $stmt->close();
 
+    ob_clean();
     echo json_encode(['exito' => false, 'error' => 'Pedido no encontrado']);
+    ob_end_flush();
 
     exit;
 }
@@ -133,10 +154,12 @@ Solo se permite cancelar pedidos que estén en estado
 */
 if ($pedido['estado'] !== 'pendiente') {
 
+    ob_clean();
     echo json_encode([
         'exito' => false,
         'error' => 'Solo se pueden cancelar pedidos en estado pendiente'
     ]);
+    ob_end_flush();
 
     exit;
 }
@@ -164,10 +187,12 @@ $ahora = new DateTime();
 // Verificar si ya pasó el tiempo permitido
 if ($ahora > $fechaLimite) {
 
+    ob_clean();
     echo json_encode([
         'exito' => false,
         'error' => 'Solo puedes cancelar dentro de las primeras 3 horas desde que realizaste el pedido'
     ]);
+    ob_end_flush();
 
     exit;
 }
@@ -182,10 +207,12 @@ $stmtUp = $conexion->prepare("UPDATE pedidos SET estado = 'cancelado' WHERE id_p
 
 if (!$stmtUp) {
 
+    ob_clean();
     echo json_encode([
         'exito' => false,
         'error' => 'Error en la consulta: ' . $conexion->error
     ]);
+    ob_end_flush();
 
     exit;
 }
@@ -193,10 +220,12 @@ if (!$stmtUp) {
 // Vincular parámetros
 if (!$stmtUp->bind_param("ii", $id_pedido, $id_cliente)) {
 
+    ob_clean();
     echo json_encode([
         'exito' => false,
         'error' => 'Error al vincular parámetros: ' . $stmtUp->error
     ]);
+    ob_end_flush();
 
     $stmtUp->close();
 
@@ -206,10 +235,12 @@ if (!$stmtUp->bind_param("ii", $id_pedido, $id_cliente)) {
 // Ejecutar actualización
 if (!$stmtUp->execute()) {
 
+    ob_clean();
     echo json_encode([
         'exito' => false,
         'error' => 'Error al ejecutar la actualización: ' . $stmtUp->error
     ]);
+    ob_end_flush();
 
     $stmtUp->close();
 
@@ -226,6 +257,16 @@ los productos al stock del inventario.
 if ($stmtUp->affected_rows > 0) {
 
     $stmtUp->close();
+
+    /*
+    ====================================================
+    NOTIFICAR AL CLIENTE POR CORREO (mismo sistema que admin)
+    ====================================================
+    Solo se envía si el UPDATE realmente cambió el estado.
+    */
+    $nombre_cliente = isset($pedido['nombre_cliente']) ? trim($pedido['nombre_cliente']) : '';
+    $correo_cliente = isset($pedido['correo_cliente']) ? trim($pedido['correo_cliente']) : '';
+    $resultadoCorreo = notificarCambioEstadoPedido($id_pedido, 'cancelado', $nombre_cliente, $correo_cliente);
 
     /*
     ====================================================
@@ -268,18 +309,22 @@ if ($stmtUp->affected_rows > 0) {
     }
 
     // Respuesta exitosa
+    ob_clean();
     echo json_encode([
         'exito' => true,
         'mensaje' => 'Pedido cancelado correctamente'
     ]);
+    ob_end_flush();
 
 } else {
 
     $stmtUp->close();
 
     // Si no se pudo cancelar el pedido
+    ob_clean();
     echo json_encode([
         'exito' => false,
         'error' => 'No se pudo cancelar el pedido. Verifica que el pedido exista y su estado sea válido'
     ]);
+    ob_end_flush();
 } 

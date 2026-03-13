@@ -1,9 +1,57 @@
 <?php
+/*
+========================================================
+API: ACTUALIZAR DIRECCIÓN DEL CLIENTE
+========================================================
+
+Este archivo permite que un cliente autenticado pueda
+editar una dirección de envío previamente registrada
+en el sistema.
+
+FUNCIONALIDADES:
+✔ Verificar autenticación del usuario
+✔ Obtener el id_cliente asociado al usuario
+✔ Validar datos enviados desde el formulario
+✔ Verificar que el departamento exista
+✔ Actualizar la dirección en la base de datos
+✔ Retornar respuesta en formato JSON
+
+TABLAS UTILIZADAS:
+- clientes
+- direcciones_cliente
+- departamentos_envio
+
+RESPUESTAS POSIBLES:
+
+Éxito:
+{
+  "success": true,
+  "message": "Dirección actualizada correctamente"
+}
+
+Error:
+{
+  "success": false,
+  "message": "Descripción del error"
+}
+
+AUTOR: Sistema de Tienda Online
+========================================================
+*/
+
+// Incluir archivos necesarios para sesión y conexión
 require_once '../core/sesiones.php';
 require_once '../core/conexion.php';
 
+// Definir que la respuesta será en formato JSON
 header('Content-Type: application/json; charset=utf-8');
 
+/*
+========================================================
+VERIFICAR AUTENTICACIÓN DEL USUARIO
+========================================================
+Se comprueba que el usuario tenga sesión activa.
+*/
 if (!usuarioAutenticado()) {
     echo json_encode([
         "success" => false,
@@ -12,9 +60,21 @@ if (!usuarioAutenticado()) {
     exit();
 }
 
+/*
+========================================================
+OBTENER ID DEL USUARIO AUTENTICADO
+========================================================
+Se obtiene el id del usuario desde la sesión.
+*/
 $id_usuario = obtenerIdUsuario();
 
-/* 🔥 OBTENER id_cliente REAL */
+/*
+========================================================
+OBTENER EL ID_CLIENTE REAL
+========================================================
+Se busca el cliente asociado al usuario en la tabla
+clientes.
+*/
 $stmtCliente = $conexion->prepare("SELECT id_cliente FROM clientes WHERE id_usuario = ?");
 $stmtCliente->bind_param("i", $id_usuario);
 $stmtCliente->execute();
@@ -22,6 +82,13 @@ $resultCliente = $stmtCliente->get_result();
 $cliente = $resultCliente->fetch_assoc();
 $stmtCliente->close();
 
+/*
+========================================================
+VALIDAR QUE EL CLIENTE EXISTA
+========================================================
+Si el usuario no tiene un cliente asociado, no podrá
+editar direcciones.
+*/
 if (!$cliente) {
     echo json_encode([
         "success" => false,
@@ -30,10 +97,16 @@ if (!$cliente) {
     exit();
 }
 
+// Guardar ID del cliente
 $id_cliente = $cliente['id_cliente'];
 
-/* =============================== */
-
+/*
+========================================================
+OBTENER DATOS DEL FORMULARIO
+========================================================
+Se reciben los datos enviados desde el formulario
+para actualizar la dirección.
+*/
 $id_direccion = $_POST['id_direccion'] ?? null;
 $direccion = trim($_POST['direccion'] ?? '');
 $ciudad = trim($_POST['ciudad'] ?? '');
@@ -42,6 +115,12 @@ $telefono = trim($_POST['telefono'] ?? '');
 $referencia = trim($_POST['referencia'] ?? '');
 $id_departamento = isset($_POST['id_departamento']) ? (int) $_POST['id_departamento'] : 0;
 
+/*
+========================================================
+VALIDACIÓN DE DATOS OBLIGATORIOS
+========================================================
+Se valida que los campos necesarios estén completos.
+*/
 if (!$id_direccion || !$direccion || !$ciudad) {
     echo json_encode([
         "success" => false,
@@ -49,6 +128,14 @@ if (!$id_direccion || !$direccion || !$ciudad) {
     ]);
     exit();
 }
+
+/*
+========================================================
+VALIDAR QUE EL DEPARTAMENTO SEA VÁLIDO
+========================================================
+El departamento debe existir en la tabla
+departamentos_envio.
+*/
 if ($id_departamento <= 0) {
     echo json_encode([
         "success" => false,
@@ -57,11 +144,18 @@ if ($id_departamento <= 0) {
     exit();
 }
 
-// Validar que id_departamento exista en departamentos_envio
+/*
+========================================================
+VERIFICAR EXISTENCIA DEL DEPARTAMENTO
+========================================================
+Se consulta la tabla departamentos_envio para asegurar
+que el ID seleccionado existe.
+*/
 $stmtDep = $conexion->prepare("SELECT id_departamento FROM departamentos_envio WHERE id_departamento = ?");
 $stmtDep->bind_param("i", $id_departamento);
 $stmtDep->execute();
 $resDep = $stmtDep->get_result();
+
 if ($resDep->num_rows === 0) {
     $stmtDep->close();
     echo json_encode([
@@ -70,8 +164,16 @@ if ($resDep->num_rows === 0) {
     ]);
     exit();
 }
+
 $stmtDep->close();
 
+/*
+========================================================
+ACTUALIZAR DIRECCIÓN EN BASE DE DATOS
+========================================================
+Se utiliza una consulta preparada para evitar
+inyección SQL.
+*/
 try {
 
     $stmt = $conexion->prepare("
@@ -80,6 +182,11 @@ try {
         WHERE id_direccion = ? AND id_cliente = ?
     ");
 
+    /*
+    ================================================
+    ASIGNAR PARÁMETROS A LA CONSULTA
+    ================================================
+    */
     $stmt->bind_param(
         "sssssiii",
         $direccion,
@@ -92,8 +199,14 @@ try {
         $id_cliente
     );
 
+    // Ejecutar actualización
     $stmt->execute();
 
+    /*
+    ================================================
+    VERIFICAR SI SE ACTUALIZÓ ALGUNA FILA
+    ================================================
+    */
     if ($stmt->affected_rows === 0) {
         echo json_encode([
             "success" => false,
@@ -102,6 +215,11 @@ try {
         exit();
     }
 
+    /*
+    ================================================
+    RESPUESTA EXITOSA
+    ================================================
+    */
     echo json_encode([
         "success" => true,
         "message" => "Dirección actualizada correctamente"
@@ -109,8 +227,13 @@ try {
 
 } catch (Exception $e) {
 
+    /*
+    ================================================
+    MANEJO DE ERRORES
+    ================================================
+    */
     echo json_encode([
         "success" => false,
         "message" => "Error al actualizar"
     ]);
-}
+} 

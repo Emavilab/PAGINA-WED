@@ -1,10 +1,13 @@
 <?php
+// Importa el archivo de sesiones para manejar autenticación
 require_once '../core/sesiones.php';
 
+// Verifica si el usuario está autenticado y si tiene rol permitido (1 o 2)
 if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2)) {
     exit("No autorizado");
 }
 
+// Verifica que se haya recibido un ID válido por GET
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     exit("Pedido inválido");
 }
@@ -13,6 +16,8 @@ $id_pedido = intval($_GET['id']);
 
 /* ================================
    OBTENER PEDIDO
+   Consulta principal para obtener datos del pedido,
+   cliente, método de envío y dirección asociada
 ================================ */
 
 $sqlPedido = "
@@ -38,6 +43,7 @@ $stmt->bind_param("i", $id_pedido);
 $stmt->execute();
 $result = $stmt->get_result();
 
+// Si no se encuentra el pedido, se detiene la ejecución
 if ($result->num_rows === 0) {
     exit("Pedido no encontrado");
 }
@@ -46,6 +52,7 @@ $pedido = $result->fetch_assoc();
 
 /* ================================
    OBTENER PRODUCTOS
+   Consulta para obtener los productos del pedido
 ================================ */
 
 $sqlDetalle = "
@@ -61,10 +68,12 @@ $stmt2->execute();
 $resultDetalle = $stmt2->get_result();
 ?>
 
+<!-- Encabezado del pedido -->
 <h2 class="text-2xl font-bold mb-4">
 Pedido #<?php echo $pedido['id_pedido']; ?>
 </h2>
 
+<!-- Información general del pedido -->
 <div class="grid grid-cols-2 gap-6 mb-6 text-sm">
 
 <div>
@@ -109,6 +118,7 @@ Pedido #<?php echo $pedido['id_pedido']; ?>
 </div>
 </div>
 
+<!-- Tabla de productos -->
 <table class="w-full border text-sm">
 <thead class="bg-gray-100">
 <tr>
@@ -140,6 +150,7 @@ L <?php echo number_format($item['precio_unitario'] * $item['cantidad'],2); ?>
 </tbody>
 </table>
 
+<!-- Totales -->
 <div class="mt-6 text-right text-sm space-y-1">
 
 <p>Subtotal: <strong>L <?php echo number_format($pedido['subtotal'],2); ?></strong></p>
@@ -165,19 +176,23 @@ Total: L <?php echo number_format($pedido['total'],2); ?>
 <?php
 /* ================================
    COMPROBANTE DE TRANSFERENCIA
+   Verifica si existe comprobante de pago
+   y lo muestra en pantalla
 ================================ */
 
 $rutaComprobante = null;
 
+// Si existe comprobante en la BD, se construye la ruta
 if (!empty($pedido['comprobante_pago'])) {
-
     $rutaTemporal = "../img/comprobantes/" . $pedido['comprobante_pago'];
 
+    // Se valida que el archivo exista físicamente
     if (file_exists($rutaTemporal)) {
         $rutaComprobante = $rutaTemporal;
     }
 }
 
+// Si hay comprobante, se muestra
 if ($rutaComprobante):
 ?>
 
@@ -202,6 +217,7 @@ class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-orange-700 mt-3">
 
 <?php else: ?>
 
+<!-- Mensaje si no hay comprobante -->
 <div class="mt-8 border-t pt-6">
 <p class="text-gray-500 italic">
 Este pedido no tiene comprobante de transferencia.

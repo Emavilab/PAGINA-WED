@@ -1,21 +1,86 @@
 <?php
+/*
+========================================================
+API: CREAR PEDIDO DESDE EL CARRITO
+========================================================
+
+Este archivo procesa la creación de un pedido dentro del
+sistema de tienda en línea.
+
+FUNCIONALIDADES PRINCIPALES:
+✔ Verificar autenticación del usuario
+✔ Obtener datos del cliente desde la sesión
+✔ Validar datos enviados por formulario (POST)
+✔ Subir comprobante de pago (opcional)
+✔ Obtener carrito activo del cliente
+✔ Validar stock de productos
+✔ Calcular subtotal, impuestos y costos de envío
+✔ Insertar pedido en la base de datos
+✔ Insertar detalle de productos del pedido
+✔ Actualizar stock de productos
+✔ Vaciar carrito después de la compra
+✔ Manejar transacciones para evitar errores de datos
+
+TABLAS UTILIZADAS:
+- carritos
+- carrito_detalle
+- productos
+- direcciones_cliente
+- departamentos_envio
+- metodos_envio
+- pedidos
+- detalle_pedido
+
+RESPUESTA DE LA API:
+
+Éxito:
+{
+  "exito": true,
+  "id_pedido": 123
+}
+
+Error:
+{
+  "exito": false,
+  "error": "Descripción del error"
+}
+
+AUTOR: Sistema de Tienda Online
+========================================================
+*/
+
 require_once '../core/sesiones.php';
 require_once '../core/conexion.php';
 
+/*
+========================================================
+CONFIGURAR RESPUESTA JSON
+========================================================
+*/
 header('Content-Type: application/json; charset=utf-8');
 
+/*
+========================================================
+VERIFICAR AUTENTICACIÓN DEL USUARIO
+========================================================
+Se valida que el usuario tenga sesión activa antes de
+permitir realizar un pedido.
+*/
 if (!usuarioAutenticado()) {
     echo json_encode(["exito" => false, "error" => "No autorizado"]);
     exit;
 }
 
+// Obtener datos del usuario desde la sesión
 $usuario = obtenerDatosUsuario();
 $id_cliente = $usuario['id_cliente'];
 
-/* 🔥 IMPORTANTE
-   Ahora usamos $_POST en vez de JSON
+/*
+========================================================
+VALIDAR DATOS RECIBIDOS DEL FORMULARIO
+========================================================
+Se verifica que los datos obligatorios existan.
 */
-
 if (
     !isset($_POST['id_direccion']) ||
     !isset($_POST['id_metodo_pago'])
@@ -24,41 +89,56 @@ if (
     exit;
 }
 
+// Convertir datos recibidos
 $id_direccion = intval($_POST['id_direccion']);
 $id_envio = !empty($_POST['id_envio']) ? intval($_POST['id_envio']) : null;
 $id_metodo_pago = intval($_POST['id_metodo_pago']);
 
 $nombreComprobante = null;
 
-/* ================================
-   SUBIR COMPROBANTE
-================================ */
+/*
+================================
+SUBIR COMPROBANTE DE PAGO
+================================
+Se permite subir una imagen como comprobante de pago.
+Se valida:
+✔ tamaño máximo
+✔ tipo de archivo
+✔ almacenamiento en servidor
+*/
 
 if (isset($_FILES['comprobante']) && $_FILES['comprobante']['error'] === 0) {
 
     $archivo = $_FILES['comprobante'];
 
+    // Validar tamaño máximo de 3MB
     if ($archivo['size'] > 3 * 1024 * 1024) {
         echo json_encode(["exito" => false, "error" => "El comprobante supera los 3MB"]);
         exit;
     }
 
+    // Tipos permitidos de imagen
     $tiposPermitidos = ['image/jpeg','image/png','image/webp'];
 
+    // Obtener tipo real del archivo
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $tipoReal = finfo_file($finfo, $archivo['tmp_name']);
     finfo_close($finfo);
 
+    // Validar formato
     if (!in_array($tipoReal, $tiposPermitidos)) {
         echo json_encode(["exito" => false, "error" => "Formato no permitido"]);
         exit;
     }
 
+    // Generar nombre único para el archivo
     $extension = pathinfo($archivo['name'], PATHINFO_EXTENSION);
     $nombreComprobante = uniqid("comp_") . "." . $extension;
 
+    // Ruta donde se guardará el comprobante
     $rutaDestino = "../img/comprobantes/" . $nombreComprobante;
 
+    // Guardar archivo en el servidor
     if (!move_uploaded_file($archivo['tmp_name'], $rutaDestino)) {
         echo json_encode(["exito" => false, "error" => "Error al guardar comprobante"]);
         exit;
@@ -67,12 +147,20 @@ if (isset($_FILES['comprobante']) && $_FILES['comprobante']['error'] === 0) {
 
 try {
 
+    /*
+    ================================================
+    INICIAR TRANSACCIÓN
+    ================================================
+    Permite asegurar que todas las operaciones se
+    ejecuten correctamente o se cancelen en caso de error.
+    */
     $conexion->begin_transaction();
 
-    /* ================================
-       OBTENER CARRITO
-    ================================ */
-
+    /*
+    ================================================
+    OBTENER CARRITO ACTIVO DEL CLIENTE
+    ================================================
+    */
     $stmt = $conexion->prepare("
         SELECT id_carrito
         FROM carritos
@@ -90,10 +178,13 @@ try {
 
     $id_carrito = $carrito['id_carrito'];
 
-    /* ================================
-       OBTENER DETALLES
-    ================================ */
-
+    /*
+    ================================================
+    OBTENER PRODUCTOS DEL CARRITO
+    ================================================
+    Se consultan los productos agregados al carrito
+    junto con el stock disponible.
+    */
     $stmt = $conexion->prepare("
         SELECT cd.*, p.stock
         FROM carrito_detalle cd
@@ -108,10 +199,16 @@ try {
         throw new Exception("Carrito sin productos");
     }
 
+    // Variables para cálculos
     $subtotal = 0;
     $impuesto_total = 0;
     $items = [];
 
+    /*
+    ================================================
+    VALIDAR STOCK Y CALCULAR TOTALES
+    ================================================
+    */
     while ($item = $detalles->fetch_assoc()) {
 
         if ($item['stock'] < $item['cantidad']) {
@@ -119,14 +216,18 @@ try {
         }
 
         $subtotal += $item['subtotal'];
+
+        // Impuesto del 15%
         $impuesto_total += ($item['subtotal'] * 0.15);
 
         $items[] = $item;
     }
 
-    /* ================================
-   OBTENER ENVIO DEPARTAMENTO
-================================ */
+    /*
+================================
+OBTENER COSTO DE ENVÍO POR DEPARTAMENTO
+================================
+*/
 
 $stmtEnvio = $conexion->prepare("
     SELECT de.costo_envio
@@ -142,12 +243,16 @@ $resEnvio = $stmtEnvio->get_result();
 $rowEnvio = $resEnvio->fetch_assoc();
 
 $envio_departamento = $rowEnvio ? $rowEnvio['costo_envio'] : 0;
-/* ================================
-   OBTENER ENVIO METODO
-================================ */
+
+/*
+================================
+OBTENER COSTO DE ENVÍO POR MÉTODO
+================================
+*/
 
 $envio_metodo = 0;
 if ($id_envio) {
+
     $stmtMetodo = $conexion->prepare("
         SELECT costo
         FROM metodos_envio
@@ -158,18 +263,23 @@ if ($id_envio) {
     $stmtMetodo->execute();
     $resMetodo = $stmtMetodo->get_result();
     $rowMetodo = $resMetodo->fetch_assoc();
+
     $envio_metodo = $rowMetodo ? $rowMetodo['costo'] : 0;
 }
 
-/* ================================
-   TOTAL
-================================ */
+/*
+================================
+CALCULAR TOTAL DEL PEDIDO
+================================
+*/
 
 $total = $subtotal + $impuesto_total + $envio_departamento + $envio_metodo;
 
-    /* ================================
-       INSERTAR PEDIDO
-    ================================ */
+    /*
+    ================================================
+    INSERTAR PEDIDO EN BASE DE DATOS
+    ================================================
+    */
 
     $stmt = $conexion->prepare("
         INSERT INTO pedidos 
@@ -191,11 +301,15 @@ $total = $subtotal + $impuesto_total + $envio_departamento + $envio_metodo;
     );
 
     $stmt->execute();
+
+    // Obtener ID del pedido recién creado
     $id_pedido = $conexion->insert_id;
 
-    /* ================================
-       INSERTAR DETALLE
-    ================================ */
+    /*
+    ================================================
+    INSERTAR DETALLE DEL PEDIDO
+    ================================================
+    */
 
     foreach ($items as $item) {
 
@@ -219,6 +333,12 @@ $total = $subtotal + $impuesto_total + $envio_departamento + $envio_metodo;
 
         $stmt->execute();
 
+        /*
+        ============================================
+        ACTUALIZAR STOCK DE PRODUCTOS
+        ============================================
+        */
+
         $stmtStock = $conexion->prepare("
             UPDATE productos
             SET stock = stock - ?
@@ -229,10 +349,23 @@ $total = $subtotal + $impuesto_total + $envio_departamento + $envio_metodo;
         $stmtStock->execute();
     }
 
+    /*
+    ================================================
+    LIMPIAR CARRITO DEL CLIENTE
+    ================================================
+    */
+
     $conexion->query("DELETE FROM carrito_detalle WHERE id_carrito = $id_carrito");
     $conexion->query("UPDATE carritos SET estado = 'comprado' WHERE id_carrito = $id_carrito");
 
+    // Eliminar carrito de la sesión
     unset($_SESSION['carrito']);
+
+    /*
+    ================================================
+    CONFIRMAR TRANSACCIÓN
+    ================================================
+    */
 
     $conexion->commit();
 
@@ -241,6 +374,12 @@ $total = $subtotal + $impuesto_total + $envio_departamento + $envio_metodo;
 
 } catch (Exception $e) {
 
+    /*
+    ================================================
+    CANCELAR TRANSACCIÓN SI OCURRE ERROR
+    ================================================
+    */
+
     $conexion->rollback();
 
     echo json_encode([
@@ -248,4 +387,4 @@ $total = $subtotal + $impuesto_total + $envio_departamento + $envio_metodo;
         "error" => $e->getMessage()
     ]);
     exit;
-}
+} 

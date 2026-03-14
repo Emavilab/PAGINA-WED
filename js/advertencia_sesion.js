@@ -1,32 +1,55 @@
 /**
- * Sistema de Advertencia de Sesión - v3 FINAL
+ * =====================================================
+ * SISTEMA DE ADVERTENCIA DE SESIÓN - v3 FINAL
+ * =====================================================
+ *
+ * Este script detecta la inactividad del usuario y muestra
+ * un modal de advertencia antes de cerrar automáticamente
+ * la sesión. Permite renovar la sesión desde el modal.
+ *
+ * FUNCIONALIDADES:
+ * - Control del tiempo de sesión y advertencia
+ * - Modal de alerta con cuenta regresiva
+ * - Renovación de sesión vía AJAX
+ * - Detección de actividad del usuario (mouse, teclado, scroll)
  */
+
 (function() {
     'use strict';
 
-    var TIEMPO_SESION = 120;
-    var TIEMPO_ADVERTENCIA = 30;
-    var timerPrincipal = null;
-    var intervaloCuenta = null;
-    var estaModalAbierto = false;
-    var ultimaActividad = Date.now();
+    // =====================================================
+    // CONFIGURACIÓN
+    // =====================================================
+    var TIEMPO_SESION = 120;      // Tiempo total de sesión en segundos
+    var TIEMPO_ADVERTENCIA = 30;  // Tiempo antes de expirar para mostrar advertencia
+    var timerPrincipal = null;     // Timer principal que controla la sesión
+    var intervaloCuenta = null;    // Intervalo para cuenta regresiva del modal
+    var estaModalAbierto = false;  // Estado del modal
+    var ultimaActividad = Date.now(); // Timestamp de última actividad
 
-    // ========== FUNCIONES DEL MODAL ==========
+    // =====================================================
+    // FUNCIONES DEL MODAL
+    // =====================================================
 
+    // Abrir modal de advertencia de sesión
     function abrirModal() {
         estaModalAbierto = true;
         var m = document.getElementById('modal-advertencia-sesion');
         if (m) m.style.display = 'flex';
     }
 
+    // Cerrar modal de advertencia de sesión
     function cerrarModal() {
         estaModalAbierto = false;
         var m = document.getElementById('modal-advertencia-sesion');
         if (m) m.style.display = 'none';
     }
 
-    // ========== CONTROL DE TIMERS ==========
+    // =====================================================
+    // CONTROL DE TIMERS
+    // =====================================================
 
+    // Detener todos los timers activos
     function pararTodo() {
         if (timerPrincipal !== null) {
             clearTimeout(timerPrincipal);
@@ -38,8 +61,9 @@
         }
     }
 
+    // Iniciar cuenta regresiva dentro del modal
     function empezarCuentaRegresiva() {
-        var seg = TIEMPO_ADVERTENCIA;
+        var seg = TIEMPO_ADVERTENCIA; // Segundos restantes
         var el = document.getElementById('countdown-sesion');
         if (el) el.textContent = seg;
 
@@ -51,35 +75,38 @@
             }
             seg--;
             if (el) el.textContent = seg;
+
+            // Cuando llega a cero, cerrar sesión automáticamente
             if (seg <= 0) {
                 clearInterval(intervaloCuenta);
                 intervaloCuenta = null;
-                // EXPIRÓ - cerrar sesión
                 window.location.href = '../core/destruir_sesion.php';
             }
         }, 1000);
     }
 
+    // Iniciar el temporizador principal de sesión
     function iniciarTemporizador() {
-        pararTodo();
-        cerrarModal();
+        pararTodo();       // Detener timers anteriores
+        cerrarModal();     // Asegurar que el modal esté cerrado
         ultimaActividad = Date.now();
 
         timerPrincipal = setTimeout(function() {
             timerPrincipal = null;
-            abrirModal();
-            empezarCuentaRegresiva();
+            abrirModal();         // Mostrar advertencia
+            empezarCuentaRegresiva(); // Iniciar cuenta regresiva
         }, (TIEMPO_SESION - TIEMPO_ADVERTENCIA) * 1000);
     }
 
-    // ========== BOTÓN SEGUIR ACTIVO ==========
+    // =====================================================
+    // BOTÓN "SEGUIR ACTIVO"
+    // =====================================================
 
     window.renovarSesion = function() {
-        // Parar absolutamente todo
-        pararTodo();
-        cerrarModal();
+        pararTodo();   // Detener timers
+        cerrarModal(); // Cerrar modal
 
-        // Avisar al servidor
+        // Avisar al servidor que la sesión sigue activa
         try {
             var xhr = new XMLHttpRequest();
             xhr.open('POST', '../core/actualizar_actividad.php', true);
@@ -87,19 +114,24 @@
             xhr.send(JSON.stringify({ timestamp: Date.now() }));
         } catch(e) {}
 
-        // Reiniciar desde cero
+        // Reiniciar temporizador desde cero
         iniciarTemporizador();
     };
 
-    // ========== DETECCIÓN DE ACTIVIDAD ==========
+    // =====================================================
+    // DETECCIÓN DE ACTIVIDAD DEL USUARIO
+    // =====================================================
 
     function onActividad() {
-        if (estaModalAbierto) return;
+        if (estaModalAbierto) return; // No reiniciar si modal está abierto
         var ahora = Date.now();
+
+        // Solo reiniciar si han pasado más de 10 segundos desde la última actividad
         if (ahora - ultimaActividad > 10000) {
             ultimaActividad = ahora;
-            // Resetear timer
             pararTodo();
+
+            // Reiniciar timer principal
             timerPrincipal = setTimeout(function() {
                 timerPrincipal = null;
                 abrirModal();
@@ -116,11 +148,14 @@
         }
     }
 
-    // ========== INICIO ==========
+    // =====================================================
+    // INICIO - DETECCIÓN DE EVENTOS
+    // =====================================================
 
-    document.addEventListener('mousedown', onActividad, true);
-    document.addEventListener('keydown', onActividad, true);
-    document.addEventListener('scroll', onActividad, true);
+    document.addEventListener('mousedown', onActividad, true); // Movimiento de mouse
+    document.addEventListener('keydown', onActividad, true);   // Teclado
+    document.addEventListener('scroll', onActividad, true);    // Scroll
 
-    iniciarTemporizador();
-})();
+    iniciarTemporizador(); // Iniciar el temporizador al cargar la página
+
+})(); 

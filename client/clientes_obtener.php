@@ -126,4 +126,4 @@ DEVOLVER DATOS EN FORMATO JSON
 Se envía el primer registro encontrado como
 respuesta al cliente.
 */
-echo ($resultado->fetch_assoc()); 
+echo json_encode($resultado->fetch_assoc());

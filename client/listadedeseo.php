@@ -417,12 +417,29 @@ function fetchWishlist() {
 
                 card.className =
                 'bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden group hover:shadow-xl transition-shadow';
-
-                /*
-                Plantilla HTML del producto
-                */
-                card.innerHTML = ` ... `;
-
+                    card.innerHTML = `
+                    <div class="relative aspect-square overflow-hidden bg-slate-100 dark:bg-slate-800">
+                        <img alt="${escapeHtml(it.nombre)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="${img}" onerror="this.src='https://via.placeholder.com/400x400?text=Error'"/>
+                        <button onclick="removeFromWishlist(this, ${it.id_producto})" class="absolute top-3 right-3 w-8 h-8 bg-white/90 dark:bg-slate-900/90 rounded-full flex items-center justify-center text-primary shadow-sm">
+                            <span class="material-symbols-outlined heart-active text-xl">favorite</span>
+                        </button>
+                    </div>
+                    <div class="p-5">
+                        <p class="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">-</p>
+                        <h3 class="font-bold text-slate-900 dark:text-white mb-2 line-clamp-1">${escapeHtml(it.nombre)}</h3>
+                        <div class="flex items-baseline gap-2 mb-4">
+                            <span class="text-xl font-black text-slate-900 dark:text-white">${precioFinal} €</span>
+                            ${enOferta ? '<span class="text-sm text-slate-400 line-through">' + precioOriginal + ' €</span>' : ''}
+                        </div>
+                        <div class="space-y-2">
+                            <button onclick="agregarAlCarritoDesdeWishlist(this, ${it.id_producto})" class="w-full py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-lg">shopping_cart</span> Agregar al Carrito
+                            </button>
+                            <button onclick="removeFromWishlist(this, ${it.id_producto})" class="w-full py-2 text-slate-400 hover:text-red-500 text-xs font-medium transition-colors flex items-center justify-center gap-1">
+                                <span class="material-symbols-outlined text-sm">delete_outline</span> Eliminar
+                            </button>
+                        </div>
+                    </div>`;
                 grid.appendChild(card);
 
             });
@@ -432,7 +449,8 @@ function fetchWishlist() {
         .catch(err => {
 
             console.error('fetch lista deseos error:', err);
-
+             document.getElementById('wishlist-grid').innerHTML = '<div class="col-span-full text-center py-12 text-red-500">Error de conexión: ' + escapeHtml((err && err.message) ? err.message : String(err)) + '</div>';
+            countEl.textContent = 'Error de conexión';
         });
 
 }

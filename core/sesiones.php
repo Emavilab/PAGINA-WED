@@ -150,10 +150,16 @@ function validarCredenciales($correo, $contraseña) {
     $usuario = $result->fetch_assoc();
     $stmt->close();
 
-    // Usuario no existe o está inactivo
-    if (!$usuario || $usuario['estado'] === 'inactivo') {
+     // Si no existe el usuario
+    if (!$usuario) {
         return null;
     }
+    
+    // Si el usuario está inactivo
+    if ($usuario['estado'] === 'inactivo') {
+        return null;
+    }
+    
 
     // Verificar contraseña usando password_verify
     if (!password_verify($contraseña, $usuario['contraseña'])) {

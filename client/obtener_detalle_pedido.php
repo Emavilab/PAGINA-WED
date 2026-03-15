@@ -103,6 +103,11 @@ $impuesto = $pedido['impuesto_total'];
 $envio_departamento = $pedido['envio_departamento'] ?? 0;
 $envio_metodo = $pedido['costo_envio'] ?? 0;
 $total = $pedido['total'];
+
+// Cargar moneda desde configuración del sistema
+$res_cfg = mysqli_query($conexion, "SELECT moneda FROM configuracion WHERE id_config = 1");
+$config = mysqli_fetch_assoc($res_cfg);
+$moneda = $config['moneda'] ?? 'L';
 ?>
 
 <!-- =====================================================
@@ -138,13 +143,13 @@ $total = $pedido['total'];
         <tr class="border-t">
             <td class="p-2"><?php echo $item['nombre']; ?></td>
             <td class="p-2 text-center">
-                L <?php echo number_format($item['precio_unitario'], 2); ?>
+                <?php echo $moneda; ?> <?php echo number_format($item['precio_unitario'], 2); ?>
             </td>
             <td class="p-2 text-center">
                 <?php echo $item['cantidad']; ?>
             </td>
             <td class="p-2 text-center font-semibold">
-                L <?php echo number_format($item['subtotal'], 2); ?>
+                <?php echo $moneda; ?> <?php echo number_format($item['subtotal'], 2); ?>
             </td>
         </tr>
         <?php endwhile; ?>
@@ -157,27 +162,27 @@ $total = $pedido['total'];
 <div class="space-y-2 text-right">
     <div class="flex justify-between">
         <span>Subtotal:</span>
-        <span>L <?php echo number_format($subtotal, 2); ?></span>
+        <span><?php echo $moneda; ?> <?php echo number_format($subtotal, 2); ?></span>
     </div>
 
     <div class="flex justify-between">
         <span>Impuesto:</span>
-        <span>L <?php echo number_format($impuesto, 2); ?></span>
+        <span><?php echo $moneda; ?> <?php echo number_format($impuesto, 2); ?></span>
     </div>
 
     <div class="flex justify-between">
         <span>Envío (Departamento):</span>
-        <span>L <?php echo number_format($envio_departamento, 2); ?></span>
+        <span><?php echo $moneda; ?> <?php echo number_format($envio_departamento, 2); ?></span>
     </div>
 
     <div class="flex justify-between">
         <span>Envío (<?php echo $pedido['nombre_envio']; ?>):</span>
-        <span>L <?php echo number_format($envio_metodo, 2); ?></span>
+        <span><?php echo $moneda; ?> <?php echo number_format($envio_metodo, 2); ?></span>
     </div>
 
     <div class="flex justify-between font-bold text-lg border-t pt-2">
         <span>Total:</span>
-        <span>L <?php echo number_format($total, 2); ?></span>
+        <span><?php echo $moneda; ?> <?php echo number_format($total, 2); ?></span>
     </div>
 </div>
 

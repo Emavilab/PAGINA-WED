@@ -66,6 +66,14 @@ $stmt2 = $conexion->prepare($sqlDetalle);
 $stmt2->bind_param("i", $id_pedido);
 $stmt2->execute();
 $resultDetalle = $stmt2->get_result();
+
+/* ================================
+   MONEDA DEL SISTEMA
+   Cargar la moneda configurada para mostrar precios
+================================ */
+$res_cfg = mysqli_query($conexion, "SELECT moneda FROM configuracion WHERE id_config = 1");
+$config = mysqli_fetch_assoc($res_cfg);
+$moneda = $config['moneda'] ?? 'L';
 ?>
 
 <!-- Encabezado del pedido -->
@@ -84,9 +92,9 @@ Pedido #<?php echo $pedido['id_pedido']; ?>
 
 <div>
 <p><strong>Método Envío:</strong> <?php echo htmlspecialchars($pedido['metodo_envio'] ?? 'No definido'); ?></p>
-<p><strong>Costo Envío:</strong> L <?php echo number_format($pedido['costo_envio'] ?? 0,2); ?></p>
-<p><strong>Envío (Departamento):</strong> L <?php echo number_format($pedido['envio_departamento'] ?? 0,2); ?></p>
-<p><strong>Impuesto:</strong> L <?php echo number_format($pedido['impuesto_total'],2); ?></p>
+<p><strong>Costo Envío:</strong> <?php echo $moneda; ?> <?php echo number_format($pedido['costo_envio'] ?? 0,2); ?></p>
+<p><strong>Envío (Departamento):</strong> <?php echo $moneda; ?> <?php echo number_format($pedido['envio_departamento'] ?? 0,2); ?></p>
+<p><strong>Impuesto:</strong> <?php echo $moneda; ?> <?php echo number_format($pedido['impuesto_total'],2); ?></p>
 </div>
 
 </div>
@@ -135,13 +143,13 @@ Pedido #<?php echo $pedido['id_pedido']; ?>
 <tr class="border-t">
 <td class="p-2"><?php echo htmlspecialchars($item['nombre']); ?></td>
 <td class="p-2 text-center">
-L <?php echo number_format($item['precio_unitario'],2); ?>
+<?php echo $moneda; ?> <?php echo number_format($item['precio_unitario'],2); ?>
 </td>
 <td class="p-2 text-center">
 <?php echo $item['cantidad']; ?>
 </td>
 <td class="p-2 text-center font-semibold">
-L <?php echo number_format($item['precio_unitario'] * $item['cantidad'],2); ?>
+<?php echo $moneda; ?> <?php echo number_format($item['precio_unitario'] * $item['cantidad'],2); ?>
 </td>
 </tr>
 
@@ -153,22 +161,22 @@ L <?php echo number_format($item['precio_unitario'] * $item['cantidad'],2); ?>
 <!-- Totales -->
 <div class="mt-6 text-right text-sm space-y-1">
 
-<p>Subtotal: <strong>L <?php echo number_format($pedido['subtotal'],2); ?></strong></p>
+<p>Subtotal: <strong><?php echo $moneda; ?> <?php echo number_format($pedido['subtotal'],2); ?></strong></p>
 
-<p>Impuesto: <strong>L <?php echo number_format($pedido['impuesto_total'],2); ?></strong></p>
+<p>Impuesto: <strong><?php echo $moneda; ?> <?php echo number_format($pedido['impuesto_total'],2); ?></strong></p>
 
 <p>Envío (Departamento):
-<strong>L <?php echo number_format($pedido['envio_departamento'] ?? 0,2); ?></strong>
+<strong><?php echo $moneda; ?> <?php echo number_format($pedido['envio_departamento'] ?? 0,2); ?></strong>
 </p>
 
 <p>Envío (<?php echo htmlspecialchars($pedido['metodo_envio'] ?? 'Método'); ?>):
-<strong>L <?php echo number_format($pedido['costo_envio'] ?? 0,2); ?></strong>
+<strong><?php echo $moneda; ?> <?php echo number_format($pedido['costo_envio'] ?? 0,2); ?></strong>
 </p>
 
 <hr class="my-2">
 
 <p class="text-lg font-bold">
-Total: L <?php echo number_format($pedido['total'],2); ?>
+Total: <?php echo $moneda; ?> <?php echo number_format($pedido['total'],2); ?>
 </p>
 
 </div>

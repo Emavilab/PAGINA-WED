@@ -164,8 +164,8 @@ try {
     Se guarda la nueva dirección asociada al cliente.
     */
     $query = "INSERT INTO direcciones_cliente 
-              (id_cliente, direccion, ciudad, codigo_postal, telefono, referencia, id_departamento)
-              VALUES (?, ?, ?, ?, ?, ?, ?)";
+              (id_cliente, direccion, ciudad, codigo_postal, telefono, referencia, id_departamento, activo)
+              VALUES (?, ?, ?, ?, ?, ?, ?, 1)";
 
     $stmt = $conexion->prepare($query);
 
@@ -179,7 +179,8 @@ try {
     ASIGNAR PARÁMETROS A LA CONSULTA
     ====================================================
     Se vinculan los datos del formulario a la consulta
-    preparada para evitar inyección SQL.
+    preparada para evitar inyección SQL. activo = 1 para
+    que la nueva dirección sea visible (soft delete).
     */
     $stmt->bind_param(
         "isssssi",

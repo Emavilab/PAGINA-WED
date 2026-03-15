@@ -123,16 +123,20 @@ if (!$id_direccion) {
 
 /*
 ------------------------------------------------------------
-PROCESO PARA ELIMINAR LA DIRECCIÓN
+PROCESO PARA ELIMINAR LA DIRECCIÓN (SOFT DELETE)
 ------------------------------------------------------------
-Se elimina únicamente si la dirección pertenece
-al cliente autenticado.
+Se marca la dirección como inactiva en lugar de eliminarla
+físicamente. Así se conserva el historial para pedidos ya
+realizados. Solo se actualiza si pertenece al cliente.
 */
 try {
 
     $stmt = $conexion->prepare("
-        DELETE FROM direcciones_cliente
-        WHERE id_direccion = ? AND id_cliente = ?
+        UPDATE direcciones_cliente
+        SET activo = 0,
+            fecha_eliminacion = NOW()
+        WHERE id_direccion = ?
+        AND id_cliente = ?
     ");
 
     /*
@@ -142,7 +146,7 @@ try {
     $stmt->execute();
 
     /*
-    Verificar si la eliminación afectó alguna fila
+    Verificar si la actualización afectó alguna fila
     */
     if ($stmt->affected_rows === 0) {
         echo json_encode([
@@ -153,7 +157,7 @@ try {
     }
 
     /*
-    Respuesta cuando la eliminación fue exitosa
+    Respuesta cuando la eliminación (soft delete) fue exitosa
     */
     echo json_encode([
         "success" => true,

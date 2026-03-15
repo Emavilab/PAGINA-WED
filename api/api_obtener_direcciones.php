@@ -109,6 +109,7 @@ $query = "SELECT d.*, dep.nombre_departamento, dep.costo_envio, dep.dias_entrega
           FROM direcciones_cliente d 
           LEFT JOIN departamentos_envio dep ON d.id_departamento = dep.id_departamento 
           WHERE d.id_cliente = ? 
+          AND d.activo = 1
           ORDER BY d.id_direccion DESC";
 
 /*

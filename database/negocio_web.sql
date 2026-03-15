@@ -267,6 +267,8 @@ CREATE TABLE `direcciones_cliente` (
   `referencia` varchar(200) DEFAULT NULL,
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
   `id_departamento` int(11) DEFAULT NULL,
+  `activo` tinyint(1) DEFAULT 1,
+  `fecha_eliminacion` datetime DEFAULT NULL,
   PRIMARY KEY (`id_direccion`),
   KEY `id_cliente` (`id_cliente`),
   KEY `fk_direcciones_departamento` (`id_departamento`),

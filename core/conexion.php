@@ -4,14 +4,15 @@
  * Archivo de configuración para conectar a MySQL
  */
 
-// Definir parámetros de conexión
-$servername = "localhost";
-$username = "root";
-$password = "";
-$database = "negocio_web";
+// Definir parámetros de conexión (usa variables de entorno en producción)
+$servername = getenv('DB_HOST')   ?: "localhost";
+$username   = getenv('DB_USER')   ?: "root";
+$password   = getenv('DB_PASS')   ?: "";
+$database   = getenv('DB_NAME')   ?: "negocio_web";
+$db_port    = (int)(getenv('DB_PORT') ?: 3306);
 
 // Crear conexión con MySQLi
-$conexion = new mysqli($servername, $username, $password, $database);
+$conexion = new mysqli($servername, $username, $password, $database, $db_port);
 
 // Establecer charset UTF-8
 $conexion->set_charset("utf8mb4");

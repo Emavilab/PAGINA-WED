@@ -126,7 +126,7 @@ Siguiente
         </div>
 
         <!-- Form -->
-        <form id="form-crear-usuario" class="p-6 space-y-4">
+        <form id="form-crear-usuario" class="form-validar-usuario p-6 space-y-4">
             <input type="hidden" id="id_usuario_edit" name="id_usuario" value="">
             
             <!-- Nombre -->

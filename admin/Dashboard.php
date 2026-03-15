@@ -977,6 +977,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <?php include '../core/modal_advertencia_sesion.html'; ?>
 
 <!-- Script de Sistema de Advertencia de Sesión (sin caché) -->
+<script src="../js/validaciones-formularios.js?v=<?php echo time(); ?>"></script>
 <script src="../js/advertencia_sesion.js?v=<?php echo time(); ?>"></script>
 
 

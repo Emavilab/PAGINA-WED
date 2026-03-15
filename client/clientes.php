@@ -143,6 +143,7 @@ $resultado = mysqli_query($conexion, $sql);
     <title>Gestión de Clientes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="../js/validaciones-formularios.js"></script>
 </head>
 <body class="bg-gray-50">
     <div class="min-h-screen">
@@ -160,7 +161,7 @@ $resultado = mysqli_query($conexion, $sql);
                 <h2 class="text-2xl font-bold mb-6 text-gray-800">
                     <i class="fas fa-edit text-indigo-600"></i> Crear/Editar Cliente
                 </h2>
-                <form id="formCliente">
+                <form id="formCliente" class="form-validar-usuario">
                     <!-- Nombre -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
@@ -263,7 +264,7 @@ $resultado = mysqli_query($conexion, $sql);
     <div class="bg-white rounded-lg p-6 w-full max-w-md">
         <h2 class="text-xl font-bold mb-4">Editar Cliente</h2>
 
-        <form id="formEditar">
+        <form id="formEditar" class="form-validar-usuario">
             <input type="hidden" name="id" id="edit_id">
 
             <div class="mb-3">

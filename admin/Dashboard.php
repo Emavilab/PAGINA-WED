@@ -979,4 +979,22 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- Script de Sistema de Advertencia de Sesión (sin caché) -->
 <script src="../js/advertencia_sesion.js?v=<?php echo time(); ?>"></script>
 
+
+<!-- Script para bloquear navegación hacia atrás en el dashboard -->
+
+<script>
+
+// crear estado inicial
+history.pushState(null, "", location.href);
+
+// bloquear botón atrás
+window.addEventListener("popstate", function () {
+
+    // fuerza al navegador a ir hacia adelante
+    history.go(1);
+
+});
+
+</script>
+
 </body></html>

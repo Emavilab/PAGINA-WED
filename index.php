@@ -1675,31 +1675,30 @@ document.addEventListener("click", function (e) {
     }
 
 });
-function loadHistorialPedidos() {
-    fetch('client/historialpedidoC.php')
+function loadHistorialPedidos(page = 1) {
+    fetch('client/historialpedidoC.php?page=' + page)
         .then(response => response.text())
         .then(data => {
             document.getElementById('mainContent').innerHTML = data;
-            
-            // Extraer y ejecutar todos los scripts del contenido cargado
+
             const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/g;
             let match;
             while ((match = scriptRegex.exec(data)) !== null) {
                 try {
-                    // Usar eval para ejecutar el script inmediatamente
-                    console.log('Ejecutando script inline...');
                     eval(match[1]);
                 } catch (err) {
-                    console.error('Error ejecutando script inline:', err);
+                    console.error(err);
                 }
             }
-            
-            // Scroll hacia arriba para ver el contenido
+
             window.scrollTo(0, 0);
-            // Guardar en historial
-            AppRouter.push('historial_pedidos', {});
+            AppRouter.push('historial_pedidos', { page: page });
         })
         .catch(error => console.error('Error al cargar historialpedidoC:', error));
+}
+
+function cambiarPagina(pagina) {
+    loadHistorialPedidos(pagina);
 }
 
 function loadListaDeseos() {
@@ -3091,7 +3090,8 @@ window.addEventListener('popstate', function(event) {
                 loadListaDeseos();
                 break;
             case 'historial_pedidos':
-                loadHistorialPedidos();
+                const pagina = (params && params.page != null) ? parseInt(params.page, 10) : 1;
+                loadHistorialPedidos(isNaN(pagina) ? 1 : pagina);
                 break;
             case 'contacto':
                 loadContacto();

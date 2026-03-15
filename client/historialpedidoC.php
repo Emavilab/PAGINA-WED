@@ -62,32 +62,15 @@ require_once '../core/sesiones.php';
 ---------------------------------------------------------
 VERIFICAR AUTENTICACIÓN DEL USUARIO
 ---------------------------------------------------------
-Si el usuario no está autenticado se redirige al login.
 */
-if (!usuarioAutenticado()) {
-    echo "<script>window.location='?modulo=login';</script>";
-    exit();
+$usuarioAutenticado = usuarioAutenticado();
+
+$id_cliente = null;
+
+if ($usuarioAutenticado) {
+    $usuario = obtenerDatosUsuario();
+    $id_cliente = $usuario['id_cliente'] ?? null;
 }
-
-/*
----------------------------------------------------------
-OBTENER DATOS DEL USUARIO AUTENTICADO
----------------------------------------------------------
-*/
-$usuario = obtenerDatosUsuario();
-$id_cliente = $usuario['id_cliente'] ?? null;
-
-/*
----------------------------------------------------------
-VALIDAR QUE EL USUARIO TENGA CLIENTE ASOCIADO
----------------------------------------------------------
-*/
-if (!$id_cliente) {
-    echo "<script>window.location='?modulo=login';</script>";
-    exit();
-}
-
-
 /*
 ====================================================================
 CONFIGURACIÓN DE PAGINACIÓN
@@ -111,45 +94,35 @@ OBTENER TOTAL DE PEDIDOS DEL CLIENTE
 ---------------------------------------------------------
 Esto se usa para calcular el número de páginas.
 */
-$sql_total = "SELECT COUNT(*) AS total FROM pedidos WHERE id_cliente = ?";
-
-$stmt_total = $conexion->prepare($sql_total);
-$stmt_total->bind_param("i", $id_cliente);
-$stmt_total->execute();
-$res_total = $stmt_total->get_result();
-
 $total_pedidos = 0;
+$total_paginas = 1;
+$resultado = null;
 
-if ($row_total = $res_total->fetch_assoc()) {
-    $total_pedidos = (int)$row_total['total'];
+if ($usuarioAutenticado && $id_cliente) {
+
+    $sql_total = "SELECT COUNT(*) AS total FROM pedidos WHERE id_cliente = ?";
+    $stmt_total = $conexion->prepare($sql_total);
+    $stmt_total->bind_param("i", $id_cliente);
+    $stmt_total->execute();
+    $res_total = $stmt_total->get_result();
+
+    if ($row_total = $res_total->fetch_assoc()) {
+        $total_pedidos = (int)$row_total['total'];
+    }
+
+    $total_paginas = max(1, ceil($total_pedidos / $por_pagina));
+
+    $sql = "SELECT id_pedido, fecha_pedido, estado, total
+            FROM pedidos
+            WHERE id_cliente = ?
+            ORDER BY fecha_pedido DESC
+            LIMIT ? OFFSET ?";
+
+    $stmt = $conexion->prepare($sql);
+    $stmt->bind_param("iii", $id_cliente, $por_pagina, $offset);
+    $stmt->execute();
+    $resultado = $stmt->get_result();
 }
-
-/*
----------------------------------------------------------
-CALCULAR TOTAL DE PÁGINAS
----------------------------------------------------------
-*/
-$total_paginas = max(1, ceil($total_pedidos / $por_pagina));
-
-
-/*
-====================================================================
-CONSULTA DE PEDIDOS PAGINADOS
-====================================================================
-Se obtienen únicamente los pedidos correspondientes
-a la página actual.
-*/
-
-$sql = "SELECT id_pedido, fecha_pedido, estado, total 
-        FROM pedidos 
-        WHERE id_cliente = ? 
-        ORDER BY fecha_pedido DESC
-        LIMIT ? OFFSET ?";
-
-$stmt = $conexion->prepare($sql);
-$stmt->bind_param("iii", $id_cliente, $por_pagina, $offset);
-$stmt->execute();
-$resultado = $stmt->get_result();
 
 
 /*
@@ -315,6 +288,31 @@ ESTILOS DE ESTADOS DE PEDIDOS
 
 </style>
 <main class="flex-grow max-w-7xl mx-auto px-4 py-8 md:py-12 w-full">
+    <?php if (!$usuarioAutenticado): ?>
+
+<div class="mt-12 text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700">
+
+    <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">
+        person_off
+    </span>
+
+    <h2 class="text-xl font-bold mb-2">
+        Inicia sesión para ver tus pedidos
+    </h2>
+
+    <p class="text-slate-500 mb-8">
+        El historial de pedidos solo está disponible para usuarios registrados.
+    </p>
+
+    <button
+        onclick="if (typeof loadLogin === 'function') { loadLogin(); } else { window.location='?modulo=login'; }"
+        class="px-8 py-3 bg-primary text-white rounded-xl font-bold">
+        Iniciar Sesión
+    </button>
+
+</div>
+
+<?php return; endif; ?>
 <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
 <div>
 <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Historial de Mis Pedidos</h1>
@@ -340,7 +338,7 @@ ESTILOS DE ESTADOS DE PEDIDOS
 </thead>
 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
 
-<?php if ($resultado->num_rows > 0): ?>
+<?php if ($resultado && $resultado->num_rows > 0): ?>
     <?php while ($pedido = $resultado->fetch_assoc()): ?>
 
     <?php
@@ -475,7 +473,7 @@ ESTILOS DE ESTADOS DE PEDIDOS
     <button
         class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50"
         <?php if ($pagina_actual <= 1): ?>disabled<?php endif; ?>
-        onclick="if(<?php echo $pagina_actual; ?> > 1) window.location='?modulo=historialpedidoC&page=<?php echo ($pagina_actual-1); ?>';"
+        onclick="cambiarPagina(<?php echo ($pagina_actual-1); ?>)"
         aria-label="Anterior"
     >
         <span class="material-icons text-lg leading-none">chevron_left</span>
@@ -493,16 +491,18 @@ ESTILOS DE ESTADOS DE PEDIDOS
         for ($i = $inicio; $i <= $fin; $i++):
     ?>
         <button
-            class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg <?php echo ($i==$pagina_actual) ? 'bg-primary text-white font-bold px-4 text-sm' : 'hover:bg-white dark:hover:bg-slate-700'; ?>"
-            <?php if ($i == $pagina_actual): ?>disabled<?php endif; ?>
-            onclick="if(<?php echo $i; ?> != <?php echo $pagina_actual; ?>) window.location='?modulo=historialpedidoC&page=<?php echo $i; ?>';"
-        ><?php echo $i; ?></button>
+        class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg <?php echo ($i==$pagina_actual) ? 'bg-primary text-white font-bold px-4 text-sm' : 'hover:bg-white dark:hover:bg-slate-700'; ?>"
+        <?php if ($i == $pagina_actual): ?>disabled<?php endif; ?>
+        onclick="cambiarPagina(<?php echo $i; ?>)"
+        >
+        <?php echo $i; ?>
+        </button>
     <?php endfor; ?>
     <!-- Botón siguiente -->
     <button
         class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50"
         <?php if ($pagina_actual >= $total_paginas): ?>disabled<?php endif; ?>
-        onclick="if(<?php echo $pagina_actual; ?> < <?php echo $total_paginas; ?>) window.location='?modulo=historialpedidoC&page=<?php echo ($pagina_actual+1); ?>';"
+        onclick="cambiarPagina(<?php echo ($pagina_actual+1); ?>)"
         aria-label="Siguiente"
     >
         <span class="material-icons text-lg leading-none">chevron_right</span>
@@ -578,6 +578,9 @@ ESTILOS DE ESTADOS DE PEDIDOS
     
     console.log('Historial script completamente inicializado');
 })();
+
+// La paginación se maneja desde el SPA (index.php): cambiarPagina(numero) y loadHistorialPedidos(page).
+
 </script>
 
 <div id="modalPedido" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
@@ -625,6 +628,7 @@ document.addEventListener("click", function(e) {
     }
 });
 </script>
+
 </body></html>
 <!-- Se requiere un archivo cancelar_pedido_ajax.php para manejar la actualización del estado vía AJAX:
 <?php

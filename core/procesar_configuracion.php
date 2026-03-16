@@ -570,44 +570,93 @@ responder(false,"Error al guardar departamento");
             $defaults[$key] = mysqli_real_escape_string($conexion, $value);
         }
 
-        // Verificar si existe configuración
-        $check = mysqli_query($conexion, "SELECT id_config FROM configuracion WHERE id_config = 1");
-        
-        if (mysqli_num_rows($check) > 0) {
-            // Actualizar valores existentes
-            $sql = "UPDATE configuracion SET 
-                nombre_negocio = '{$defaults['nombre_negocio']}',
-                slogan = '{$defaults['slogan']}',
-                correo = '{$defaults['correo']}',
-                telefono = '{$defaults['telefono']}',
-                direccion = '{$defaults['direccion']}',
-                moneda = '{$defaults['moneda']}',
-                horario_atencion = '{$defaults['horario_atencion']}',
-                texto_inicio = '{$defaults['texto_inicio']}',
-                pie_pagina = '{$defaults['pie_pagina']}',
-                texto_banner_superior = '{$defaults['texto_banner_superior']}',
-                hero_etiqueta = '{$defaults['hero_etiqueta']}',
-                hero_titulo = '{$defaults['hero_titulo']}',
-                hero_subtitulo = '{$defaults['hero_subtitulo']}',
-                hero_descripcion = '{$defaults['hero_descripcion']}',
-                hero_btn_primario = '{$defaults['hero_btn_primario']}',
-                hero_btn_secundario = '{$defaults['hero_btn_secundario']}',
-                color_primary = '{$defaults['color_primary']}',
-                color_primary_dark = '{$defaults['color_primary_dark']}',
-                color_background_light = '{$defaults['color_background_light']}',
-                color_background_dark = '{$defaults['color_background_dark']}',
-                redes_sociales = '{$defaults['redes_sociales']}',
-                header_menu = '{$defaults['header_menu']}',
-                footer_columns = '{$defaults['footer_columns']}'
-                WHERE id_config = 1";
+        // Comenzar transacción para atomicidad
+        mysqli_query($conexion, "START TRANSACTION");
 
-            if (mysqli_query($conexion, $sql)) {
-                responder(true, 'Valores restaurados a los predeterminados exitosamente');
-            } else {
-                responder(false, 'Error al restaurar valores: ' . mysqli_error($conexion));
+        try {
+            // 1. Eliminar logo y favicon
+            $carpeta_img = __DIR__ . '/../img/';
+            $res_img = mysqli_query($conexion, "SELECT logo, favicon FROM configuracion WHERE id_config = 1");
+            if ($row_img = mysqli_fetch_assoc($res_img)) {
+                // Eliminar logo
+                if (!empty($row_img['logo']) && file_exists($carpeta_img . $row_img['logo'])) {
+                    @unlink($carpeta_img . $row_img['logo']);
+                }
+                // Eliminar favicon
+                if (!empty($row_img['favicon']) && file_exists($carpeta_img . $row_img['favicon'])) {
+                    @unlink($carpeta_img . $row_img['favicon']);
+                }
             }
-        } else {
-            responder(false, 'No hay configuración para restaurar');
+
+            // 2. Eliminar todos los banners y sus imágenes
+            $carpeta_banners = __DIR__ . '/../img/banners/';
+            $res_banners = mysqli_query($conexion, "SELECT imagen FROM banners");
+            while ($row = mysqli_fetch_assoc($res_banners)) {
+                if (!empty($row['imagen']) && file_exists($carpeta_banners . $row['imagen'])) {
+                    @unlink($carpeta_banners . $row['imagen']);
+                }
+            }
+            mysqli_query($conexion, "DELETE FROM banners");
+
+            // 3. Eliminar todos los hero slides y sus imágenes
+            $carpeta_slides = __DIR__ . '/../img/slides/';
+            $res_slides = mysqli_query($conexion, "SELECT imagen FROM hero_slides");
+            while ($row = mysqli_fetch_assoc($res_slides)) {
+                if (!empty($row['imagen']) && file_exists($carpeta_slides . $row['imagen'])) {
+                    @unlink($carpeta_slides . $row['imagen']);
+                }
+            }
+            mysqli_query($conexion, "DELETE FROM hero_slides");
+
+            // 4. Verificar si existe configuración
+            $check = mysqli_query($conexion, "SELECT id_config FROM configuracion WHERE id_config = 1");
+            
+            if (mysqli_num_rows($check) > 0) {
+                // Actualizar valores existentes (sin logo ni favicon)
+                $sql = "UPDATE configuracion SET 
+                    nombre_negocio = '{$defaults['nombre_negocio']}',
+                    slogan = '{$defaults['slogan']}',
+                    correo = '{$defaults['correo']}',
+                    telefono = '{$defaults['telefono']}',
+                    direccion = '{$defaults['direccion']}',
+                    moneda = '{$defaults['moneda']}',
+                    horario_atencion = '{$defaults['horario_atencion']}',
+                    texto_inicio = '{$defaults['texto_inicio']}',
+                    pie_pagina = '{$defaults['pie_pagina']}',
+                    texto_banner_superior = '{$defaults['texto_banner_superior']}',
+                    hero_etiqueta = '{$defaults['hero_etiqueta']}',
+                    hero_titulo = '{$defaults['hero_titulo']}',
+                    hero_subtitulo = '{$defaults['hero_subtitulo']}',
+                    hero_descripcion = '{$defaults['hero_descripcion']}',
+                    hero_btn_primario = '{$defaults['hero_btn_primario']}',
+                    hero_btn_secundario = '{$defaults['hero_btn_secundario']}',
+                    color_primary = '{$defaults['color_primary']}',
+                    color_primary_dark = '{$defaults['color_primary_dark']}',
+                    color_background_light = '{$defaults['color_background_light']}',
+                    color_background_dark = '{$defaults['color_background_dark']}',
+                    redes_sociales = '{$defaults['redes_sociales']}',
+                    header_menu = '{$defaults['header_menu']}',
+                    footer_columns = '{$defaults['footer_columns']}',
+                    logo = NULL,
+                    favicon = NULL,
+                    hero_imagen = NULL
+                    WHERE id_config = 1";
+
+                if (!mysqli_query($conexion, $sql)) {
+                    throw new Exception('Error al restaurar valores: ' . mysqli_error($conexion));
+                }
+            } else {
+                throw new Exception('No hay configuración para restaurar');
+            }
+
+            // Confirmar transacción
+            mysqli_query($conexion, "COMMIT");
+            responder(true, 'Configuración restaurada a valores predeterminados. Logo, favicon, banners y slides han sido eliminados.');
+
+        } catch (Exception $e) {
+            // Revertir transacción en caso de error
+            mysqli_query($conexion, "ROLLBACK");
+            responder(false, $e->getMessage());
         }
     }
 }

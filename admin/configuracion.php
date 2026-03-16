@@ -2112,8 +2112,27 @@ function eliminarEnlaceFooter(btn) {
 }
 
 function resetConfigGeneral() {
-    if (confirm('¿Restaurar los valores guardados? Se perderán los cambios no guardados.')) {
-        recargarModulo();
+    if (confirm('¿Restaurar los valores predeterminados del sistema? Se perderán todos los cambios actuales.')) {
+        const formData = new FormData();
+        formData.append('accion', 'restaurar_valores_predeterminados');
+
+        fetch('../core/procesar_configuracion.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarNotificacion('Valores restaurados exitosamente', 'success');
+                setTimeout(() => recargarModulo(), 1500);
+            } else {
+                mostrarNotificacion(data.message || 'Error al restaurar valores', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            mostrarNotificacion('Error en la solicitud', 'error');
+        });
     }
 }
 

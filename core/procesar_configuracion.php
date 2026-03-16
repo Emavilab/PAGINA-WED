@@ -528,6 +528,88 @@ responder(false,"Error al guardar departamento");
             responder(false, 'Error al guardar slide: ' . mysqli_error($conexion));
         }
     }
+
+    // --- LÓGICA PARA RESTAURAR VALORES PREDETERMINADOS ---
+    if ($accion == 'restaurar_valores_predeterminados') {
+        // Definir valores predeterminados
+        $defaults = [
+            'nombre_negocio' => 'ControlPlus',
+            'slogan' => 'Tu tienda en línea',
+            'correo' => 'admin@controlplus.com',
+            'telefono' => '+1 (555) 123-4567',
+            'direccion' => 'Dirección de la empresa',
+            'moneda' => 'USD',
+            'horario_atencion' => 'Lunes a Viernes 9AM - 6PM',
+            'texto_inicio' => 'Bienvenido a ControlPlus',
+            'pie_pagina' => '© 2024 ControlPlus. Todos los derechos reservados.',
+            'texto_banner_superior' => 'Ofertas especiales disponibles',
+            'hero_etiqueta' => 'Bienvenido',
+            'hero_titulo' => 'Tu tienda de confianza',
+            'hero_subtitulo' => 'Descubre nuestros productos',
+            'hero_descripcion' => 'Compra los mejores productos',
+            'hero_btn_primario' => 'Comprar Ahora',
+            'hero_btn_secundario' => 'Conocer Más',
+            'color_primary' => '#137FEC',
+            'color_primary_dark' => '#0D66C2',
+            'color_background_light' => '#F6F7F8',
+            'color_background_dark' => '#101922',
+            'redes_sociales' => json_encode([
+                'facebook' => '',
+                'instagram' => '',
+                'whatsapp' => '',
+                'tiktok' => '',
+                'twitter' => '',
+                'youtube' => ''
+            ], JSON_UNESCAPED_SLASHES),
+            'header_menu' => json_encode([], JSON_UNESCAPED_SLASHES),
+            'footer_columns' => json_encode([], JSON_UNESCAPED_SLASHES)
+        ];
+
+        // Escapar valores
+        foreach ($defaults as $key => $value) {
+            $defaults[$key] = mysqli_real_escape_string($conexion, $value);
+        }
+
+        // Verificar si existe configuración
+        $check = mysqli_query($conexion, "SELECT id_config FROM configuracion WHERE id_config = 1");
+        
+        if (mysqli_num_rows($check) > 0) {
+            // Actualizar valores existentes
+            $sql = "UPDATE configuracion SET 
+                nombre_negocio = '{$defaults['nombre_negocio']}',
+                slogan = '{$defaults['slogan']}',
+                correo = '{$defaults['correo']}',
+                telefono = '{$defaults['telefono']}',
+                direccion = '{$defaults['direccion']}',
+                moneda = '{$defaults['moneda']}',
+                horario_atencion = '{$defaults['horario_atencion']}',
+                texto_inicio = '{$defaults['texto_inicio']}',
+                pie_pagina = '{$defaults['pie_pagina']}',
+                texto_banner_superior = '{$defaults['texto_banner_superior']}',
+                hero_etiqueta = '{$defaults['hero_etiqueta']}',
+                hero_titulo = '{$defaults['hero_titulo']}',
+                hero_subtitulo = '{$defaults['hero_subtitulo']}',
+                hero_descripcion = '{$defaults['hero_descripcion']}',
+                hero_btn_primario = '{$defaults['hero_btn_primario']}',
+                hero_btn_secundario = '{$defaults['hero_btn_secundario']}',
+                color_primary = '{$defaults['color_primary']}',
+                color_primary_dark = '{$defaults['color_primary_dark']}',
+                color_background_light = '{$defaults['color_background_light']}',
+                color_background_dark = '{$defaults['color_background_dark']}',
+                redes_sociales = '{$defaults['redes_sociales']}',
+                header_menu = '{$defaults['header_menu']}',
+                footer_columns = '{$defaults['footer_columns']}'
+                WHERE id_config = 1";
+
+            if (mysqli_query($conexion, $sql)) {
+                responder(true, 'Valores restaurados a los predeterminados exitosamente');
+            } else {
+                responder(false, 'Error al restaurar valores: ' . mysqli_error($conexion));
+            }
+        } else {
+            responder(false, 'No hay configuración para restaurar');
+        }
+    }
 }
 
 // --- LÓGICA PARA ELIMINAR (GET) ---

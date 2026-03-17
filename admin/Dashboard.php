@@ -510,10 +510,6 @@ onclick="loadPage('./admin_reportes.php', event)">
 <span class="material-icons-round dark:hidden">dark_mode</span>
 <span class="material-icons-round hidden dark:block text-yellow-400">light_mode</span>
 </button>
-<button class="relative p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-<span class="material-icons-round">notifications</span>
-<span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
-</button>
 <div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800">
 <div class="text-right hidden sm:block">
 <p class="text-sm font-semibold dark:text-white"><?php echo htmlspecialchars($usuario['nombre'] ?? 'Usuario'); ?></p>

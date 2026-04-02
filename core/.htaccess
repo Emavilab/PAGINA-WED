@@ -1,0 +1,7 @@
+# ============================================================
+# HTACCESS - BLOQUEAR ACCESO AL DIRECTORIO CORE
+# ============================================================
+# Sintaxis para Apache 2.4+
+# Bloquea acceso HTTP directo a archivos sensibles
+
+Require all denied

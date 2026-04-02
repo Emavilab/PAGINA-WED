@@ -1,6 +1,7 @@
 <?php
 require_once '../core/sesiones.php';
 require_once '../core/conexion.php';
+require_once '../core/csrf.php';
 
 if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2)) {
     header("Location: ../index.php");
@@ -18,6 +19,7 @@ $cfg_moneda = $simbolos_moneda[$cfg_moneda_cod] ?? $cfg_moneda_cod;
    MANEJO DE REQUESTS AJAX
 ================================ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'])) {
+    validarCSRFMiddleware();
     include 'pedidos_contenido.php';
     exit();
 }

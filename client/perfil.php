@@ -10,11 +10,26 @@ if (!usuarioAutenticado()) {
 
 $usuario = obtenerDatosUsuario();
 
-// Validar que el cliente exista
+// Si falta cliente asociado, crearlo automáticamente para usuarios autenticados
 if (!isset($usuario['id_cliente']) || !$usuario['id_cliente']) {
-    http_response_code(401);
-    echo "<script>window.location='?modulo=login';</script>";
-    exit();
+    global $conexion;
+    $id_usuario = (int)($usuario['id_usuario'] ?? ($usuario['id'] ?? 0));
+
+    if ($id_usuario > 0) {
+        $nombre_cliente = trim((string)($usuario['nombre'] ?? 'Cliente'));
+        if ($nombre_cliente === '') {
+            $nombre_cliente = 'Cliente';
+        }
+
+        $stmt_crear_cliente = $conexion->prepare("INSERT INTO clientes (id_usuario, nombre, estado) VALUES (?, ?, 'activo')");
+        if ($stmt_crear_cliente) {
+            $stmt_crear_cliente->bind_param("is", $id_usuario, $nombre_cliente);
+            $stmt_crear_cliente->execute();
+            $stmt_crear_cliente->close();
+        }
+
+        $usuario = obtenerDatosUsuario();
+    }
 }
 ?>
 <main class="flex-grow max-w-7xl mx-auto px-4 py-8 md:py-12 w-full">
@@ -426,7 +441,7 @@ async function confirmarEliminarDireccion() {
     const formData = new FormData();
     formData.append("id_direccion", direccionAEliminar);
 
-    const response = await fetch("api/api_eliminar_direccion.php", {
+    const response = await fetch("/PAGINA%20WED/api/api_eliminar_direccion.php", {
         method: "POST",
         body: formData,
         credentials: "include"
@@ -445,7 +460,7 @@ async function confirmarEliminarDireccion() {
 // ===============================
 async function cargarDepartamentosPerfil() {
     try {
-        const response = await fetch("api/api_obtener_departamentos.php", { credentials: "include" });
+        const response = await fetch("/PAGINA%20WED/api/api_obtener_departamentos.php", { credentials: "include" });
         const data = await response.json();
         if (!data.success || !data.departamentos || !data.departamentos.length) return;
         const optionsHtml = '<option value="">Seleccione departamento</option>' +
@@ -481,7 +496,7 @@ function iniciarPerfil() {
 
             try {
 
-                const response = await fetch("api/api_crear_direccion.php", {
+                const response = await fetch("/PAGINA%20WED/api/api_crear_direccion.php", {
                     method: "POST",
                     body: formData,
                     credentials: "include" // 🔥 ENVÍA LA SESIÓN
@@ -525,7 +540,7 @@ if (formEditar) {
 
         const formData = new FormData(this);
 
-        const response = await fetch("api/api_editar_direccion.php", {
+        const response = await fetch("/PAGINA%20WED/api/api_editar_direccion.php", {
             method: "POST",
             body: formData,
             credentials: "include"
@@ -560,12 +575,27 @@ function setupPerfilForm() {
         const formData = new FormData(this);
         
         try {
-            const response = await fetch('api/api_actualizar_perfil.php', {
+            const response = await fetch('/PAGINA%20WED/api/api_actualizar_perfil.php', {
                 method: 'POST',
+                credentials: 'include',
                 body: formData
             });
-            
-            const data = await response.json();
+
+            const text = await response.text();
+            let data = null;
+
+            try {
+                data = JSON.parse(text);
+            } catch (_) {
+                const match = text.match(/(\{[\s\S]*\})\s*$/);
+                if (match && match[1]) {
+                    try { data = JSON.parse(match[1]); } catch (__) {}
+                }
+            }
+
+            if (!data) {
+                throw new Error('Respuesta del servidor no válida');
+            }
             
             if (data.exito) {
                 if (mensajeExito) {
@@ -584,7 +614,7 @@ function setupPerfilForm() {
             }
         } catch (error) {
             if (mensajeError) {
-                mensajeError.textContent = 'Error al conectar con el servidor';
+                mensajeError.textContent = error.message ? ('Error al conectar con el servidor: ' + error.message) : 'Error al conectar con el servidor';
                 mensajeError.classList.remove('hidden');
             }
         }
@@ -596,7 +626,7 @@ async function cargarDirecciones() {
 
     try {
 
-        const response = await fetch("api/api_obtener_direcciones.php", {
+        const response = await fetch("/PAGINA%20WED/api/api_obtener_direcciones.php", {
             credentials: "include"
         });
 
@@ -680,7 +710,7 @@ function eliminarDireccion(id) {
             const formData = new FormData();
             formData.append("id_direccion", id);
 
-            const response = await fetch("api/api_eliminar_direccion.php", {
+            const response = await fetch("/PAGINA%20WED/api/api_eliminar_direccion.php", {
                 method: "POST",
                 body: formData,
                 credentials: "include"
@@ -714,7 +744,7 @@ function setupContraseñaForm() {
         const formData = new FormData(this);
         
         try {
-            const response = await fetch('api/api_cambiar_contraseña.php', {
+            const response = await fetch('/PAGINA%20WED/api/api_cambiar_contraseña.php', {
                 method: 'POST',
                 body: formData
             });
@@ -761,7 +791,7 @@ function eliminarCuenta() {
         return;
     }
     
-    fetch('api/api_eliminar_cuenta.php', {
+    fetch('/PAGINA%20WED/api/api_eliminar_cuenta.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

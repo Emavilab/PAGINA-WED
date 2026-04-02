@@ -1,9 +1,11 @@
 <?php
 require_once 'core/sesiones.php';
 require_once 'core/conexion.php';
+require_once 'core/csrf.php';
 
 $usuarioAutenticado = usuarioAutenticado();
 $datosUsuario = $usuarioAutenticado ? obtenerDatosUsuario() : null;
+$csrfToken = obtenerTokenCSRF();
 
 // Cargar configuración general del negocio
 $res_cfg = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
@@ -88,8 +90,45 @@ if($res_marcas && mysqli_num_rows($res_marcas) > 0) {
               borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
             },
           },
-        }
+        };
     </script>
+<script>
+    window.APP_CSRF_TOKEN = "<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>";
+
+    window.getCSRFToken = function() {
+        return window.APP_CSRF_TOKEN || '';
+    };
+
+    window.setCSRFToken = function(token) {
+        if (typeof token === 'string' && token.length > 0) {
+            window.APP_CSRF_TOKEN = token;
+        }
+    };
+
+    (function() {
+        const originalFetch = window.fetch.bind(window);
+
+        window.fetch = function(input, init) {
+            const config = init ? { ...init } : {};
+            const method = (config.method || 'GET').toUpperCase();
+            const token = window.getCSRFToken();
+
+            if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) && token) {
+                const headers = new Headers(config.headers || {});
+                headers.set('X-CSRF-TOKEN', token);
+                config.headers = headers;
+
+                if (config.body instanceof FormData && !config.body.has('csrf_token')) {
+                    config.body.append('csrf_token', token);
+                } else if (config.body instanceof URLSearchParams && !config.body.has('csrf_token')) {
+                    config.body.append('csrf_token', token);
+                }
+            }
+
+            return originalFetch(input, config);
+        };
+    })();
+</script>
 <style type="text/tailwindcss">
         body { font-family: 'Inter', sans-serif; }
         .category-card:hover .category-image { transform: scale(1.05); }
@@ -831,7 +870,7 @@ const iconoFaToMaterial = {
 };
 
 function cargarCategorias() {
-    fetch('api/obtener_categorias.php')
+    fetch('/PAGINA%20WED/api/obtener_categorias.php')
         .then(r => r.json())
         .then(categorias => {
             const grid = document.getElementById('categorias-grid');
@@ -861,7 +900,7 @@ function cargarCategorias() {
 // --- Panel de Categorías estilo sidebar ---
 function loadCategoriasPanel() {
     document.getElementById('mainContent').innerHTML = '<div class="flex justify-center items-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div></div>';
-    fetch('api/obtener_categorias.php')
+    fetch('/PAGINA%20WED/api/obtener_categorias.php')
         .then(r => r.json())
         .then(categorias => {
             window._categoriasPanel = categorias;
@@ -942,7 +981,7 @@ function seleccionarCategoria(index, idCategoria, btn) {
     const panel = document.getElementById('cat-subcategorias-panel');
     panel.innerHTML = '<div class="flex justify-center items-center h-32"><div class="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div></div>';
 
-    fetch('api/obtener_subcategorias.php?id=' + idCategoria)
+    fetch('/PAGINA%20WED/api/obtener_subcategorias.php?id=' + idCategoria)
         .then(r => r.json())
         .then(subcats => {
             let html = '<div class="mb-6 flex items-center justify-between">' +
@@ -983,8 +1022,8 @@ function seleccionarCategoria(index, idCategoria, btn) {
 function loadProductosPorCategoria(idCategoria, nombreCategoria) {
     document.getElementById('mainContent').innerHTML = '<div class="flex justify-center items-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div></div>';
     Promise.all([
-        fetch('api/obtener_productos.php').then(r => r.json()),
-        fetch('api/obtener_categorias_hijas.php?id=' + idCategoria).then(r => r.json())
+        fetch('/PAGINA%20WED/api/obtener_productos.php').then(r => r.json()),
+        fetch('/PAGINA%20WED/api/obtener_categorias_hijas.php?id=' + idCategoria).then(r => r.json())
     ]).then(function([productos, subcatIds]) {
             const idsValidos = [idCategoria, ...subcatIds];
             const filtrados = productos.filter(p => idsValidos.includes(parseInt(p.id_categoria)));
@@ -1099,8 +1138,8 @@ function loadProductosPorMarca(idMarca, nombreMarca) {
     document.getElementById('mainContent').innerHTML = '<div class="flex justify-center items-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div></div>';
     
     Promise.all([
-        fetch('api/obtener_productos.php').then(r => r.json()),
-        fetch('api/obtener_categorias.php?todas=1').then(r => r.json())
+        fetch('/PAGINA%20WED/api/obtener_productos.php').then(r => r.json()),
+        fetch('/PAGINA%20WED/api/obtener_categorias.php?todas=1').then(r => r.json())
     ]).then(function([productos, categorias]) {
         // Filtrar productos por marca
         const productosMarca = productos.filter(p => parseInt(p.id_marca) === parseInt(idMarca));
@@ -1356,7 +1395,7 @@ var _heroTimer = null;
 var _heroTotal = 1;
 
 function cargarHeroCarousel() {
-    fetch('api/obtener_hero_slides.php')
+    fetch('/PAGINA%20WED/api/obtener_hero_slides.php')
         .then(r => r.json())
         .then(resp => {
             var data = resp.data || resp;
@@ -1514,7 +1553,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function cargarBannerCards() {
-    fetch('api/obtener_banners.php')
+    fetch('/PAGINA%20WED/api/obtener_banners.php')
         .then(r => r.json())
         .then(resp => {
             var section = document.getElementById('banners-section');
@@ -1563,65 +1602,371 @@ function loadContacto() {
 }
 
 function loadLogin() {
-    fetch('pages/login.php')
-        .then(response => response.text())
-        .then(data => {
-            // Crear un contenedor temporal para parsear el HTML
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = data;
+    console.log('loadLogin llamado');
+    try {
+        fetch('api/get_login_form.php')
+            .then(response => {
+                console.log('Login response status:', response.status);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.text();
+            })
+            .then(data => {
+                console.log('Login HTML recibido, longitud:', data.length);
+                // Verificar que tenemos mainContent
+                const mainContent = document.getElementById('mainContent');
+                if (!mainContent) {
+                    console.error('mainContent no encontrado en el DOM');
+                    return;
+                }
+                
+                // Insertar el contenido directamente
+                mainContent.innerHTML = data;
+                console.log('Login HTML inyectado correctamente');
+                
+                // Scroll hacia arriba
+                window.scrollTo(0, 0);
+                
+                // Guardar en historial (sin error si falla)
+                try {
+                    if (typeof AppRouter !== 'undefined' && AppRouter.push) {
+                        AppRouter.push('login', {});
+                    }
+                } catch(e) {
+                    console.log('AppRouter no disponible, continuando sin él');
+                }
+                
+                // **CONFIGURAR HANDLERS DEL FORMULARIO DESPUÉS DE INYECTAR HTML**
+                setTimeout(() => {
+                    console.log('Llamando setupLoginFormHandlers()');
+                    setupLoginFormHandlers();
+                }, 50);
+            })
+            .catch(error => {
+                console.error('Error al cargar login:', error);
+                alert('Error al cargar el formulario de login: ' + error.message);
+            });
+    } catch(e) {
+        console.error('Error no capturado en loadLogin:', e);
+    }
+}
+
+// Funciones auxiliares para el formulario de login
+function togglePasswordLogin() {
+    const input = document.getElementById('password');
+    const icon = document.getElementById('icon-toggle-password');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = 'visibility';
+    } else {
+        input.type = 'password';
+        icon.textContent = 'visibility_off';
+    }
+}
+
+function mostrarErrorLogin(campo, mensaje) {
+    const errorEl = document.getElementById('error-' + campo);
+    if (errorEl) {
+        errorEl.textContent = mensaje;
+        errorEl.classList.remove('hidden');
+    }
+}
+
+// Configurar handlers del formulario de login (llamar después de inyectar HTML)
+function setupLoginFormHandlers() {
+    const form = document.getElementById('form-login-modal');
+    if (!form) {
+        console.error('Formulario de login no encontrado');
+        return;
+    }
+    
+    console.log('Configurando handlers del formulario de login...');
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        console.log('Submit del formulario detectado');
+        
+        // Limpiar mensajes previos
+        const mensajeError = document.getElementById('mensaje-error');
+        const mensajeExito = document.getElementById('mensaje-exito');
+        if (mensajeError) mensajeError.classList.add('hidden');
+        if (mensajeExito) mensajeExito.classList.add('hidden');
+        document.querySelectorAll('[id^="error-"]').forEach(el => el.classList.add('hidden'));
+        
+        // Validaciones frontend
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        let valido = true;
+
+        if (!email) {
+            mostrarErrorLogin('email', 'El correo es requerido');
+            valido = false;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            mostrarErrorLogin('email', 'Ingresa un correo válido');
+            valido = false;
+        }
+
+        if (!password) {
+            mostrarErrorLogin('password', 'La contraseña es requerida');
+            valido = false;
+        }
+
+        if (!valido) {
+            console.log('Validaciones fallidas');
+            return;
+        }
+        
+        console.log('Enviando credenciales a api/validar_login.php...');
+        
+        // Obtener datos del formulario
+        const formData = new FormData(this);
+        
+        try {
+            const response = await fetch('/PAGINA%20WED/api/validar_login.php', {
+                method: 'POST',
+                body: formData
+            });
             
-            // Extraer solo el body content
-            const bodyContent = tempDiv.querySelector('body')?.innerHTML || data;
+            console.log('Response status:', response.status);
             
-            // Insertar el contenido en mainContent
-            document.getElementById('mainContent').innerHTML = bodyContent;
-            
-            // Extraer y ejecutar scripts
-            const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/g;
-            let scriptMatch;
-            while ((scriptMatch = scriptRegex.exec(data)) !== null) {
-                const script = document.createElement('script');
-                script.textContent = scriptMatch[1];
-                document.body.appendChild(script);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            // Scroll hacia arriba para ver el contenido
-            window.scrollTo(0, 0);
-            // Guardar en historial
-            AppRouter.push('login', {});
-        })
-        .catch(error => console.error('Error al cargar login:', error));
+            const data = await response.json();
+            console.log('JSON Response:', data);
+            
+            if(data.exito) {
+                console.log('Login exitoso, mostrando mensaje...');
+                // Mostrar mensaje de éxito
+                if (mensajeExito) {
+                    mensajeExito.textContent = data.mensaje || 'Sesión iniciada correctamente';
+                    mensajeExito.classList.remove('hidden');
+                }
+                
+                // Redirigir después de 1.5 segundos
+                setTimeout(() => {
+                    let redirect = data.redirect || 'index.php';
+                    
+                    // El redirect ya es una ruta relativa desde index.php
+                    // No necesitamos manipularlo, solo usar window.location.href
+                    console.log('Redirigiendo a:', redirect);
+                    window.location.href = redirect;
+                }, 1500);
+            } else {
+                console.log('Login fallido:', data.mensaje);
+                // Error en login
+                if (mensajeError) {
+                    mensajeError.textContent = data.mensaje || 'Error al iniciar sesión';
+                    mensajeError.classList.remove('hidden');
+                }
+                
+                if(data.bloqueado) {
+                    form.style.opacity = '0.5';
+                    form.style.pointerEvents = 'none';
+                    if (mensajeError) {
+                        mensajeError.textContent = '⏱️ Cuenta bloqueada temporalmente. Intenta de nuevo en 15 minutos.';
+                    }
+                }
+            }
+        } catch(error) {
+            console.error('Error en login:', error);
+            if (mensajeError) {
+                mensajeError.textContent = 'Error al conectar con el servidor: ' + error.message;
+                mensajeError.classList.remove('hidden');
+            }
+        }
+    });
+}
+
+// Configurar handlers del formulario de registro
+function setupRegisterForm() {
+    const form = document.getElementById('form-register');
+    if (!form) {
+        console.warn('Formulario de registro no encontrado');
+        return;
+    }
+    
+    console.log('Configurando handlers del formulario de registro...');
+    
+    // Agregar evento para el indicador de fortaleza de contraseña
+    const passwordInput = document.getElementById('password');
+    if (passwordInput) {
+        passwordInput.addEventListener('input', function() {
+            actualizarBarraFortaleza(this.value);
+        });
+    }
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        console.log('Submit del formulario de registro detectado');
+        
+        // Limpiar mensajes previos
+        const mensajeError = document.getElementById('mensaje-error-registro');
+        const mensajeExito = document.getElementById('mensaje-exito-registro');
+        if (mensajeError) mensajeError.classList.add('hidden');
+        if (mensajeExito) mensajeExito.classList.add('hidden');
+        document.querySelectorAll('[id^="error-"]').forEach(el => el.classList.add('hidden'));
+        
+        // Validaciones frontend
+        const nombre = document.getElementById('name').value.trim();
+        const correo = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const passwordConfirm = document.getElementById('confirm-password').value;
+        const terms = document.getElementById('terms').checked;
+        let valido = true;
+
+        if (!nombre) {
+            if (document.getElementById('error-name')) {
+                document.getElementById('error-name').textContent = 'El nombre es requerido';
+                document.getElementById('error-name').classList.remove('hidden');
+            }
+            valido = false;
+        }
+
+        if (!correo) {
+            if (document.getElementById('error-email')) {
+                document.getElementById('error-email').textContent = 'El correo es requerido';
+                document.getElementById('error-email').classList.remove('hidden');
+            }
+            valido = false;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+            if (document.getElementById('error-email')) {
+                document.getElementById('error-email').textContent = 'Ingresa un correo válido';
+                document.getElementById('error-email').classList.remove('hidden');
+            }
+            valido = false;
+        }
+
+        if (!password) {
+            if (document.getElementById('error-password')) {
+                document.getElementById('error-password').textContent = 'La contraseña es requerida';
+                document.getElementById('error-password').classList.remove('hidden');
+            }
+            valido = false;
+        } else if (password.length < 8) {
+            if (document.getElementById('error-password')) {
+                document.getElementById('error-password').textContent = 'Mínimo 8 caracteres';
+                document.getElementById('error-password').classList.remove('hidden');
+            }
+            valido = false;
+        }
+
+        if (password !== passwordConfirm) {
+            if (document.getElementById('error-confirm-password')) {
+                document.getElementById('error-confirm-password').textContent = 'Las contraseñas no coinciden';
+                document.getElementById('error-confirm-password').classList.remove('hidden');
+            }
+            valido = false;
+        }
+
+        if (!terms) {
+            if (document.getElementById('error-terms')) {
+                document.getElementById('error-terms').textContent = 'Debes aceptar los términos y condiciones';
+                document.getElementById('error-terms').classList.remove('hidden');
+            }
+            valido = false;
+        }
+
+        if (!valido) {
+            console.log('Validaciones de registro fallidas');
+            return;
+        }
+        
+        console.log('Enviando datos de registro...');
+        
+        // Obtener datos del formulario
+        const formData = new FormData(this);
+        
+        try {
+            const response = await fetch('/PAGINA%20WED/api/registrar_usuario.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('JSON Response registro:', data);
+            
+            if (data.exito) {
+                const mensajeExito = document.getElementById('mensaje-exito-registro');
+                if (mensajeExito) {
+                    mensajeExito.textContent = data.mensaje || 'Registro exitoso. Redirigiendo...';
+                    mensajeExito.classList.remove('hidden');
+                }
+                
+                setTimeout(() => {
+                    window.location.href = data.redirect || 'index.php';
+                }, 1500);
+            } else {
+                const mensajeError = document.getElementById('mensaje-error-registro');
+                if (mensajeError) {
+                    mensajeError.textContent = data.mensaje || 'Error al registrar';
+                    mensajeError.classList.remove('hidden');
+                }
+            }
+        } catch(error) {
+            console.error('Error en registro:', error);
+            const mensajeError = document.getElementById('mensaje-error-registro');
+            if (mensajeError) {
+                mensajeError.textContent = 'Error al conectar con el servidor: ' + error.message;
+                mensajeError.classList.remove('hidden');
+            }
+        }
+    });
 }
 
 function loadRegistrarse() {
-    fetch('pages/crear_cuenta.php')
-        .then(response => response.text())
-        .then(data => {
-            // Crear un contenedor temporal para parsear el HTML
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = data;
-            
-            // Extraer solo el body content
-            const bodyContent = tempDiv.querySelector('body')?.innerHTML || data;
-            
-            // Insertar el contenido en mainContent
-            document.getElementById('mainContent').innerHTML = bodyContent;
-            
-            // Extraer y ejecutar scripts
-            const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/g;
-            let scriptMatch;
-            while ((scriptMatch = scriptRegex.exec(data)) !== null) {
-                const script = document.createElement('script');
-                script.textContent = scriptMatch[1];
-                document.body.appendChild(script);
-            }
-            
-            // Scroll hacia arriba para ver el contenido
-            window.scrollTo(0, 0);
-            // Guardar en historial
-            AppRouter.push('registrarse', {});
-        })
-        .catch(error => console.error('Error al cargar registro:', error));
+    console.log('loadRegistrarse llamado');
+    try {
+        fetch('api/get_register_form.php')
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.text();
+            })
+            .then(data => {
+                console.log('HTML recibido, longitud:', data.length);
+                // Verificar que tenemos mainContent
+                const mainContent = document.getElementById('mainContent');
+                if (!mainContent) {
+                    console.error('mainContent no encontrado en el DOM');
+                    return;
+                }
+                
+                // Insertar el contenido directamente
+                mainContent.innerHTML = data;
+                console.log('HTML inyectado correctamente');
+                
+                // Scroll hacia arriba
+                window.scrollTo(0, 0);
+                
+                // Guardar en historial (sin error si falla)
+                try {
+                    if (typeof AppRouter !== 'undefined' && AppRouter.push) {
+                        AppRouter.push('registrarse', {});
+                    }
+                } catch(e) {
+                    console.log('AppRouter no disponible, continuando sin él');
+                }
+                
+                // **CONFIGURAR HANDLERS DEL FORMULARIO DESPUÉS DE INYECTAR HTML**
+                setTimeout(() => {
+                    console.log('Llamando setupRegisterForm()');
+                    setupRegisterForm();
+                }, 50);
+            })
+            .catch(error => {
+                console.error('Error al cargar registro:', error);
+                alert('Error al cargar el formulario de registro: ' + error.message);
+            });
+    } catch(e) {
+        console.error('Error no capturado en loadRegistrarse:', e);
+    }
 }
 
 function initCheckout() {
@@ -1676,7 +2021,7 @@ document.addEventListener("click", function (e) {
 
 });
 function loadHistorialPedidos(page = 1) {
-    fetch('client/historialpedidoC.php?page=' + page)
+    fetch('/PAGINA%20WED/client/historialpedidoC.php?page=' + page)
         .then(response => response.text())
         .then(data => {
             document.getElementById('mainContent').innerHTML = data;
@@ -1702,7 +2047,7 @@ function cambiarPagina(pagina) {
 }
 
 function loadListaDeseos() {
-    fetch('client/listadedeseo.php')
+    fetch('/PAGINA%20WED/client/listadedeseo.php')
         .then(response => response.text())
         .then(data => {
             // Insertar el HTML
@@ -1734,7 +2079,7 @@ function loadListaDeseos() {
 }
 
 function loadPerfil() {
-    fetch('client/perfil.php')
+    fetch('/PAGINA%20WED/client/perfil.php')
         .then(response => response.text())
         .then(data => {
 
@@ -1934,7 +2279,7 @@ function loadContactanos() {
                 formData.append('asunto', asunto);
                 formData.append('mensaje', mensaje);
 
-                fetch('pages/guardar_mensaje.php', { method: 'POST', body: formData })
+    fetch('pages/guardar_mensaje.php', { method: 'POST', body: formData })
                 .then(function(r) { return r.text(); })
                 .then(function(resp) {
                     if (resp.trim() === 'ok') {
@@ -3588,6 +3933,84 @@ function irAlLogin() {
     closeAuthModal();
     loadLogin();
 }
+
+// ========================================
+// FUNCIONES AUXILIARES PARA FORMULARIO DE REGISTRO
+// ========================================
+
+// Toggle para mostrar/ocultar contraseña
+function togglePasswordRegistro(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = 'visibility_off';
+    } else {
+        input.type = 'password';
+        icon.textContent = 'visibility';
+    }
+}
+
+// Evaluar fortaleza de contraseña
+function evaluarFortaleza(password) {
+    let score = 0;
+    const checks = {
+        length: password.length >= 8,
+        upper: /[A-Z]/.test(password),
+        lower: /[a-z]/.test(password),
+        number: /[0-9]/.test(password),
+        special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password)
+    };
+
+    Object.values(checks).forEach(v => { if (v) score++; });
+
+    // Bonus por longitud extra
+    if (password.length >= 12) score++;
+
+    return { score, checks };
+}
+
+function actualizarBarraFortaleza(password) {
+    const container = document.getElementById('password-strength-container');
+    const textEl = document.getElementById('password-strength-text');
+    
+    if (!password) {
+        container.classList.add('hidden');
+        return;
+    }
+    container.classList.remove('hidden');
+
+    const { score } = evaluarFortaleza(password);
+
+    const niveles = [
+        { max: 2, label: 'Muy débil', color: 'bg-red-500', textColor: 'text-red-500' },
+        { max: 3, label: 'Débil', color: 'bg-orange-500', textColor: 'text-orange-500' },
+        { max: 4, label: 'Media', color: 'bg-yellow-500', textColor: 'text-yellow-500' },
+        { max: 5, label: 'Fuerte', color: 'bg-green-500', textColor: 'text-green-500' },
+        { max: 7, label: 'Muy fuerte', color: 'bg-emerald-500', textColor: 'text-emerald-500' }
+    ];
+
+    let nivel = niveles[0];
+    let barrasActivas = 1;
+    if (score >= 5) { nivel = niveles[4]; barrasActivas = 4; }
+    else if (score >= 4) { nivel = niveles[3]; barrasActivas = 3; }
+    else if (score >= 3) { nivel = niveles[2]; barrasActivas = 2; }
+    else if (score >= 2) { nivel = niveles[1]; barrasActivas = 2; }
+
+    for (let i = 1; i <= 4; i++) {
+        const bar = document.getElementById('str-bar-' + i);
+        if (bar) {
+            bar.className = 'h-1.5 flex-1 rounded-full transition-all duration-300 ' + 
+                (i <= barrasActivas ? nivel.color : 'bg-slate-200');
+        }
+    }
+
+    if (textEl) {
+        textEl.textContent = nivel.label;
+        textEl.className = 'text-xs font-semibold ' + nivel.textColor;
+    }
+}
+
 </script>
 
 <!-- MODAL AUTENTICACIÓN -->

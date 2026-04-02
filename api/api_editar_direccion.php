@@ -42,6 +42,9 @@ AUTOR: Sistema de Tienda Online
 // Incluir archivos necesarios para sesión y conexión
 require_once '../core/sesiones.php';
 require_once '../core/conexion.php';
+require_once '../core/csrf.php';
+
+validarCSRFMiddleware();
 
 // Definir que la respuesta será en formato JSON
 header('Content-Type: application/json; charset=utf-8');
@@ -66,39 +69,41 @@ OBTENER ID DEL USUARIO AUTENTICADO
 ========================================================
 Se obtiene el id del usuario desde la sesión.
 */
-$id_usuario = obtenerIdUsuario();
+$id_usuario = (int)($_SESSION['id_usuario'] ?? ($_SESSION['id'] ?? 0));
 
-/*
-========================================================
-OBTENER EL ID_CLIENTE REAL
-========================================================
-Se busca el cliente asociado al usuario en la tabla
-clientes.
-*/
-$stmtCliente = $conexion->prepare("SELECT id_cliente FROM clientes WHERE id_usuario = ?");
-$stmtCliente->bind_param("i", $id_usuario);
-$stmtCliente->execute();
-$resultCliente = $stmtCliente->get_result();
-$cliente = $resultCliente->fetch_assoc();
-$stmtCliente->close();
-
-/*
-========================================================
-VALIDAR QUE EL CLIENTE EXISTA
-========================================================
-Si el usuario no tiene un cliente asociado, no podrá
-editar direcciones.
-*/
-if (!$cliente) {
+if ($id_usuario <= 0) {
     echo json_encode([
         "success" => false,
-        "message" => "Debes iniciar sesión para editar una dirección"
+        "message" => "Sesión inválida"
     ]);
     exit();
 }
 
-// Guardar ID del cliente
-$id_cliente = $cliente['id_cliente'];
+/*
+========================================================
+OBTENER ID DEL CLIENTE DESDE LA TABLA CLIENTES
+========================================================
+Buscar el id_cliente del usuario autenticado.
+*/
+$id_cliente = null;
+$stmt_cliente = $conexion->prepare("SELECT id_cliente FROM clientes WHERE id_usuario = ?");
+$stmt_cliente->bind_param("i", $id_usuario);
+$stmt_cliente->execute();
+$resultado = $stmt_cliente->get_result();
+
+if ($resultado->num_rows > 0) {
+    $row = $resultado->fetch_assoc();
+    $id_cliente = $row['id_cliente'];
+}
+$stmt_cliente->close();
+
+if (!$id_cliente) {
+    echo json_encode([
+        "success" => false,
+        "message" => "Cliente no encontrado"
+    ]);
+    exit();
+}
 
 /*
 ========================================================

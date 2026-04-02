@@ -1,0 +1,7 @@
+# ============================================================
+# HTACCESS - BLOQUEAR ACCESO AL DIRECTORIO DATABASE
+# ============================================================
+# Sintaxis para Apache 2.4+
+# Bloquea acceso HTTP a archivos de BD
+
+Require all denied

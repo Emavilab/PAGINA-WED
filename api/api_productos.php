@@ -2,6 +2,9 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../core/sesiones.php';
 require_once '../core/conexion.php';
+require_once '../core/csrf.php';
+
+validarCSRFMiddleware();
 
 if (!usuarioAutenticado() || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2)) {
     echo json_encode(['exito' => false, 'error' => 'No autorizado']);
@@ -194,6 +197,10 @@ if ($metodo === 'POST') {
         $id_categoria = intval($_POST['id_categoria'] ?? 0);
         $id_marca = intval($_POST['id_marca'] ?? 0);
         $estado = $_POST['estado'] ?? 'disponible';
+        if (!in_array($estado, ['disponible', 'agotado'], true)) {
+            echo json_encode(['exito' => false, 'error' => 'Estado inválido']);
+            exit();
+        }
         $precio_descuento = !empty($_POST['precio_descuento']) ? floatval($_POST['precio_descuento']) : null;
         $en_oferta = isset($_POST['en_oferta']) ? intval($_POST['en_oferta']) : 0;
         $fecha_inicio_oferta = !empty($_POST['fecha_inicio_oferta']) ? $_POST['fecha_inicio_oferta'] : null;
@@ -274,6 +281,10 @@ if ($metodo === 'POST') {
         $id_categoria = intval($_POST['id_categoria'] ?? 0);
         $id_marca = intval($_POST['id_marca'] ?? 0);
         $estado = $_POST['estado'] ?? 'disponible';
+        if (!in_array($estado, ['disponible', 'agotado'], true)) {
+            echo json_encode(['exito' => false, 'error' => 'Estado inválido']);
+            exit();
+        }
         $precio_descuento = !empty($_POST['precio_descuento']) ? floatval($_POST['precio_descuento']) : null;
         $en_oferta = isset($_POST['en_oferta']) ? intval($_POST['en_oferta']) : 0;
         $fecha_inicio_oferta = !empty($_POST['fecha_inicio_oferta']) ? $_POST['fecha_inicio_oferta'] : null;
@@ -347,6 +358,7 @@ if ($metodo === 'POST') {
         }
 
         try {
+            $conexion->begin_transaction();
             // Desactivar temporal de foreign key checks para permitir eliminación en cascada
             $conexion->query("SET FOREIGN_KEY_CHECKS=0");
 
@@ -397,19 +409,23 @@ if ($metodo === 'POST') {
             if ($stmt) {
                 $stmt->bind_param("i", $id);
                 if ($stmt->execute()) {
-                    // Reactivar foreign key checks
+                    // Reactivar foreign key checks y confirmar transacción
                     $conexion->query("SET FOREIGN_KEY_CHECKS=1");
+                    $conexion->commit();
                     echo json_encode(['exito' => true, 'mensaje' => 'Producto eliminado exitosamente']);
                 } else {
+                    $conexion->rollback();
                     $conexion->query("SET FOREIGN_KEY_CHECKS=1");
                     echo json_encode(['exito' => false, 'error' => 'Error al eliminar producto: ' . $stmt->error]);
                 }
             } else {
+                $conexion->rollback();
                 $conexion->query("SET FOREIGN_KEY_CHECKS=1");
                 echo json_encode(['exito' => false, 'error' => 'Error al preparar eliminación: ' . $conexion->error]);
             }
         } catch (Exception $e) {
             // Reactivar foreign key checks en caso de excepción
+            $conexion->rollback();
             $conexion->query("SET FOREIGN_KEY_CHECKS=1");
             echo json_encode(['exito' => false, 'error' => 'Error al eliminar: ' . $e->getMessage()]);
         }
@@ -466,7 +482,7 @@ exit();
 function subirMultiplesImagenes($conexion, $id_producto, $archivos) {
     $dirDestino = __DIR__ . '/../img/productos/';
     if (!is_dir($dirDestino)) {
-        mkdir($dirDestino, 0777, true);
+        mkdir($dirDestino, 0755, true);
     }
 
     // Obtener el orden máximo actual

@@ -1,114 +1,141 @@
 <?php
 /**
- * =====================================================
- * GESTIÓN DE SESIONES
- * =====================================================
- *
- * Este archivo maneja la autenticación, validación
- * y control de sesiones de usuarios.
- *
- * FUNCIONALIDADES PRINCIPALES:
- * - Iniciar sesión
- * - Validar si un usuario está autenticado
- * - Obtener datos de usuario
- * - Registrar y cerrar sesión
- * - Validar credenciales
- * - Crear nuevos usuarios
- * - Verificar roles (Admin / Cliente)
- * - Registrar intentos fallidos de login
+ * GESION DE SESIONES
+ * Funciones para autenticación y control de usuarios
  */
 
-// =====================================================
-// INICIAR SESIÓN
-// =====================================================
+// Iniciar sesión
 if (session_status() === PHP_SESSION_NONE) {
-    session_start(); // Inicia la sesión si no está activa
+    session_start();
 }
 
-// =====================================================
-// INCLUIR CONEXIÓN A BASE DE DATOS
-// =====================================================
-require_once 'conexion.php'; // Archivo de conexión a la base de datos
+// Compatibilidad de sesión: sincronizar id e id_usuario
+if (!isset($_SESSION['id_usuario']) && isset($_SESSION['id'])) {
+    $_SESSION['id_usuario'] = $_SESSION['id'];
+}
+if (!isset($_SESSION['id']) && isset($_SESSION['id_usuario'])) {
+    $_SESSION['id'] = $_SESSION['id_usuario'];
+}
 
-// =====================================================
-// FUNCIONES DE AUTENTICACIÓN Y SESIÓN
-// =====================================================
+// Cargar variables de entorno
+require_once __DIR__ . '/env_loader.php';
 
-/**
- * Validar si el usuario está autenticado
- * @return bool True si el usuario tiene sesión activa
- */
+// Cargar conexión a base de datos
+require_once __DIR__ . '/conexion.php';
+
+// Cargar funciones de rate limiting
+require_once __DIR__ . '/rate_limiting.php';
+
+// Verifica si el usuario está autenticado
 function usuarioAutenticado() {
-    return isset($_SESSION['id_usuario']) && !empty($_SESSION['id_usuario']);
+    $id = $_SESSION['id'] ?? ($_SESSION['id_usuario'] ?? null);
+    return !empty($id);
 }
 
-/**
- * Obtener ID del usuario autenticado
- * @return int|null Retorna el ID de usuario o null si no está autenticado
- */
-function obtenerIdUsuario() {
-    return isset($_SESSION['id_usuario']) ? $_SESSION['id_usuario'] : null;
-}
-
-/**
- * Obtener todos los datos del usuario autenticado
- * @return array|null Arreglo con datos del usuario o null si no está autenticado
- */
+// Obtiene datos del usuario autenticado (incluyendo nombre del rol)
 function obtenerDatosUsuario() {
     global $conexion;
-
+    
     if (!usuarioAutenticado()) {
         return null;
     }
-
-    $id_usuario = $_SESSION['id_usuario'];
-
-    // Consulta para obtener información del usuario, cliente y rol
-    $query = "SELECT 
-                u.*, 
-                c.id_cliente,
-                c.nombre as nombre_cliente, 
-                r.nombre as nombre_rol
-              FROM usuarios u 
-              LEFT JOIN clientes c ON u.id_usuario = c.id_usuario
-              LEFT JOIN roles r ON u.id_rol = r.id_rol
-              WHERE u.id_usuario = ?";
-
-    $stmt = $conexion->prepare($query);
-    $stmt->bind_param("i", $id_usuario);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $datos = $result->fetch_assoc();
-    $stmt->close();
-
-    return $datos;
+    
+    try {
+        // Obtener datos del usuario con el nombre del rol desde la tabla roles
+            // Obtener datos del usuario con rol y cliente asociado
+        $stmt = $conexion->prepare("
+            SELECT 
+                u.id_usuario,
+                u.nombre,
+                u.correo,
+                u.id_rol,
+                    r.nombre as nombre_rol,
+                    c.id_cliente
+            FROM usuarios u
+            LEFT JOIN roles r ON u.id_rol = r.id_rol
+                LEFT JOIN clientes c ON c.id_usuario = u.id_usuario
+            WHERE u.id_usuario = ?
+        ");
+        
+        $id = $_SESSION['id'] ?? ($_SESSION['id_usuario'] ?? null);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
+        
+        if ($resultado->num_rows > 0) {
+            $usuario = $resultado->fetch_assoc();
+            $stmt->close();
+            
+            return [
+                'id' => $usuario['id_usuario'] ?? null,
+                    'id_usuario' => $usuario['id_usuario'] ?? null,
+                    'id_cliente' => $usuario['id_cliente'] ?? null,
+                'nombre' => $usuario['nombre'] ?? null,
+                'correo' => $usuario['correo'] ?? null,
+                'id_rol' => $usuario['id_rol'] ?? null,
+                'nombre_rol' => $usuario['nombre_rol'] ?? 'Sin definir',
+                'apellido' => $_SESSION['apellido'] ?? null,
+                'telefono' => $_SESSION['telefono'] ?? null
+            ];
+        }
+        
+        $stmt->close();
+        
+        // Fallback a datos de sesión si no se encuentra en BD
+        return [
+            'id' => $_SESSION['id'] ?? null,
+                'id_usuario' => $_SESSION['id'] ?? ($_SESSION['id_usuario'] ?? null),
+                'id_cliente' => $_SESSION['id_cliente'] ?? null,
+            'nombre' => $_SESSION['nombre'] ?? null,
+            'correo' => $_SESSION['correo'] ?? null,
+            'id_rol' => $_SESSION['id_rol'] ?? null,
+            'nombre_rol' => 'Sin definir',
+            'apellido' => $_SESSION['apellido'] ?? null,
+            'telefono' => $_SESSION['telefono'] ?? null
+        ];
+        
+    } catch (Exception $e) {
+        // Si hay error en la consulta, retornar datos de sesión
+        return [
+            'id' => $_SESSION['id'] ?? null,
+                'id_usuario' => $_SESSION['id'] ?? ($_SESSION['id_usuario'] ?? null),
+                'id_cliente' => $_SESSION['id_cliente'] ?? null,
+            'nombre' => $_SESSION['nombre'] ?? null,
+            'correo' => $_SESSION['correo'] ?? null,
+            'id_rol' => $_SESSION['id_rol'] ?? null,
+            'nombre_rol' => 'Sin definir',
+            'apellido' => $_SESSION['apellido'] ?? null,
+            'telefono' => $_SESSION['telefono'] ?? null
+        ];
+    }
 }
 
-/**
- * Registrar usuario en sesión
- * @param int $id_usuario ID del usuario
- * @param string $correo Correo electrónico
- * @param string $nombre Nombre del usuario
- * @param int $id_rol ID del rol
- * @return void
- */
-function registrarSesion($id_usuario, $correo, $nombre, $id_rol) {
-    $_SESSION['id_usuario'] = $id_usuario;
-    $_SESSION['correo'] = $correo;
-    $_SESSION['nombre'] = $nombre;
-    $_SESSION['id_rol'] = $id_rol;
-    $_SESSION['fecha_login'] = time(); // Timestamp del login
+// Verifica si tiene un rol específico
+function tieneRol($rol) {
+    return usuarioAutenticado() && ($_SESSION['id_rol'] ?? null) == $rol;
 }
 
-/**
- * Cerrar sesión del usuario
- * @return void
- */
+// Verifica si es admin
+function esAdmin() {
+    return tieneRol(1);
+}
+
+// Verifica si es vendedor
+function esVendedor() {
+    return tieneRol(2);
+}
+
+// Verifica si es cliente
+function esCliente() {
+    return tieneRol(3);
+}
+
+// Cierra la sesión del usuario
 function cerrarSesion() {
-    // Limpiar todas las variables de sesión
+    // Destruir todas las variables de sesión
     $_SESSION = array();
-
-    // Eliminar la cookie de sesión si existe
+    
+    // Si hay una cookie de sesión, eliminarla
     if (ini_get("session.use_cookies")) {
         $params = session_get_cookie_params();
         setcookie(
@@ -121,139 +148,104 @@ function cerrarSesion() {
             $params["httponly"]
         );
     }
-
-    // Destruir la sesión en el servidor
+    
+    // Destruir la sesión
     session_destroy();
-
-    // Redirigir al index
-    header("Location: ../index.php");
-    exit();
 }
 
 /**
- * Validar credenciales de usuario
+ * CREAR USUARIO
+ * Registra un nuevo usuario en la base de datos
+ * @param string $nombre Nombre del usuario
  * @param string $correo Correo del usuario
- * @param string $contraseña Contraseña en texto plano
- * @return array|null Datos del usuario si son válidos, null si falla
+ * @param string $contraseña Contraseña sin encriptar
+ * @return array Con estatus de la operación
  */
-function validarCredenciales($correo, $contraseña) {
+function crearUsuario($nombre, $correo, $contraseña) {
     global $conexion;
-
-    $query = "SELECT id_usuario, nombre, correo, contraseña, id_rol, estado 
-              FROM usuarios 
-              WHERE correo = ?";
-
-    $stmt = $conexion->prepare($query);
-    $stmt->bind_param("s", $correo);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $usuario = $result->fetch_assoc();
-    $stmt->close();
-
-     // Si no existe el usuario
-    if (!$usuario) {
-        return null;
+    
+    // Verificar que el correo no esté registrado
+    $stmt = $conexion->prepare("SELECT id_usuario FROM usuarios WHERE correo = ?");
+    if (!$stmt) {
+        return ['exito' => false, 'mensaje' => 'Error al preparar consulta'];
     }
     
-    // Si el usuario está inactivo
-    if ($usuario['estado'] === 'inactivo') {
-        return null;
-    }
-    
-
-    // Verificar contraseña usando password_verify
-    if (!password_verify($contraseña, $usuario['contraseña'])) {
-        return null;
-    }
-
-    return $usuario;
-}
-
-/**
- * Crear nuevo usuario
- * @param string $nombre Nombre completo
- * @param string $correo Correo electrónico
- * @param string $contraseña Contraseña
- * @param int $id_rol Rol del usuario (default 3 = cliente)
- * @return array Resultado: ['exito' => bool, 'mensaje' => string, 'id_usuario' => int]
- */
-function crearUsuario($nombre, $correo, $contraseña, $id_rol = 3) {
-    global $conexion;
-
-    // Validar correo
-    if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
-        return ['exito' => false, 'mensaje' => 'El correo no es válido'];
-    }
-
-    // Validar longitud de contraseña
-    if (strlen($contraseña) < 6) {
-        return ['exito' => false, 'mensaje' => 'La contraseña debe tener al menos 6 caracteres'];
-    }
-
-    // Verificar si el correo ya existe
-    $query_check = "SELECT id_usuario FROM usuarios WHERE correo = ?";
-    $stmt = $conexion->prepare($query_check);
     $stmt->bind_param("s", $correo);
     $stmt->execute();
-    if ($stmt->get_result()->num_rows > 0) {
+    $resultado = $stmt->get_result();
+    
+    if ($resultado->num_rows > 0) {
         $stmt->close();
         return ['exito' => false, 'mensaje' => 'El correo ya está registrado'];
     }
     $stmt->close();
+    
+    // Hashear contraseña con bcrypt
+    $contraseña_hash = password_hash($contraseña, PASSWORD_BCRYPT, ['cost' => 12]);
+    
+    $conexion->begin_transaction();
 
-    // Hashear la contraseña antes de guardar
-    $contraseña_hash = password_hash($contraseña, PASSWORD_DEFAULT);
-
-    // Insertar usuario en la tabla
-    $query_insert = "INSERT INTO usuarios (nombre, correo, contraseña, id_rol, estado) 
-                     VALUES (?, ?, ?, ?, 'activo')";
-
-    $stmt = $conexion->prepare($query_insert);
-    $stmt->bind_param("sssi", $nombre, $correo, $contraseña_hash, $id_rol);
-
-    if ($stmt->execute()) {
-        $id_usuario = $conexion->insert_id;
-
-        // Crear registro en tabla clientes
-        $query_cliente = "INSERT INTO clientes (id_usuario, nombre, estado) 
-                          VALUES (?, ?, 'activo')";
-        $stmt_cliente = $conexion->prepare($query_cliente);
-        $stmt_cliente->bind_param("is", $id_usuario, $nombre);
-        $stmt_cliente->execute();
-        $stmt_cliente->close();
-
-        $stmt->close();
-        return ['exito' => true, 'mensaje' => 'Usuario registrado exitosamente', 'id_usuario' => $id_usuario];
-    } else {
-        $stmt->close();
-        return ['exito' => false, 'mensaje' => 'Error al registrar el usuario: ' . $conexion->error];
+    // Insertar nuevo usuario
+    // Campos: id_usuario (auto), nombre (s), correo (s), contraseña (s), id_rol (i), estado (s)
+    $stmt = $conexion->prepare("INSERT INTO usuarios (nombre, correo, contraseña, id_rol, estado) VALUES (?, ?, ?, ?, ?)");
+    if (!$stmt) {
+        $conexion->rollback();
+        return ['exito' => false, 'mensaje' => 'Error al preparar consulta de inserción'];
     }
+    
+    $id_rol = 3; // Cliente por defecto
+    $estado = 'activo';
+    
+    // sssis = string nombre, string correo, string contraseña, int id_rol, string estado
+    $stmt->bind_param("sssis", $nombre, $correo, $contraseña_hash, $id_rol, $estado);
+    
+    if (!$stmt->execute()) {
+        $stmt->close();
+        $conexion->rollback();
+        return ['exito' => false, 'mensaje' => 'Error al crear la cuenta: ' . $conexion->error];
+    }
+    
+    $id_usuario = $stmt->insert_id;
+    $stmt->close();
+
+    // Insertar cliente asociado al nuevo usuario
+    $stmtCliente = $conexion->prepare("INSERT INTO clientes (id_usuario, nombre, estado) VALUES (?, ?, ?)");
+    if (!$stmtCliente) {
+        $conexion->rollback();
+        return ['exito' => false, 'mensaje' => 'Error al preparar inserción de cliente'];
+    }
+
+    $stmtCliente->bind_param("iss", $id_usuario, $nombre, $estado);
+    if (!$stmtCliente->execute()) {
+        $stmtCliente->close();
+        $conexion->rollback();
+        return ['exito' => false, 'mensaje' => 'Error al crear registro de cliente: ' . $conexion->error];
+    }
+    $stmtCliente->close();
+
+    $conexion->commit();
+    
+    return [
+        'exito' => true,
+        'id_usuario' => $id_usuario,
+        'mensaje' => 'Usuario creado correctamente'
+    ];
 }
 
 /**
- * Verificar si el usuario autenticado es administrador
- * @return bool True si es administrador
+ * REGISTRAR SESIÓN
+ * Establece las variables de sesión para un usuario autenticado
+ * @param int $id_usuario ID del usuario
+ * @param string $correo Correo del usuario
+ * @param string $nombre Nombre del usuario
+ * @param int $id_rol ID del rol
  */
-function esAdmin() {
-    return usuarioAutenticado() && isset($_SESSION['id_rol']) && $_SESSION['id_rol'] == 1;
-}
-
-/**
- * Verificar si el usuario autenticado es cliente
- * @return bool True si es cliente
- */
-function esCliente() {
-    return usuarioAutenticado() && isset($_SESSION['id_rol']) && $_SESSION['id_rol'] == 3;
-}
-
-/**
- * Registrar intento fallido de login
- * @param string $correo Correo usado en el intento
- * @param string $razon Razón del fallo
- * @return void
- */
-function registrarIntento($correo, $razon) {
-    // Para auditoría o depuración
-    error_log("Intento de login fallido - Email: {$correo} - Razón: {$razon}");
+function registrarSesion($id_usuario, $correo, $nombre, $id_rol) {
+    $_SESSION['id'] = $id_usuario;
+    $_SESSION['id_usuario'] = $id_usuario;
+    $_SESSION['correo'] = $correo;
+    $_SESSION['nombre'] = $nombre;
+    $_SESSION['id_rol'] = $id_rol;
+    $_SESSION['inicio_sesion'] = time();
 }
 ?> 

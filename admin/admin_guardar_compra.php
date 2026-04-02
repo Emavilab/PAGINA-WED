@@ -12,8 +12,10 @@ Recibe datos por AJAX desde admin_compras.php
 */
 
 require_once '../core/conexion.php';
+require_once '../core/csrf.php';
 
 header('Content-Type: application/json; charset=utf-8');
+validarCSRFMiddleware();
 
 // Validar datos recibidos
 if (!isset($_POST['producto_id'], $_POST['cantidad'], $_POST['proveedor'], $_POST['precio'])) {

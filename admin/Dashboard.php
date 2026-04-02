@@ -56,6 +56,7 @@ AUTOR: Sistema Web
 
 require_once '../core/sesiones.php';
 require_once '../core/conexion.php';
+require_once '../core/csrf.php';
 
 
 
@@ -153,7 +154,7 @@ $total_productos = ($res_productos && mysqli_num_rows($res_productos) > 0)
    TOTAL DE CLIENTES
 ------------------------- */
 
-$res_clientes = mysqli_query($conexion, "SELECT COUNT(*) AS total FROM clientes");
+$res_clientes = mysqli_query($conexion, "SELECT COUNT(*) AS total FROM usuarios WHERE id_rol = 3");
 
 $total_clientes = ($res_clientes && mysqli_num_rows($res_clientes) > 0)
     ? mysqli_fetch_assoc($res_clientes)['total']
@@ -167,14 +168,20 @@ $total_clientes = ($res_clientes && mysqli_num_rows($res_clientes) > 0)
 
 $hoy = date('Y-m-d');
 
-$res_pedidos_hoy = mysqli_query(
-    $conexion,
-    "SELECT COUNT(*) AS total FROM pedidos WHERE DATE(fecha_pedido) = '$hoy'"
-);
-
-$pedidos_hoy = ($res_pedidos_hoy && mysqli_num_rows($res_pedidos_hoy) > 0)
-    ? mysqli_fetch_assoc($res_pedidos_hoy)['total']
-    : 0;
+// Usar prepared statement para evitar SQL injection
+$stmt_pedidos = $conexion->prepare("SELECT COUNT(*) AS total FROM pedidos WHERE DATE(fecha_pedido) = ?");
+if ($stmt_pedidos) {
+    $stmt_pedidos->bind_param("s", $hoy);
+    $stmt_pedidos->execute();
+    $res_pedidos_hoy = $stmt_pedidos->get_result();
+    $pedidos_hoy = ($res_pedidos_hoy && mysqli_num_rows($res_pedidos_hoy) > 0)
+        ? mysqli_fetch_assoc($res_pedidos_hoy)['total']
+        : 0;
+    $stmt_pedidos->close();
+} else {
+    error_log("Error preparando query de pedidos hoy: " . $conexion->error);
+    $pedidos_hoy = 0;
+}
 
 
 
@@ -183,19 +190,26 @@ $pedidos_hoy = ($res_pedidos_hoy && mysqli_num_rows($res_pedidos_hoy) > 0)
    Solo pedidos pagados
 ------------------------- */
 
-$res_ingresos_hoy = mysqli_query(
-    $conexion,
+$stmt_ingresos = $conexion->prepare(
     "SELECT SUM(total) AS total
      FROM pedidos
-     WHERE DATE(fecha_pedido) = '$hoy'
+     WHERE DATE(fecha_pedido) = ?
      AND estado IN ('confirmado','enviado','entregado')"
 );
 
-$resultado_ingresos = mysqli_fetch_assoc($res_ingresos_hoy);
-
-$ingresos_hoy = !empty($resultado_ingresos['total'])
-    ? floatval($resultado_ingresos['total'])
-    : 0;
+if ($stmt_ingresos) {
+    $stmt_ingresos->bind_param("s", $hoy);
+    $stmt_ingresos->execute();
+    $res_ingresos_hoy = $stmt_ingresos->get_result();
+    $resultado_ingresos = mysqli_fetch_assoc($res_ingresos_hoy);
+    $ingresos_hoy = !empty($resultado_ingresos['total'])
+        ? floatval($resultado_ingresos['total'])
+        : 0;
+    $stmt_ingresos->close();
+} else {
+    error_log("Error preparando query de ingresos hoy: " . $conexion->error);
+    $ingresos_hoy = 0;
+}
 
 
 
@@ -279,6 +293,7 @@ $admin_sidebar_dark = '#1e293b';
 ==================================================== */
 
 $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
+$csrfToken = obtenerTokenCSRF();
 ?>
 <!DOCTYPE html>
 <html class="light" lang="es"><head>
@@ -292,6 +307,42 @@ $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
 <script>
+            window.APP_CSRF_TOKEN = "<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>";
+
+            window.getCSRFToken = function() {
+                return window.APP_CSRF_TOKEN || '';
+            };
+
+            window.setCSRFToken = function(token) {
+                if (typeof token === 'string' && token.length > 0) {
+                    window.APP_CSRF_TOKEN = token;
+                }
+            };
+
+            (function() {
+                const originalFetch = window.fetch.bind(window);
+
+                window.fetch = function(input, init) {
+                    const config = init ? { ...init } : {};
+                    const method = (config.method || 'GET').toUpperCase();
+                    const token = window.getCSRFToken();
+
+                    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) && token) {
+                        const headers = new Headers(config.headers || {});
+                        headers.set('X-CSRF-TOKEN', token);
+                        config.headers = headers;
+
+                        if (config.body instanceof FormData && !config.body.has('csrf_token')) {
+                            config.body.append('csrf_token', token);
+                        } else if (config.body instanceof URLSearchParams && !config.body.has('csrf_token')) {
+                            config.body.append('csrf_token', token);
+                        }
+                    }
+
+                    return originalFetch(input, config);
+                };
+            })();
+
       tailwind.config = {
         darkMode: "class",
         theme: {
@@ -371,11 +422,11 @@ $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
 </div>
 </div>
 <nav class="flex-1 mt-4 px-3 space-y-1">
-<a class="flex items-center gap-3 px-4 py-3 sidebar-active rounded-r-none rounded-lg transition-all nav-link" href="#" onclick="loadPage('Dashboard.php', event)">
+<a class="flex items-center gap-3 px-4 py-3 sidebar-active rounded-r-none rounded-lg transition-all nav-link" href="#" onclick="loadPage('./Dashboard.php', event)">
 <span class="material-icons-round">dashboard</span>
 <span class="font-medium">Dashboard</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../admin/gestion_productos.php', event)">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./gestion_productos.php', event)">
 <span class="material-icons-round">inventory_2</span>
 <span class="font-medium">Productos</span>
 </a>
@@ -396,7 +447,7 @@ $admin_nombre = htmlspecialchars($cfg_admin['nombre_negocio'] ?? 'Mi Negocio');
 <span class="font-medium">Mensajería</span>
 </a>
 <?php if ($_SESSION['id_rol'] == 1): // Solo para administrador ?>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./usuarios.php', event)">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('/PAGINA%20WED/admin/usuarios.php', event)">
 <span class="material-icons-round">manage_accounts</span>
 <span class="font-medium">Usuarios</span>
 </a>
@@ -414,7 +465,7 @@ onclick="loadPage('./admin_reportes.php', event)">
 <span class="material-icons-round">bar_chart</span>
 <span class="font-medium">Reportes</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('configuracion.php', event)">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./configuracion.php', event)">
 <span class="material-icons-round">settings</span>
 <span class="font-medium">Configuraciones</span>
 </a>
@@ -443,11 +494,11 @@ onclick="loadPage('./admin_reportes.php', event)">
 </button>
 </div>
 <nav class="flex-1 mt-4 px-3 space-y-1">
-<a class="flex items-center gap-3 px-4 py-3 sidebar-active rounded-r-none rounded-lg transition-all nav-link" href="#" onclick="loadPage('Dashboard.php', event); toggleSidebarMobile();">
+<a class="flex items-center gap-3 px-4 py-3 sidebar-active rounded-r-none rounded-lg transition-all nav-link" href="#" onclick="loadPage('./Dashboard.php', event); toggleSidebarMobile();">
 <span class="material-icons-round">dashboard</span>
 <span class="font-medium">Dashboard</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('../admin/gestion_productos.php', event); toggleSidebarMobile();">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./gestion_productos.php', event); toggleSidebarMobile();">
 <span class="material-icons-round">inventory_2</span>
 <span class="font-medium">Productos</span>
 </a>
@@ -468,7 +519,7 @@ onclick="loadPage('./admin_reportes.php', event)">
 <span class="font-medium">Mensajería</span>
 </a>
 <?php if ($_SESSION['id_rol'] == 1): // Solo para administrador ?>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./usuarios.php', event); toggleSidebarMobile();">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('/PAGINA%20WED/admin/usuarios.php', event); toggleSidebarMobile();">
 <span class="material-icons-round">manage_accounts</span>
 <span class="font-medium">Usuarios</span>
 </a>
@@ -480,7 +531,7 @@ onclick="loadPage('./admin_reportes.php', event)">
 <span class="material-icons-round">bar_chart</span>
 <span class="font-medium">Reportes</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('configuracion.php', event); toggleSidebarMobile();">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all nav-link" href="#" onclick="loadPage('./configuracion.php', event); toggleSidebarMobile();">
 <span class="material-icons-round">settings</span>
 <span class="font-medium">Configuraciones</span>
 </a>

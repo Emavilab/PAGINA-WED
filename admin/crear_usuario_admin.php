@@ -37,6 +37,7 @@ AUTOR: Sistema Web
 ==================================================== */
 
 require_once '../core/conexion.php';
+require_once '../core/audit_logging.php';
 
 
 /* ====================================================
@@ -45,12 +46,11 @@ require_once '../core/conexion.php';
 ==================================================== */
 
 require_once '../core/sesiones.php';
+require_once '../core/csrf.php';
 
+validarCSRFMiddleware();
 
-/* ====================================================
-   INICIAR SESION SI NO ESTA INICIADA
-==================================================== */
-
+// Iniciar sesión si no está iniciada
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -62,6 +62,27 @@ if (session_status() === PHP_SESSION_NONE) {
 ==================================================== */
 
 header('Content-Type: application/json; charset=utf-8');
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+
+// Usar ob_start() para capturar cualquier output accidental
+ob_start();
+
+// Registrar handler de error para endpoint JSON
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    ob_end_clean(); // Limpiar output accidental
+    header('Content-Type: application/json; charset=utf-8', true);
+    http_response_code(500);
+    die(json_encode(['exito' => false, 'mensaje' => 'Error interno: ' . $errstr]));
+});
+
+// Capturar excepciones no manejadas
+set_exception_handler(function($e) {
+    ob_end_clean(); // Limpiar output accidental
+    header('Content-Type: application/json; charset=utf-8', true);
+    http_response_code(500);
+    die(json_encode(['exito' => false, 'mensaje' => 'Excepción: ' . $e->getMessage()]));
+});
 
 
 
@@ -221,25 +242,38 @@ if ($stmt->execute()) {
 
     $id_usuario = $conexion->insert_id;
     
-
-    /* ====================================================
-       SI EL USUARIO ES CLIENTE
-       SE CREA TAMBIEN EN TABLA CLIENTES
-    ==================================================== */
-
+    $stmt->close();
+    
+    // Si el rol es Cliente (3), insertar también en tabla clientes
     if ($id_rol == 3) {
-
-        $query_cliente = "INSERT INTO clientes (id_usuario, nombre, estado) 
-                         VALUES (?, ?, 'activo')";
-        
-        $stmt_cliente = $GLOBALS['conexion']->prepare($query_cliente);
+        $query_cliente = "INSERT INTO clientes (id_usuario, nombre, estado) VALUES (?, ?, 'activo')";
+        $stmt_cliente = $conexion->prepare($query_cliente);
         $stmt_cliente->bind_param("is", $id_usuario, $nombre);
         $stmt_cliente->execute();
         $stmt_cliente->close();
     }
     
-    $stmt->close();
-    
+    // REGISTRAR EN AUDIT LOG (SIN QUE CAUSE ERROR SI FALLA)
+    try {
+        if (function_exists('registrarAudit')) {
+            registrarAudit(
+                'CREATE',
+                'usuarios',
+                $id_usuario,
+                [],
+                [
+                    'nombre' => $nombre,
+                    'correo' => $correo,
+                    'rol' => $id_rol,
+                    'estado' => 'activo'
+                ],
+                "Nuevo usuario creado: $nombre ($correo)"
+            );
+        }
+    } catch (Throwable $auditError) {
+        // No fallar si hay error en auditoría
+        error_log("Error al registrar auditoría: " . $auditError->getMessage());
+    }
 
 
     /* ====================================================

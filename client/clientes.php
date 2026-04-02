@@ -2,12 +2,14 @@
 
 require_once '../core/sesiones.php';
 require_once '../core/conexion.php';
+require_once '../core/csrf.php';
 
 /* procesar formulario */
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     header('Content-Type: application/json; charset=utf-8');
+    validarCSRFMiddleware();
 
     mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     $conexion->set_charset("utf8mb4");
@@ -79,22 +81,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
+        // Insertar en tabla usuarios
         $stmt = $conexion->prepare("INSERT INTO usuarios (nombre, correo, contraseña, estado, id_rol) VALUES (?, ?, ?, ?, 3)");
         $stmt->bind_param("ssss", $nombre, $correo, $passwordHash, $estado);
         $stmt->execute();
 
         $id_usuario = $conexion->insert_id;
 
+        // Insertar en tabla clientes vinculado al usuario
         $stmt2 = $conexion->prepare("INSERT INTO clientes (id_usuario, nombre, estado) VALUES (?, ?, ?)");
         $stmt2->bind_param("iss", $id_usuario, $nombre, $estado);
         $stmt2->execute();
+        
+        $id_cliente = $conexion->insert_id;
 
         $conexion->commit();
 
-        $resFecha = $conexion->query("SELECT fecha_registro FROM clientes WHERE id_usuario = " . intval($id_usuario));
+        // Obtener fecha de creación
+        $resFecha = $conexion->query("SELECT fecha_creacion FROM usuarios WHERE id_usuario = " . intval($id_usuario));
         $fecha_registro = date('Y-m-d H:i:s');
         if ($resFecha && $rowFecha = $resFecha->fetch_assoc()) {
-            $fecha_registro = $rowFecha['fecha_registro'];
+            $fecha_registro = $rowFecha['fecha_creacion'];
         }
 
         echo json_encode([
@@ -102,6 +109,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             "message" => "Cliente registrado correctamente",
             "cliente" => [
                 "id_usuario" => (int)$id_usuario,
+                "id_cliente" => (int)$id_cliente,
                 "nombre" => $nombre,
                 "correo" => $correo,
                 "fecha_registro" => $fecha_registro
@@ -123,16 +131,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 /*   CONSULTA PARA TABLA */
 
 $sql = "SELECT 
-            clientes.id_usuario,
-            clientes.nombre,
-            clientes.estado,
-            clientes.fecha_registro,
-            usuarios.correo
-        FROM clientes
-        INNER JOIN usuarios 
-            ON clientes.id_usuario = usuarios.id_usuario";
+            c.id_cliente,
+            u.id_usuario,
+            c.nombre,
+            c.estado,
+            c.fecha_registro,
+            u.correo
+        FROM clientes c
+        INNER JOIN usuarios u ON c.id_usuario = u.id_usuario
+        ORDER BY c.fecha_registro DESC";
 
 $resultado = mysqli_query($conexion, $sql);
+
+if (!$resultado) {
+    die('Error en consulta ' . mysqli_error($conexion));
+}
 
 ?>
 <!DOCTYPE html>
@@ -223,10 +236,13 @@ $resultado = mysqli_query($conexion, $sql);
             </tr>
         </thead>
         <tbody id="tbody-clientes">
-            <?php while($fila = mysqli_fetch_assoc($resultado)) { ?>
-                <tr id="cliente-<?php echo $fila['id_usuario']; ?>" class="border-b border-gray-200 hover:bg-gray-50 transition">
+            <?php 
+            if ($resultado && mysqli_num_rows($resultado) > 0) {
+                while($fila = mysqli_fetch_assoc($resultado)) { 
+            ?>
+                <tr id="cliente-<?php echo $fila['id_cliente']; ?>" class="border-b border-gray-200 hover:bg-gray-50 transition">
                     <td class="px-6 py-4 text-sm text-gray-700">
-                        <?php echo $fila['id_usuario']; ?>
+                        <?php echo $fila['id_cliente']; ?>
                     </td>
 
                     <td class="cliente-nombre px-6 py-4 text-sm text-gray-700 font-semibold">
@@ -244,15 +260,24 @@ $resultado = mysqli_query($conexion, $sql);
                     <td class="px-6 py-4 text-sm text-center">
                         <button 
                             class="btn-editar bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2 transition"
-                            data-id="<?php echo $fila['id_usuario']; ?>">
+                            data-id="<?php echo $fila['id_cliente']; ?>">
                             <i class="fas fa-edit"></i>
                         </button>
 
                         <button 
                             class="btn-eliminar bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition"
-                            data-id="<?php echo $fila['id_usuario']; ?>">
+                            data-id="<?php echo $fila['id_cliente']; ?>">
                             <i class="fas fa-trash"></i>
                         </button>
+                    </td>
+                </tr>
+            <?php 
+                }
+            } else {
+            ?>
+                <tr>
+                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                        No hay clientes registrados
                     </td>
                 </tr>
             <?php } ?>
@@ -314,26 +339,6 @@ $resultado = mysqli_query($conexion, $sql);
 </div>
 
 <script>
-// Añadir nueva fila al crear cliente (sin recargar)
-function addClienteRow(cliente) {
-    const tbody = document.getElementById("tbody-clientes");
-    if (!tbody) return;
-    const id = cliente.id_usuario || cliente.id;
-    const nombre = (cliente.nombre || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-    const correo = (cliente.correo || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-    const fecha = cliente.fecha_registro || "";
-    const row = '<tr id="cliente-' + id + '" class="border-b border-gray-200 hover:bg-gray-50 transition">' +
-        '<td class="px-6 py-4 text-sm text-gray-700">' + id + '</td>' +
-        '<td class="cliente-nombre px-6 py-4 text-sm text-gray-700 font-semibold">' + nombre + '</td>' +
-        '<td class="cliente-correo px-6 py-4 text-sm text-gray-700">' + correo + '</td>' +
-        '<td class="cliente-fecha px-6 py-4 text-sm text-gray-600">' + fecha + '</td>' +
-        '<td class="px-6 py-4 text-sm text-center">' +
-        '<button class="btn-editar bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2 transition" data-id="' + id + '"><i class="fas fa-edit"></i></button>' +
-        '<button class="btn-eliminar bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition" data-id="' + id + '"><i class="fas fa-trash"></i></button>' +
-        '</td></tr>';
-    tbody.insertAdjacentHTML("beforeend", row);
-}
-
 // TOGGLE FORMULARIO
 function toggleFormulario(type) {
     const formulario = document.getElementById('formulario-' + type);
@@ -385,7 +390,7 @@ document.addEventListener("submit", function(e){
             return;
         }
 
-        fetch("/PAGINA-WED/client/clientes.php", {
+        fetch("/PAGINA%20WED/client/clientes.php", {
             method: "POST",
             body: formData
         })
@@ -397,12 +402,16 @@ document.addEventListener("submit", function(e){
             if(data.success){
 
                 toggleFormulario('crear');
-                document.getElementById("formCliente").reset();
+                const form = document.getElementById("formCliente");
+                form.reset();
                 showSuccessModal(data.message);
 
                 if (data.cliente) {
                     addClienteRow(data.cliente);
                 }
+                
+                // Limpiar todos los errores
+                limpiarTodosErrores();
 
             }else {
 
@@ -452,6 +461,43 @@ function limpiarTodosErrores(){
     limpiarError("correo");
     limpiarError("password");
 }
+
+// AGREGAR CLIENTE A LA TABLA
+function addClienteRow(cliente) {
+    const tbody = document.getElementById("tbody-clientes");
+    if (!tbody) return;
+
+    const id_cliente = cliente.id_cliente || cliente.id_usuario;
+    const fecha = cliente.fecha_registro || new Date().toLocaleString('es-ES');
+    
+    const row = document.createElement("tr");
+    row.id = "cliente-" + id_cliente;
+    row.className = "border-b border-gray-200 hover:bg-gray-50 transition";
+    row.innerHTML = `
+        <td class="px-6 py-4 text-sm text-gray-700">${id_cliente}</td>
+        <td class="cliente-nombre px-6 py-4 text-sm text-gray-700 font-semibold">${escapeHtml(cliente.nombre)}</td>
+        <td class="cliente-correo px-6 py-4 text-sm text-gray-700">${escapeHtml(cliente.correo)}</td>
+        <td class="cliente-fecha px-6 py-4 text-sm text-gray-600">${fecha}</td>
+        <td class="px-6 py-4 text-sm text-center">
+            <button class="btn-editar bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2 transition" data-id="${id_cliente}">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn-eliminar bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition" data-id="${id_cliente}">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    `;
+    
+    tbody.insertBefore(row, tbody.firstChild);
+}
+
+// ESCAPAR HTML PARA SEGURIDAD
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 document.addEventListener("input", function(e){
 
     if(e.target.id === "nombre"){
@@ -497,7 +543,7 @@ document.addEventListener("click", function(e){
 // ABRIR MODAL EDITAR
 function abrirModalEditar(id){
 
-    fetch("/PAGINA-WED/client/clientes_obtener.php?id=" + id)
+    fetch("/PAGINA%20WED/client/clientes_obtener.php?id=" + id)
     .then(res => res.json())
     .then(data => {
 
@@ -506,7 +552,7 @@ function abrirModalEditar(id){
             return;
         }
 
-        document.getElementById("edit_id").value = data.id_usuario;
+        document.getElementById("edit_id").value = data.id_cliente || data.id_usuario;
         document.getElementById("edit_nombre").value = data.nombre;
         document.getElementById("edit_correo").value = data.correo;
 
@@ -540,7 +586,7 @@ document.getElementById("formEditar").addEventListener("submit", function(e){
 
     const formData = new FormData(this);
 
-    fetch("/PAGINA-WED/client/clientes_editar.php", {
+    fetch("/PAGINA%20WED/client/clientes_editar.php", {
         method: "POST",
         body: formData
     })
@@ -579,7 +625,7 @@ function confirmarEliminar(){
 
     const id = document.getElementById("delete_id").value;
 
-    fetch("/PAGINA-WED/client/clientes_eliminar.php", {
+    fetch("/PAGINA%20WED/client/clientes_eliminar.php", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify({id:id})

@@ -16,6 +16,9 @@
 
 header('Content-Type: application/json; charset=utf-8'); // Indicar que la respuesta será JSON
 
+require_once '../core/csrf.php';
+validarCSRFMiddleware();
+
 // =====================================================
 // VERIFICAR MÉTODO DE SOLICITUD
 // =====================================================

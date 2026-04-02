@@ -66,6 +66,17 @@ la barra de búsqueda del frontend.
 */
 $termino = isset($_GET['q']) ? trim($_GET['q']) : '';
 
+// Limitar longitud para evitar búsquedas abusivas
+if (strlen($termino) > 100) {
+    echo json_encode([
+        'productos' => [],
+        'marcas' => [],
+        'categorias' => [],
+        'error' => 'Término de búsqueda demasiado largo'
+    ]);
+    exit;
+}
+
 
 /*
 ========================================================
@@ -96,7 +107,7 @@ Se agrega el operador LIKE (%) para permitir
 búsquedas parciales dentro de la base de datos.
 Además se escapa el valor para mayor seguridad.
 */
-$termino_sql = '%' . $conexion->real_escape_string($termino) . '%';
+$termino_sql = '%' . $termino . '%';
 
 
 /*

@@ -299,7 +299,7 @@ function initFormContacto() {
         console.log("Enviando datos:", {nombre, correo, telefono, asunto, mensaje});
         
         // Enviar con fetch
-        fetch('pages/guardar_mensaje.php', {
+        fetch('/PAGINA%20WED/pages/guardar_mensaje.php', {
             method: 'POST',
             body: formData
         })

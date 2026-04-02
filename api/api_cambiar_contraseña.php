@@ -47,6 +47,9 @@ AUTOR: Sistema de Gestión de Usuarios
  */
 
 require_once '../core/sesiones.php'; // Archivo que gestiona las sesiones del sistema
+require_once '../core/csrf.php';
+
+validarCSRFMiddleware();
 
 // Establecer que la respuesta será en formato JSON
 header('Content-Type: application/json');

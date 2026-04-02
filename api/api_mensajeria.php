@@ -41,6 +41,9 @@ include(__DIR__ . "/../core/conexion.php");
 
 // Incluir configuración SMTP para envío de correos
 include(__DIR__ . "/../core/smtp_config.php");
+include(__DIR__ . "/../core/csrf.php");
+
+validarCSRFMiddleware();
 
 // Verificar que la conexión exista
 if (!isset($conexion)) {
@@ -70,6 +73,15 @@ if ($metodo === 'GET') {
         // Filtros opcionales
         $estado = $_GET['estado'] ?? '';
         $busqueda = $_GET['busqueda'] ?? '';
+        $estadosPermitidos = ['', 'todos', 'nuevo', 'leido', 'respondido', 'cerrado'];
+
+        if (!in_array($estado, $estadosPermitidos, true)) {
+            echo json_encode([
+                'exito' => false,
+                'error' => 'Estado de filtro inválido'
+            ]);
+            exit();
+        }
 
         // Consulta base
         $sql = "SELECT * FROM mensajes_contacto WHERE 1=1";
@@ -124,7 +136,9 @@ if ($metodo === 'GET') {
         $resConteo = $conexion->query($sqlConteo);
 
         while ($fila = $resConteo->fetch_assoc()) {
-            $conteos[$fila['estado']] = (int)$fila['total'];
+            if (array_key_exists($fila['estado'], $conteos)) {
+                $conteos[$fila['estado']] = (int)$fila['total'];
+            }
         }
 
         $conteos['todos'] = array_sum([

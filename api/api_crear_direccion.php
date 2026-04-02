@@ -43,6 +43,9 @@ header('Content-Type: application/json; charset=utf-8');
 // Incluir conexión a base de datos y sistema de sesiones
 require_once '../core/conexion.php';
 require_once '../core/sesiones.php';
+require_once '../core/csrf.php';
+
+validarCSRFMiddleware();
 
 /*
 ========================================================
@@ -51,7 +54,8 @@ CONFIGURACIÓN DE ERRORES (SOLO DESARROLLO)
 Se muestran errores de PHP para facilitar depuración.
 En producción se recomienda desactivarlo.
 */
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
 
 try {
@@ -79,7 +83,7 @@ try {
     */
     $usuario = obtenerDatosUsuario();
 
-    if (!$usuario || !isset($usuario['id_cliente'])) {
+    if (!$usuario) {
         echo json_encode([
             'success' => false,
             'message' => 'Debes iniciar sesión para crear una dirección'
@@ -87,8 +91,50 @@ try {
         exit;
     }
 
-    // ID del cliente autenticado
-    $id_cliente = $usuario['id_cliente'];
+    // Obtener ID de usuario (compatibilidad de sesión)
+    $id_usuario = (int)($usuario['id'] ?? ($_SESSION['id_usuario'] ?? ($_SESSION['id'] ?? 0)));
+
+    if ($id_usuario <= 0) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Sesión inválida de usuario'
+        ]);
+        exit;
+    }
+
+    // Obtener ID del cliente desde la tabla clientes
+    $id_cliente = null;
+    $stmt_cliente = $conexion->prepare("SELECT id_cliente FROM clientes WHERE id_usuario = ?");
+    $stmt_cliente->bind_param("i", $id_usuario);
+    $stmt_cliente->execute();
+    $resultado = $stmt_cliente->get_result();
+    
+    if ($resultado->num_rows > 0) {
+        $row = $resultado->fetch_assoc();
+        $id_cliente = $row['id_cliente'];
+    }
+    $stmt_cliente->close();
+    
+    if (!$id_cliente) {
+        // Si no existe cliente asociado, crearlo automáticamente
+        $nombre_cliente = trim((string)($usuario['nombre'] ?? ($_SESSION['nombre'] ?? 'Cliente')));
+        if ($nombre_cliente === '') {
+            $nombre_cliente = 'Cliente';
+        }
+
+        $stmt_crear_cliente = $conexion->prepare("INSERT INTO clientes (id_usuario, nombre, estado) VALUES (?, ?, 'activo')");
+        if (!$stmt_crear_cliente) {
+            throw new Exception("Error en prepare crear cliente: " . $conexion->error);
+        }
+
+        $stmt_crear_cliente->bind_param("is", $id_usuario, $nombre_cliente);
+        if (!$stmt_crear_cliente->execute()) {
+            throw new Exception("Error al crear cliente asociado: " . $stmt_crear_cliente->error);
+        }
+
+        $id_cliente = (int)$stmt_crear_cliente->insert_id;
+        $stmt_crear_cliente->close();
+    }
 
     /*
     ====================================================

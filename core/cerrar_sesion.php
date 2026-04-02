@@ -14,3 +14,8 @@ if (!usuarioAutenticado()) {
 
 // Cerrar sesión del usuario
 cerrarSesion();
+
+// Redirigir a la página principal
+header("Location: ../index.php");
+exit();
+?>;

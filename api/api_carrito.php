@@ -7,6 +7,9 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../core/sesiones.php';
 require_once '../core/conexion.php';
+require_once '../core/csrf.php';
+
+validarCSRFMiddleware();
 
 // Verificar autenticación
 if (!usuarioAutenticado()) {
@@ -15,17 +18,21 @@ if (!usuarioAutenticado()) {
 }
 
 $datosUsuario = obtenerDatosUsuario();
-// Obtener id_cliente a partir del usuario autenticado
-$stmtCli = $conexion->prepare("SELECT id_cliente FROM clientes WHERE id_usuario = ? AND estado = 'activo'");
-$stmtCli->bind_param("i", $_SESSION['id_usuario']);
-$stmtCli->execute();
-$resCli = $stmtCli->get_result()->fetch_assoc();
 
-if (!$resCli) {
-    echo json_encode(['exito' => false, 'error' => 'Debes iniciar sesión para usar el carrito']);
+// Obtener el id_cliente del usuario autenticado desde la tabla clientes
+$id_cliente = null;
+$stmt = $conexion->prepare("SELECT id_cliente FROM clientes WHERE id_usuario = ?");
+$stmt->bind_param("i", $_SESSION['id_usuario']);
+$stmt->execute();
+$res = $stmt->get_result();
+if ($res && $res->num_rows > 0) {
+    $row = $res->fetch_assoc();
+    $id_cliente = (int)$row['id_cliente'];
+} else {
+    echo json_encode(['exito' => false, 'error' => 'No se encontró cliente asociado']);
     exit();
 }
-$id_cliente = (int)$resCli['id_cliente'];
+$stmt->close();
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 $accion = $_REQUEST['accion'] ?? '';

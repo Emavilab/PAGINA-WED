@@ -3,21 +3,26 @@
  * Configuración SMTP para envío de correos
  * Usa PHPMailer con Gmail SMTP
  * 
- * IMPORTANTE: Debes generar una "Contraseña de aplicación" en tu cuenta Google:
+ * IMPORTANTE: Las credenciales se cargan desde el archivo .env
+ * 
+ * Para generar una "Contraseña de aplicación" en tu cuenta Google:
  * 1. Ve a https://myaccount.google.com/security
  * 2. Activa la verificación en dos pasos si no la tienes
  * 3. Ve a "Contraseñas de aplicaciones" (o busca "App passwords")
  * 4. Genera una nueva contraseña para "Correo" y "Otro (nombre personalizado)"
- * 5. Copia la contraseña de 16 caracteres y pégala abajo en SMTP_PASSWORD
+ * 5. Copia la contraseña y agrégala a tu archivo .env como SMTP_PASSWORD
  */
 
-// ====== CONFIGURACIÓN SMTP ======
-define('SMTP_HOST', 'smtp.gmail.com');
-define('SMTP_PORT', 587);
-define('SMTP_USERNAME', 'wedpaginawed@gmail.com');
-define('SMTP_PASSWORD', 'sijpsgcocjdneuxh');  // Contraseña de aplicación de Google
-define('SMTP_FROM_EMAIL', 'wedpaginawed@gmail.com');
-define('SMTP_FROM_NAME', 'ControlPlus - Soporte');
+// Cargar variables de entorno
+require_once __DIR__ . '/env_loader.php';
+
+// ====== CONFIGURACIÓN SMTP (desde .env) ======
+define('SMTP_HOST', getEnv('SMTP_HOST', 'smtp.gmail.com'));
+define('SMTP_PORT', getEnv('SMTP_PORT', 587));
+define('SMTP_USERNAME', getEnv('SMTP_USER', ''));
+define('SMTP_PASSWORD', getEnv('SMTP_PASSWORD', ''));
+define('SMTP_FROM_EMAIL', getEnv('SMTP_USER', ''));
+define('SMTP_FROM_NAME', getEnv('APP_NAME', 'ControlPlus - Soporte'));
 
 /**
  * Enviar correo usando PHPMailer + Gmail SMTP

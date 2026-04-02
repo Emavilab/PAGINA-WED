@@ -368,6 +368,31 @@ function irPagina(pagina) {
     cargarUsuarios();
 }
 
+function parsearRespuestaJSON(texto) {
+    try {
+        return JSON.parse(texto);
+    } catch (_) {
+        const match = texto.match(/(\{[\s\S]*\})\s*$/);
+        if (match && match[1]) {
+            try {
+                return JSON.parse(match[1]);
+            } catch (_) {
+                return null;
+            }
+        }
+        return null;
+    }
+}
+
+async function obtenerJSONSeguro(response) {
+    const texto = await response.text();
+    const data = parsearRespuestaJSON(texto);
+    if (!data) {
+        throw new Error('Respuesta del servidor no válida');
+    }
+    return data;
+}
+
 async function cargarUsuarios() {
     const busqueda = document.querySelector('input[placeholder*="Buscar"]').value;
     const rol = document.getElementById('filtro-rol').value;
@@ -381,25 +406,15 @@ async function cargarUsuarios() {
     });
 
     try {
-        const response = await fetch(`obtener_usuarios.php?${params}`, {
+        const response = await fetch(`./obtener_usuarios.php?${params}`, {
             method: 'GET',
             credentials: 'same-origin',
             headers: {
                 'Accept': 'application/json'
             }
         });
-        
-        const text = await response.text();
-        
-        // Intentar parsear como JSON
-        let data;
-        try {
-            data = JSON.parse(text);
-        } catch (e) {
-            // Si no es JSON válido, probablemente sea un error de sesión
-            console.error('Respuesta no JSON:', text);
-            throw new Error('Respuesta del servidor no válida. Probablemente necesitas volver a iniciar sesión.');
-        }
+
+        const data = await obtenerJSONSeguro(response);
 
         if (data.exito) {
             datosUsuarios = data;
@@ -529,7 +544,7 @@ setTimeout(() => {
                 credentials: 'same-origin'
             });
 
-            const data = await response.json();
+            const data = await obtenerJSONSeguro(response);
 
             if (data.exito) {
                 CustomModal.show('success', 'Éxito', data.mensaje, () => {
@@ -566,7 +581,7 @@ setTimeout(() => {
                 credentials: 'same-origin'
             });
 
-            const data = await response.json();
+            const data = await obtenerJSONSeguro(response);
 
             if (data.exito) {
                 document.getElementById('mensaje-exito-form').textContent = data.mensaje;

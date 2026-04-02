@@ -86,25 +86,29 @@ Copiar la carpeta del proyecto a: C:\xampp\htdocs\PAGINA WED\
 
 ### 3. Verificar la conexión
 
-Editar `core/conexion.php` si es necesario (por defecto usa `root` sin contraseña):
+Configurar el archivo `.env` en la raíz del proyecto y verificar que `core/env_loader.php` esté cargando las variables correctamente:
 
-```php
-$servername = "localhost";
-$username   = "root";
-$password   = "";
-$database   = "negocio_web";
+```bash
+DB_HOST=localhost
+DB_USER=usuario_bd
+DB_PASSWORD=contraseña_segura
+DB_NAME=negocio_web
 ```
 
 ### 4. Configurar el correo SMTP
 
-Editar `core/smtp_config.php`:
+Configurar las variables SMTP en `.env`:
 
-```php
-define('SMTP_USERNAME', 'tu_correo@gmail.com');
-define('SMTP_PASSWORD', 'tu_contraseña_de_aplicacion');
+```bash
+SMTP_USER=tu_correo@gmail.com
+SMTP_PASSWORD=tu_contraseña_de_aplicacion
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
 ```
 
 > **Nota:** Debes generar una "Contraseña de Aplicación" en tu cuenta de Google en: Seguridad → Verificación en dos pasos → Contraseñas de aplicaciones.
+
+> **Importante:** El sistema ya usa carga centralizada de variables de entorno, así que no debes dejar credenciales reales hardcodeadas en `core/conexion.php` ni en `core/smtp_config.php`.
 
 ### 5. Acceder al sistema
 
@@ -552,7 +556,7 @@ El sistema implementa un mecanismo de **timeout de sesión por inactividad** exc
 
 ### Constantes de Tiempo
 ```javascript
-TIEMPO_SESION      = 120 segundos  // 2 minutos de inactividad
+TIEMPO_SESION      = 90 segundos  // 2 minutos de inactividad
 TIEMPO_ADVERTENCIA =  30 segundos  // 30 segundos de aviso antes de cerrar
 ```
 

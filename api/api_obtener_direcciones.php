@@ -82,18 +82,36 @@ $usuario = obtenerDatosUsuario();
 
 /*
 --------------------------------------------------------------
-VALIDAR QUE EL USUARIO TENGA ID DE CLIENTE
+OBTENER ID DEL CLIENTE DESDE LA TABLA CLIENTES
 --------------------------------------------------------------
-Si no existe el cliente asociado al usuario se detiene
-la ejecución y se devuelve error.
+Se busca el id_cliente asociado al usuario autenticado.
 */
-if (!$usuario || !isset($usuario['id_cliente'])) {
+if (!$usuario) {
     echo json_encode(['success' => false]);
     exit;
 }
 
-// Guardar el ID del cliente autenticado
-$id_cliente = $usuario['id_cliente'];
+$id_usuario = (int)($usuario['id'] ?? ($_SESSION['id_usuario'] ?? ($_SESSION['id'] ?? 0)));
+
+if ($id_usuario <= 0) {
+    echo json_encode(['success' => false, 'direcciones' => []]);
+    exit;
+}
+
+$id_cliente = null;
+$stmt_cliente = $conexion->prepare("SELECT id_cliente FROM clientes WHERE id_usuario = ?");
+$stmt_cliente->bind_param("i", $id_usuario);
+$stmt_cliente->execute();
+$resultado = $stmt_cliente->get_result();
+
+if ($resultado->num_rows > 0) {
+    $row = $resultado->fetch_assoc();
+    $id_cliente = $row['id_cliente'];
+} else {
+    echo json_encode(['success' => true, 'direcciones' => []]);
+    exit;
+}
+$stmt_cliente->close();
 
 /*
 --------------------------------------------------------------

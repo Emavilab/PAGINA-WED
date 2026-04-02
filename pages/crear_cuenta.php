@@ -1,5 +1,8 @@
 <?php
 require_once '../core/conexion.php';
+require_once '../core/csrf.php';
+
+$csrfToken = obtenerTokenCSRF();
 
 // Cargar configuración general de colores
 $res_cfg_reg = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
@@ -68,6 +71,7 @@ $reg_bg_dark = normalizar_color_registro($cfg_reg['color_background_dark'] ?? '#
 <p class="text-slate-500 dark:text-slate-400">Completa tus datos para empezar tu experiencia con nosotros.</p>
 </div>
 <form id="form-registro-modal" class="space-y-6">
+<input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>"/>
 <!-- Full Name -->
 <div class="space-y-2">
 <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300" for="name">Nombre completo</label>
@@ -348,7 +352,7 @@ function setupRegistroForm() {
         const formData = new FormData(this);
         
         try {
-            const response = await fetch('api/registrar_usuario.php', {
+            const response = await fetch('/PAGINA%20WED/api/registrar_usuario.php', {
                 method: 'POST',
                 body: formData
             });
@@ -401,7 +405,7 @@ if (document.readyState === 'loading') {
 function loadLogin() {
     // Cargar la página de login
     if (typeof fetch !== 'undefined') {
-        fetch('pages/login.php')
+        fetch('/PAGINA%20WED/pages/login.php')
             .then(response => response.text())
             .then(data => {
                 const tempDiv = document.createElement('div');

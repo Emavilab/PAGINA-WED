@@ -165,7 +165,7 @@ let ofProductosFiltrados = [];
 
 // --- Cargar productos en oferta ---
 function ofCargarProductos() {
-    fetch('api/obtener_productos.php')
+    fetch('/PAGINA%20WED/api/obtener_productos.php')
         .then(r => r.json())
         .then(data => {
             // Solo productos en oferta

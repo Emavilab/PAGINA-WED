@@ -46,6 +46,9 @@ header('Content-Type: application/json; charset=utf-8');
 // Incluir manejo de sesiones y conexión a base de datos
 require_once '../core/sesiones.php';
 require_once '../core/conexion.php';
+require_once '../core/csrf.php';
+
+validarCSRFMiddleware();
 
 
 /*
@@ -111,6 +114,15 @@ if ($metodo === 'GET') {
 
         $busqueda = $_GET['busqueda'] ?? '';
         $estado = $_GET['estado'] ?? '';
+        $estadosPermitidos = ['', 'todos', 'activo', 'inactivo'];
+
+        if (!in_array($estado, $estadosPermitidos, true)) {
+            echo json_encode([
+                'exito' => false,
+                'error' => 'Estado de filtro inválido'
+            ]);
+            exit();
+        }
 
         // Consulta principal de categorías
         $sql = "SELECT c.*, p.nombre AS nombre_padre,
@@ -266,18 +278,28 @@ if ($metodo === 'GET') {
 
         $excluir = (int)($_GET['excluir'] ?? 0);
 
-        $sql = "SELECT id_categoria, nombre, icono 
-                FROM categorias 
-                WHERE id_padre IS NULL 
-                AND estado = 'activo'";
-
         if ($excluir > 0) {
-            $sql .= " AND id_categoria != " . $excluir;
+            $stmtPadres = $conexion->prepare(
+                "SELECT id_categoria, nombre, icono
+                 FROM categorias
+                 WHERE id_padre IS NULL
+                 AND estado = 'activo'
+                 AND id_categoria != ?
+                 ORDER BY nombre ASC"
+            );
+            $stmtPadres->bind_param("i", $excluir);
+        } else {
+            $stmtPadres = $conexion->prepare(
+                "SELECT id_categoria, nombre, icono
+                 FROM categorias
+                 WHERE id_padre IS NULL
+                 AND estado = 'activo'
+                 ORDER BY nombre ASC"
+            );
         }
 
-        $sql .= " ORDER BY nombre ASC";
-
-        $resultado = $conexion->query($sql);
+        $stmtPadres->execute();
+        $resultado = $stmtPadres->get_result();
 
         $padres = [];
 
@@ -317,6 +339,13 @@ if ($metodo === 'POST') {
         $icono = trim($_POST['icono'] ?? '');
         $descripcion = trim($_POST['descripcion'] ?? '');
         $estado = $_POST['estado'] ?? 'activo';
+        if (!in_array($estado, ['activo', 'inactivo'], true)) {
+            echo json_encode([
+                'exito' => false,
+                'error' => 'Estado inválido'
+            ]);
+            exit();
+        }
 
         $id_padre = !empty($_POST['id_padre']) ? (int)$_POST['id_padre'] : null;
 
@@ -370,9 +399,13 @@ if ($metodo === 'POST') {
         INSERTAR NUEVA CATEGORÍA
         ------------------------------------------------
         */
-        $stmt = $conexion->prepare("INSERT INTO categorias (nombre, id_padre, icono, descripcion, estado, tasa_impuesto) VALUES (?, ?, ?, ?, ?, ?)");
-
-        $stmt->bind_param("sisssd", $nombre, $id_padre, $icono, $descripcion, $estado, $tasa_impuesto);
+        if ($id_padre) {
+            $stmt = $conexion->prepare("INSERT INTO categorias (nombre, id_padre, icono, descripcion, estado, tasa_impuesto) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("sisssd", $nombre, $id_padre, $icono, $descripcion, $estado, $tasa_impuesto);
+        } else {
+            $stmt = $conexion->prepare("INSERT INTO categorias (nombre, id_padre, icono, descripcion, estado, tasa_impuesto) VALUES (?, NULL, ?, ?, ?, ?)");
+            $stmt->bind_param("sssd", $nombre, $icono, $descripcion, $estado, $tasa_impuesto);
+        }
 
         if ($stmt->execute()) {
 
@@ -412,6 +445,32 @@ if ($metodo === 'POST') {
                 'error' => 'ID inválido'
             ]);
 
+            exit();
+        }
+
+        $stmtProd = $conexion->prepare("SELECT COUNT(*) AS total FROM productos WHERE id_categoria = ?");
+        $stmtProd->bind_param("i", $id);
+        $stmtProd->execute();
+        $totalProd = (int)($stmtProd->get_result()->fetch_assoc()['total'] ?? 0);
+
+        if ($totalProd > 0) {
+            echo json_encode([
+                'exito' => false,
+                'error' => 'No se puede eliminar: existen productos asociados a esta categoría'
+            ]);
+            exit();
+        }
+
+        $stmtHijos = $conexion->prepare("SELECT COUNT(*) AS total FROM categorias WHERE id_padre = ?");
+        $stmtHijos->bind_param("i", $id);
+        $stmtHijos->execute();
+        $totalHijos = (int)($stmtHijos->get_result()->fetch_assoc()['total'] ?? 0);
+
+        if ($totalHijos > 0) {
+            echo json_encode([
+                'exito' => false,
+                'error' => 'No se puede eliminar: existen subcategorías asociadas'
+            ]);
             exit();
         }
 

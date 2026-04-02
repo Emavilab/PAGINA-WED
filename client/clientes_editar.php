@@ -48,6 +48,9 @@ REQUISITOS:
 - Método de envío: POST
 - Campos requeridos:
   - id
+
+PROTECCIÓN:
+- Token CSRF requerido para POST (validarCSRFMiddleware)
   - nombre
   - correo
 
@@ -56,6 +59,7 @@ AUTOR: Sistema de Gestión
 */
 
 require_once '../core/conexion.php';
+require_once '../core/csrf.php';
 
 /*
 ---------------------------------------------------------
@@ -65,6 +69,7 @@ Se establece que la respuesta del servidor será en
 formato JSON.
 */
 header('Content-Type: application/json');
+validarCSRFMiddleware();
 
 /*
 ---------------------------------------------------------
@@ -137,39 +142,53 @@ try {
 
     /*
     =====================================================
-    1️⃣ ACTUALIZAR TABLA CLIENTES
+    ACTUALIZAR TABLA USUARIOS Y CLIENTES
     =====================================================
-    Se actualiza el nombre del cliente asociado
-    al usuario.
+    Se actualiza el nombre y el correo electrónico.
+    El id puede ser id_usuario o id_cliente.
     */
-    $stmt1 = $conexion->prepare("
+    
+    // Primero, obtener el id_usuario si se envió id_cliente
+    $id_usuario = $id;
+    $id_cliente = $id;
+    
+    // Verificar si es id_cliente o id_usuario
+    $stmt_check = $conexion->prepare("SELECT id_usuario FROM clientes WHERE id_cliente = ?");
+    $stmt_check->bind_param("i", $id);
+    $stmt_check->execute();
+    $result_check = $stmt_check->get_result();
+    
+    if ($result_check->num_rows > 0) {
+        $row = $result_check->fetch_assoc();
+        $id_usuario = $row['id_usuario'];
+    }
+    $stmt_check->close();
+    
+    // Actualizar tabla usuarios
+    $stmt = $conexion->prepare("
+        UPDATE usuarios 
+        SET nombre = ?, correo = ?
+        WHERE id_usuario = ? AND id_rol = 3
+    ");
+    $stmt->bind_param("ssi", $nombre, $correo, $id_usuario);
+    $stmt->execute();
+    $stmt->close();
+    
+    // Actualizar tabla clientes
+    $stmt2 = $conexion->prepare("
         UPDATE clientes 
         SET nombre = ?
         WHERE id_usuario = ?
     ");
-    $stmt1->bind_param("si", $nombre, $id);
-    $stmt1->execute();
-
-    /*
-    =====================================================
-    2️⃣ ACTUALIZAR TABLA USUARIOS
-    =====================================================
-    Se actualiza el nombre y el correo electrónico
-    del usuario en la tabla usuarios.
-    */
-    $stmt2 = $conexion->prepare("
-        UPDATE usuarios 
-        SET nombre = ?, correo = ?
-        WHERE id_usuario = ?
-    ");
-    $stmt2->bind_param("ssi", $nombre, $correo, $id);
+    $stmt2->bind_param("si", $nombre, $id_usuario);
     $stmt2->execute();
+    $stmt2->close();
 
     /*
     -----------------------------------------------------
     CONFIRMAR TRANSACCIÓN
-    -----------------------------------------------------
-    Si ambas consultas se ejecutan correctamente,
+    ----------------------------------------------------- 
+    Si la consulta se ejecuta correctamente,
     se guardan los cambios en la base de datos.
     */
     $conexion->commit();

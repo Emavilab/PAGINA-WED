@@ -47,6 +47,10 @@ AUTOR: Sistema Web
    CONEXION A LA BASE DE DATOS
 ==================================================== */
 require_once '../core/conexion.php';
+require_once '../core/audit_logging.php';
+require_once '../core/csrf.php';
+validarCSRFMiddleware();
+require_once '../core/eliminacion_usuario.php';
 
 
 /* ====================================================
@@ -67,6 +71,8 @@ if (session_status() === PHP_SESSION_NONE) {
    Todas las respuestas serán JSON
 ==================================================== */
 header('Content-Type: application/json; charset=utf-8');
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
 
 
 /* ====================================================
@@ -104,7 +110,10 @@ if ($id_usuario <= 0) {
 /* ====================================================
    EVITAR QUE EL USUARIO ELIMINE SU PROPIA CUENTA
 ==================================================== */
-if (isset($_SESSION['id_usuario']) && $id_usuario === $_SESSION['id_usuario']) {
+if (
+   (isset($_SESSION['id']) && $id_usuario === (int)$_SESSION['id']) ||
+   (isset($_SESSION['id_usuario']) && $id_usuario === (int)$_SESSION['id_usuario'])
+) {
     echo json_encode(['exito' => false, 'mensaje' => 'No puedes eliminar tu propia cuenta']);
     exit();
 }
@@ -113,193 +122,32 @@ if (isset($_SESSION['id_usuario']) && $id_usuario === $_SESSION['id_usuario']) {
 /* ====================================================
    VERIFICAR QUE EL USUARIO EXISTA
 ==================================================== */
-$query_verify = "SELECT id_usuario FROM usuarios WHERE id_usuario = ?";
-$stmt = $conexion->prepare($query_verify);
-$stmt->bind_param("i", $id_usuario);
-$stmt->execute();
-
-if ($stmt->get_result()->num_rows === 0) {
-    $stmt->close();
-    echo json_encode(['exito' => false, 'mensaje' => 'El usuario no existe']);
-    exit();
-}
-$stmt->close();
-
-
-/* ====================================================
-   INICIAR TRANSACCION
-   Permite revertir cambios si ocurre un error
-==================================================== */
-$conexion->begin_transaction();
-
-
 try {
+    $resultadoEliminacion = eliminarUsuarioEnCascada($conexion, $id_usuario);
 
-    /* ====================================================
-       DESACTIVAR FOREIGN KEY CHECKS
-       Permite eliminar registros relacionados manualmente
-    ==================================================== */
-    $conexion->query("SET FOREIGN_KEY_CHECKS=0");
-    
+    $nombre_usuario = $resultadoEliminacion['nombre'] ?? '';
+    $correo_usuario = $resultadoEliminacion['correo'] ?? '';
 
-    /* ====================================================
-       OBTENER CLIENTE ASOCIADO AL USUARIO
-    ==================================================== */
-    $stmtCli = $conexion->prepare("SELECT id_cliente FROM clientes WHERE id_usuario = ?");
-    $stmtCli->bind_param("i", $id_usuario);
-    $stmtCli->execute();
-    $resCli = $stmtCli->get_result();
-
-    $id_cliente = null;
-
-    if ($filaCli = $resCli->fetch_assoc()) {
-        $id_cliente = (int)$filaCli['id_cliente'];
-    }
-
-    $stmtCli->close();
-
-
-    /* ====================================================
-       SI EL USUARIO TIENE CLIENTE ASOCIADO
-       SE ELIMINAN TODAS SUS DEPENDENCIAS
-    ==================================================== */
-    if ($id_cliente) {
-
-
-        /* ===============================
-           ELIMINAR DETALLES DE CARRITO
-        =============================== */
-        $stmt = $conexion->prepare("DELETE FROM carrito_detalle WHERE id_carrito IN (SELECT id_carrito FROM carritos WHERE id_cliente = ?)");
-        $stmt->bind_param("i", $id_cliente);
-        $stmt->execute();
-        $stmt->close();
-
-
-        /* ===============================
-           ELIMINAR CARRITOS
-        =============================== */
-        $stmt = $conexion->prepare("DELETE FROM carritos WHERE id_cliente = ?");
-        $stmt->bind_param("i", $id_cliente);
-        $stmt->execute();
-        $stmt->close();
-
-
-        /* ===============================
-           ELIMINAR DETALLES DE PEDIDOS
-        =============================== */
-        $stmt = $conexion->prepare("DELETE FROM detalle_pedido WHERE id_pedido IN (SELECT id_pedido FROM pedidos WHERE id_cliente = ?)");
-        $stmt->bind_param("i", $id_cliente);
-        $stmt->execute();
-        $stmt->close();
-
-
-        /* ===============================
-           ELIMINAR PEDIDOS
-        =============================== */
-        $stmt = $conexion->prepare("DELETE FROM pedidos WHERE id_cliente = ?");
-        $stmt->bind_param("i", $id_cliente);
-        $stmt->execute();
-        $stmt->close();
-
-
-        /* ===============================
-           ELIMINAR DIRECCIONES
-        =============================== */
-        $stmt = $conexion->prepare("DELETE FROM direcciones_cliente WHERE id_cliente = ?");
-        $stmt->bind_param("i", $id_cliente);
-        $stmt->execute();
-        $stmt->close();
-
-
-        /* ===============================
-           ELIMINAR LISTA DE DESEOS
-           (SI LA TABLA EXISTE)
-        =============================== */
-        $tableExists = $conexion->query("SHOW TABLES LIKE 'lista_deseos'");
-
-        if ($tableExists && $tableExists->num_rows > 0) {
-
-            $stmt = $conexion->prepare("DELETE FROM lista_deseos WHERE id_cliente = ?");
-
-            if ($stmt) {
-                $stmt->bind_param("i", $id_cliente);
-                $stmt->execute();
-                $stmt->close();
-            }
+    // REGISTRAR EN AUDIT LOG (SIN QUE CAUSE ERROR SI FALLA)
+    try {
+        if (function_exists('registrarAudit')) {
+            registrarAudit(
+                'DELETE',
+                'usuarios',
+                $id_usuario,
+                [
+                    'nombre' => $nombre_usuario,
+                    'correo' => $correo_usuario,
+                    'estado' => 'eliminado'
+                ],
+                [],
+                "Usuario eliminado completamente del sistema: $nombre_usuario"
+            );
         }
-
-
-        /* ===============================
-           ELIMINAR MENSAJES
-           (SI LA TABLA EXISTE)
-        =============================== */
-        $tableExists = $conexion->query("SHOW TABLES LIKE 'mensajes'");
-
-        if ($tableExists && $tableExists->num_rows > 0) {
-
-            $stmt = $conexion->prepare("DELETE FROM mensajes WHERE id_usuario = ?");
-
-            if ($stmt) {
-                $stmt->bind_param("i", $id_usuario);
-                $stmt->execute();
-                $stmt->close();
-            }
-        }
-
-
-        /* ===============================
-           ELIMINAR HISTORIAL DE PEDIDOS
-           (SI LA TABLA EXISTE)
-        =============================== */
-        $tableExists = $conexion->query("SHOW TABLES LIKE 'historial_pedido'");
-
-        if ($tableExists && $tableExists->num_rows > 0) {
-
-            $stmt = $conexion->prepare("DELETE FROM historial_pedido WHERE id_usuario = ?");
-
-            if ($stmt) {
-                $stmt->bind_param("i", $id_usuario);
-                $stmt->execute();
-                $stmt->close();
-            }
-        }
-
-
-        /* ===============================
-           ELIMINAR CLIENTE
-        =============================== */
-        $stmt = $conexion->prepare("DELETE FROM clientes WHERE id_cliente = ?");
-        $stmt->bind_param("i", $id_cliente);
-        $stmt->execute();
-        $stmt->close();
+   } catch (Throwable $auditError) {
+        // No fallar si hay error en auditoría
+        error_log("Error al registrar auditoría: " . $auditError->getMessage());
     }
-
-
-    /* ====================================================
-       ELIMINAR USUARIO
-    ==================================================== */
-    $query_delete = "DELETE FROM usuarios WHERE id_usuario = ?";
-    $stmt = $conexion->prepare($query_delete);
-    $stmt->bind_param("i", $id_usuario);
-
-    if (!$stmt->execute()) {
-        throw new Exception("Error al eliminar usuario: " . $conexion->error);
-    }
-
-    $stmt->close();
-
-
-    /* ====================================================
-       REACTIVAR FOREIGN KEYS
-    ==================================================== */
-    $conexion->query("SET FOREIGN_KEY_CHECKS=1");
-
-
-    /* ====================================================
-       CONFIRMAR TRANSACCION
-    ==================================================== */
-    $conexion->commit();
-
 
     /* ====================================================
        RESPUESTA EXITOSA
@@ -309,19 +157,13 @@ try {
         'mensaje' => 'Usuario eliminado exitosamente'
     ]);
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
 
 
     /* ====================================================
        SI OCURRE UN ERROR:
-       - Reactivar foreign keys
        - Revertir cambios
     ==================================================== */
-    $conexion->query("SET FOREIGN_KEY_CHECKS=1");
-
-    $conexion->rollback();
-
-
     echo json_encode([
         'exito' => false,
         'mensaje' => $e->getMessage()

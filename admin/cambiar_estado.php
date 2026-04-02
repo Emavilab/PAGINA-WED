@@ -50,6 +50,7 @@ require_once '../core/smtp_config.php';
 ==================================================== */
 
 require_once '../core/sesiones.php';
+require_once '../core/csrf.php';
 
 
 /* ====================================================
@@ -98,6 +99,13 @@ if (!isset($_POST['id'], $_POST['estado'])) {
 $id = intval($_POST['id']);
 $estado = $_POST['estado'];
 
+if ($id <= 0) {
+   ob_clean();
+   echo json_encode(["exito" => false, "error" => "ID de pedido inválido"]);
+   ob_end_flush();
+   exit();
+}
+
 
 
 /* ====================================================
@@ -143,6 +151,13 @@ $estado_anterior = $datosPedido ? $datosPedido['estado_actual'] : null;
 $nombre_cliente = $datosPedido ? trim($datosPedido['nombre_cliente']) : '';
 $correo_cliente = $datosPedido ? trim($datosPedido['correo_cliente']) : '';
 
+if ($estado_anterior === null) {
+   ob_clean();
+   echo json_encode(["exito" => false, "error" => "Pedido no encontrado"]);
+   ob_end_flush();
+   exit();
+}
+
 
 
 /* ====================================================
@@ -177,6 +192,13 @@ if (!$stmt) {
 
 $stmt->bind_param("si", $estado, $id);
 $stmt->execute();
+
+if ($stmt->errno) {
+   ob_clean();
+   echo json_encode(["exito" => false, "error" => "Error al actualizar estado: " . $stmt->error]);
+   ob_end_flush();
+   exit();
+}
 
 
 

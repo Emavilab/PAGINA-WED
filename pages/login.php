@@ -1,5 +1,8 @@
 <?php
 require_once '../core/conexion.php';
+require_once '../core/csrf.php';
+
+$csrfToken = obtenerTokenCSRF();
 
 // Cargar configuración general de colores
 $res_cfg_login = mysqli_query($conexion, "SELECT * FROM configuracion WHERE id_config = 1");
@@ -27,14 +30,19 @@ $login_bg_dark = normalizar_color_login($cfg_login['color_background_dark'] ?? '
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
+        const loginColors = {
+            primary: "<?php echo $login_primary; ?>",
+            bg_light: "<?php echo $login_bg_light; ?>",
+            bg_dark: "<?php echo $login_bg_dark; ?>"
+        };
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        primary: "<?php echo $login_primary; ?>",
-                        "background-light": "<?php echo $login_bg_light; ?>",
-                        "background-dark": "<?php echo $login_bg_dark; ?>"
+                        primary: loginColors.primary,
+                        "background-light": loginColors.bg_light,
+                        "background-dark": loginColors.bg_dark
                     },
                     fontFamily: {
                         display: "Inter"
@@ -62,6 +70,7 @@ $login_bg_dark = normalizar_color_login($cfg_login['color_background_dark'] ?? '
 </div>
 <div class="p-8 pt-2">
 <form id="form-login-modal" class="space-y-5">
+<input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>"/>
 <div class="space-y-2">
 <label class="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1" for="email">
                             Correo electrónico
@@ -174,7 +183,7 @@ function setupLoginForm() {
         const formData = new FormData(this);
         
         try {
-            const response = await fetch('api/validar_login.php', {
+            const response = await fetch('/PAGINA%20WED/api/validar_login.php', {
                 method: 'POST',
                 body: formData
             });
@@ -216,7 +225,7 @@ if (document.readyState === 'loading') {
 }
 
 function loadRegistrarse() {
-    fetch('pages/crear_cuenta.php')
+    fetch('/PAGINA%20WED/pages/crear_cuenta.php')
         .then(response => response.text())
         .then(data => {
             // Crear un contenedor temporal para parsear el HTML

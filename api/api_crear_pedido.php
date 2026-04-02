@@ -51,6 +51,9 @@ AUTOR: Sistema de Tienda Online
 
 require_once '../core/sesiones.php';
 require_once '../core/conexion.php';
+require_once '../core/csrf.php';
+
+validarCSRFMiddleware();
 
 /*
 ========================================================
@@ -73,7 +76,29 @@ if (!usuarioAutenticado()) {
 
 // Obtener datos del usuario desde la sesión
 $usuario = obtenerDatosUsuario();
-$id_cliente = $usuario['id_cliente'];
+
+$id_usuario = (int)($usuario['id'] ?? ($_SESSION['id_usuario'] ?? ($_SESSION['id'] ?? 0)));
+
+if ($id_usuario <= 0) {
+    echo json_encode(["exito" => false, "error" => "Sesión inválida"]);
+    exit;
+}
+
+// Obtener ID del cliente desde la tabla clientes
+$id_cliente = null;
+$stmt_cliente = $conexion->prepare("SELECT id_cliente FROM clientes WHERE id_usuario = ?");
+$stmt_cliente->bind_param("i", $id_usuario);
+$stmt_cliente->execute();
+$resultado = $stmt_cliente->get_result();
+
+if ($resultado->num_rows > 0) {
+    $row = $resultado->fetch_assoc();
+    $id_cliente = $row['id_cliente'];
+} else {
+    echo json_encode(["exito" => false, "error" => "Cliente no encontrado"]);
+    exit;
+}
+$stmt_cliente->close();
 
 /*
 ========================================================
@@ -132,11 +157,24 @@ if (isset($_FILES['comprobante']) && $_FILES['comprobante']['error'] === 0) {
     }
 
     // Generar nombre único para el archivo
-    $extension = pathinfo($archivo['name'], PATHINFO_EXTENSION);
-    $nombreComprobante = uniqid("comp_") . "." . $extension;
+    $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
+    
+    // Validar extensión
+    $extensionesPermitidas = ['jpg', 'jpeg', 'png', 'webp'];
+    if (!in_array($extension, $extensionesPermitidas)) {
+        echo json_encode(["exito" => false, "error" => "Extensión de archivo no permitida"]);
+        exit;
+    }
+    
+    $nombreComprobante = uniqid("comp_") . "_" . time() . "." . $extension;
 
     // Ruta donde se guardará el comprobante
     $rutaDestino = "../img/comprobantes/" . $nombreComprobante;
+
+    // Crear directorio si no existe
+    if (!is_dir("../img/comprobantes")) {
+        mkdir("../img/comprobantes", 0755, true);
+    }
 
     // Guardar archivo en el servidor
     if (!move_uploaded_file($archivo['tmp_name'], $rutaDestino)) {
@@ -355,8 +393,21 @@ $total = $subtotal + $impuesto_total + $envio_departamento + $envio_metodo;
     ================================================
     */
 
-    $conexion->query("DELETE FROM carrito_detalle WHERE id_carrito = $id_carrito");
-    $conexion->query("UPDATE carritos SET estado = 'comprado' WHERE id_carrito = $id_carrito");
+    // Usar prepared statements para evitar SQL injection
+    $stmtLimpiar = $conexion->prepare("DELETE FROM carrito_detalle WHERE id_carrito = ?");
+    if ($stmtLimpiar) {
+        $stmtLimpiar->bind_param("i", $id_carrito);
+        $stmtLimpiar->execute();
+        $stmtLimpiar->close();
+    }
+
+    // Actualizar estado del carrito
+    $stmtCarrito = $conexion->prepare("UPDATE carritos SET estado = 'comprado' WHERE id_carrito = ?");
+    if ($stmtCarrito) {
+        $stmtCarrito->bind_param("i", $id_carrito);
+        $stmtCarrito->execute();
+        $stmtCarrito->close();
+    }
 
     // Eliminar carrito de la sesión
     unset($_SESSION['carrito']);

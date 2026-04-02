@@ -32,6 +32,7 @@ AUTOR: Sistema de Tienda Online
 
 require_once '../core/sesiones.php';   // Control de sesiones del sistema
 require_once '../core/conexion.php';   // Conexión a la base de datos
+require_once '../core/csrf.php';       // Validación de CSRF
 
 /*
 ========================================================
@@ -81,6 +82,7 @@ El sistema recibe datos vía POST para aplicar filtros
 y cargar los pedidos correspondientes.
 */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'])) {
+    validarCSRFMiddleware();
     
     // Filtro por número de pedido
     $numeroPedido = isset($_POST['numero_pedido']) ? trim($_POST['numero_pedido']) : '';

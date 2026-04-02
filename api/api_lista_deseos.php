@@ -55,6 +55,9 @@ ob_start();
 // Cargar archivos necesarios
 require_once '../core/sesiones.php';
 require_once '../core/conexion.php';
+require_once '../core/csrf.php';
+
+validarCSRFMiddleware();
 
 // Si hay alguna salida previa limpiarla
 if (ob_get_length() > 0) ob_clean();
@@ -91,19 +94,22 @@ $conexion->query($createTbl);
 ---------------------------------------------------------------------
 OBTENER ID_CLIENTE ASOCIADO AL USUARIO
 ---------------------------------------------------------------------
-Se busca el cliente que pertenece al usuario autenticado.
+Buscar el id_cliente desde la tabla clientes.
 */
-$stmtCli = $conexion->prepare("SELECT id_cliente FROM clientes WHERE id_usuario = ? AND estado = 'activo' LIMIT 1");
-$stmtCli->bind_param("i", $_SESSION['id_usuario']);
-$stmtCli->execute();
-$resCli = $stmtCli->get_result()->fetch_assoc();
+$id_cliente = null;
+$stmt_cliente = $conexion->prepare("SELECT id_cliente FROM clientes WHERE id_usuario = ?");
+$stmt_cliente->bind_param("i", $_SESSION['id_usuario']);
+$stmt_cliente->execute();
+$resultado = $stmt_cliente->get_result();
 
-if (!$resCli) {
-    echo json_encode(['exito' => false, 'error' => 'Debes iniciar sesión para usar la lista de deseos']);
+if ($resultado->num_rows > 0) {
+    $row = $resultado->fetch_assoc();
+    $id_cliente = $row['id_cliente'];
+} else {
+    echo json_encode(['exito' => false, 'error' => 'Cliente no encontrado']);
     exit();
 }
-
-$id_cliente = (int)$resCli['id_cliente'];
+$stmt_cliente->close();
 
 /*
 ---------------------------------------------------------------------

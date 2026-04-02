@@ -1,37 +1,38 @@
 <?php
 /**
  * Conexión a la Base de Datos
- * Archivo de configuración para conectar a MySQL
  */
 
-// Definir parámetros de conexión
-$servername = "localhost";
-$username = "root";
-$password = "";
-$database = "negocio_web";
+// Cargar variables de entorno
+require_once __DIR__ . '/env_loader.php';
 
-// Crear conexión con MySQLi
+// Obtener parámetros de conexión
+$servername = getEnv('DB_HOST', 'localhost');
+$username = getEnv('DB_USER', 'root');
+$password = getEnv('DB_PASSWORD', '');
+$database = getEnv('DB_NAME', 'negocio_web');
+
+// Crear conexión
 $conexion = new mysqli($servername, $username, $password, $database);
 
-// Establecer charset UTF-8
-$conexion->set_charset("utf8mb4");
+// Establecer charset
+if (!$conexion->set_charset("utf8mb4")) {
+    error_log("Error al establecer charset: " . $conexion->error);
+}
 
 // Verificar conexión
 if ($conexion->connect_error) {
-    // Si es una solicitud API, devolver JSON
     if (strpos($_SERVER['REQUEST_URI'] ?? '', '/api/') !== false) {
         header('Content-Type: application/json; charset=utf-8', true);
         http_response_code(500);
-        die(json_encode(['exito' => false, 'mensaje' => 'Error de conexión a la base de datos']));
+        die(json_encode(['exito' => false, 'mensaje' => 'Error de conexión a BD']));
     }
-    die("Error de conexión: " . $conexion->connect_error);
+    die("Conexión fallida: " . $conexion->connect_error);
 }
 
-// Modo de errores para debugging
-$conexion->query("SET sql_mode='STRICT_TRANS_TABLES'");
-
-// Variable para verificar que la conexión fue exitosa
+// Flag de conexión exitosa
 $conexion_establecida = true;
 
-// Desactivar ofertas vencidas automáticamente
-$conexion->query("UPDATE productos SET en_oferta = 0, precio_descuento = NULL WHERE en_oferta = 1 AND fecha_fin_oferta < CURDATE()");
+// Configuración segura
+$conexion->query("SET SESSION sql_mode='STRICT_TRANS_TABLES'");
+?>

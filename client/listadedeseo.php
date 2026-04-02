@@ -340,7 +340,7 @@ function fetchWishlist() {
     /*
     Petición a la API para obtener la lista
     */
-    fetch('api/api_lista_deseos.php?accion=listar', { credentials: 'same-origin' })
+    fetch('/PAGINA%20WED/api/api_lista_deseos.php?accion=listar', { credentials: 'same-origin' })
 
         .then(response => response.text())
 
@@ -469,7 +469,7 @@ function removeFromWishlist(btn, idProducto) {
     fd.append('accion', 'eliminar');
     fd.append('id_producto', idProducto);
 
-    fetch('api/api_lista_deseos.php', { method: 'POST', body: fd })
+    fetch('/PAGINA%20WED/api/api_lista_deseos.php', { method: 'POST', body: fd })
 
         .then(r => r.json())
 
@@ -510,7 +510,7 @@ function agregarAlCarritoDesdeWishlist(btn, idProducto) {
     fd.append('id_producto', idProducto);
     fd.append('cantidad', 1);
 
-    fetch('api/api_carrito.php', { method: 'POST', body: fd })
+    fetch('/PAGINA%20WED/api/api_carrito.php', { method: 'POST', body: fd })
 
         .then(r => r.json())
 

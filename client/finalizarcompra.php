@@ -307,7 +307,7 @@ async function cargarDepartamentosCheckout() {
     const select = document.getElementById("new-id_departamento");
     if (!select) return;
     try {
-        const response = await fetch("api/api_obtener_departamentos.php", { credentials: "include" });
+        const response = await fetch("/PAGINA%20WED/api/api_obtener_departamentos.php", { credentials: "include" });
         const data = await response.json();
         if (!data.success || !data.departamentos || !data.departamentos.length) return;
         select.innerHTML = '<option value="">Seleccione departamento</option>';
@@ -334,7 +334,7 @@ async function cargarDireccionesCheckout() {
 
     try {
 
-        const response = await fetch("api/api_obtener_direcciones.php", {
+        const response = await fetch("/PAGINA%20WED/api/api_obtener_direcciones.php", {
             credentials: "include"
         });
 
@@ -533,7 +533,7 @@ async function guardarNuevaDireccion(e) {
     btn.innerHTML = '<span class="material-icons text-lg animate-spin">hourglass_empty</span> Guardando...';
 
     try {
-        const response = await fetch('api/api_crear_direccion.php', {
+        const response = await fetch('/PAGINA%20WED/api/api_crear_direccion.php', {
             method: 'POST',
             credentials: 'include',
             body: formData
@@ -748,7 +748,7 @@ async function confirmarPedido() {
 
     try {
 
-        const response = await fetch("api/api_crear_pedido.php", {
+        const response = await fetch("/PAGINA%20WED/api/api_crear_pedido.php", {
             method: "POST",
             credentials: "include",
             body: formData
@@ -785,7 +785,7 @@ async function cargarMetodosEnvio() {
 
     try {
 
-        const response = await fetch("api/api_metodos_envio.php");
+        const response = await fetch("/PAGINA%20WED/api/api_metodos_envio.php");
         const data = await response.json();
 
         if (!data.success || !data.metodos.length) {
@@ -891,7 +891,7 @@ if(!contenedor) return;
 
 try {
 
-const response = await fetch("api/api_bancos.php");
+const response = await fetch("/PAGINA%20WED/api/api_bancos.php");
 const data = await response.json();
 
 if(!data.exito || !data.bancos.length){
@@ -949,7 +949,7 @@ async function cargarResumenPedido() {
 
     try {
 
-        const response = await fetch("api/api_carrito.php?accion=listar", {
+        const response = await fetch("/PAGINA%20WED/api/api_carrito.php?accion=listar", {
             credentials: "include"
         });
 
@@ -1029,7 +1029,7 @@ async function cambiarCantidad(idCarritoDetalle, nuevaCantidad) {
     formData.append("id_carrito_detalle", idCarritoDetalle);
     formData.append("cantidad", nuevaCantidad);
 
-    await fetch("api/api_carrito.php?accion=actualizar", {
+    await fetch("/PAGINA%20WED/api/api_carrito.php?accion=actualizar", {
         method: "POST",
         body: formData,
         credentials: "include"
@@ -1046,7 +1046,7 @@ async function cargarMetodosPago() {
 
     try {
 
-        const response = await fetch("api/api_metodos_pago.php");
+        const response = await fetch("/PAGINA%20WED/api/api_metodos_pago.php");
         const data = await response.json();
 
         if (!data.exito || !data.metodos.length) {

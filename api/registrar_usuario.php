@@ -44,6 +44,9 @@
 
 // Incluir sistema de sesiones y funciones de autenticación
 require_once '../core/sesiones.php';
+require_once '../core/csrf.php';
+
+validarCSRFMiddleware();
 
 /**
  * ---------------------------------------------------------------

@@ -60,6 +60,9 @@ date_default_timezone_set('America/Tegucigalpa');
 require_once '../core/conexion.php';
 require_once '../core/sesiones.php';
 require_once '../core/smtp_config.php';
+require_once '../core/csrf.php';
+
+validarCSRFMiddleware();
 
 /*
 ========================================================

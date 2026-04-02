@@ -86,24 +86,22 @@ Se realiza un INNER JOIN entre:
 */
 $stmt = $conexion->prepare("
     SELECT 
-        clientes.id_usuario,
-        clientes.nombre,
-        clientes.estado,
-        usuarios.correo
-    FROM clientes
-    INNER JOIN usuarios 
-        ON clientes.id_usuario = usuarios.id_usuario
-    WHERE clientes.id_usuario = ?
+        c.id_cliente,
+        u.id_usuario,
+        c.nombre,
+        c.estado,
+        u.correo
+    FROM clientes c
+    INNER JOIN usuarios u ON c.id_usuario = u.id_usuario
+    WHERE c.id_cliente = ? OR u.id_usuario = ?
 ");
 
 /*
 ---------------------------------------------------------
-ASOCIAR PARÁMETRO A LA CONSULTA
+ASOCIAR PARÁMETROS A LA CONSULTA
 ---------------------------------------------------------
-El parámetro ? será reemplazado por el valor
-del ID recibido.
 */
-$stmt->bind_param("i", $id);
+$stmt->bind_param("ii", $id, $id);
 
 /*
 ---------------------------------------------------------

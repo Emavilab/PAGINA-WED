@@ -76,11 +76,15 @@ set_error_handler(function($errno, $errstr, $errfile, $errline) {
 
 /**
  * ---------------------------------------------------------------
- * INCLUIR ARCHIVO DE SESIONES
+ * INCLUIR ARCHIVOS NECESARIOS
  * ---------------------------------------------------------------
- * Contiene las funciones necesarias para autenticación.
+ * Contiene las funciones necesarias para autenticación y rate limiting.
  */
 require_once '../core/sesiones.php';
+require_once '../core/rate_limiting.php';
+require_once '../core/csrf.php';
+
+validarCSRFMiddleware();
 
 /**
  * ---------------------------------------------------------------
@@ -136,6 +140,30 @@ if (!empty($errores)) {
 
 /**
  * ---------------------------------------------------------------
+ * VERIFICAR RATE LIMITING (PROTECCIÓN CONTRA BRUTE FORCE)
+ * ---------------------------------------------------------------
+ * Se valida que la IP/usuario no haya excedido los intentos fallidos.
+ * Límites:
+ * - 5 intentos fallidos por IP en 1 hora
+ * - 10 intentos fallidos por usuario en 1 hora
+ * - Bloqueo temporal de 15 minutos al superar límite
+ */
+$ip = obtenerIPReal();
+$verificacion_rate = verificarRateLimiting($ip, $correo);
+
+if (!$verificacion_rate['permitido']) {
+    header('Content-Type: application/json');
+    echo json_encode([
+        'exito' => false,
+        'mensaje' => $verificacion_rate['mensaje'],
+        'bloqueado' => true,
+        'bloqueado_hasta' => $verificacion_rate['bloqueado_hasta']
+    ]);
+    exit();
+}
+
+/**
+ * ---------------------------------------------------------------
  * VALIDAR CREDENCIALES DEL USUARIO
  * ---------------------------------------------------------------
  * Se verifica si el correo y la contraseña coinciden
@@ -149,7 +177,20 @@ $usuario = validarCredenciales($correo, $contraseña);
  * ---------------------------------------------------------------
  */
 if (!$usuario) {
-    registrarIntento($correo, 'Credenciales inválidas');
+    registrarIntentoFallido($ip, $correo, 'credenciales_invalidas');
+    
+    // Verificar si acaba de ser bloqueado por rate limiting
+    $nueva_verificacion = verificarRateLimiting($ip, $correo);
+    if (!$nueva_verificacion['permitido']) {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'exito' => false,
+            'mensaje' => $nueva_verificacion['mensaje'],
+            'bloqueado' => true
+        ]);
+        exit();
+    }
+    
     header('Content-Type: application/json');
     echo json_encode([
         'exito' => false,
@@ -165,7 +206,7 @@ if (!$usuario) {
  * Solo los usuarios activos pueden iniciar sesión.
  */
 if ($usuario['estado'] !== 'activo') {
-    registrarIntento($correo, 'Intento de login con usuario inactivo');
+    registrarIntentoFallido($ip, $correo, 'usuario_inactivo');
     header('Content-Type: application/json');
     echo json_encode([
         'exito' => false,
@@ -189,17 +230,29 @@ registrarSesion(
 
 /**
  * ---------------------------------------------------------------
+ * REGISTRAR INTENTO EXITOSO (para limpieza de rate limiting)
+ * ---------------------------------------------------------------
+ */
+registrarIntentoExitoso($ip, $correo);
+
+/**
+ * ---------------------------------------------------------------
  * DETERMINAR REDIRECCIÓN SEGÚN EL ROL
  * ---------------------------------------------------------------
  */
-$redirect = 'index.php'; // Página por defecto
+$redirect = 'admin/Dashboard.php'; // Página por defecto para admins
 
+// Admin (id_rol = 1)
 if ($usuario['id_rol'] == 1) {
     $redirect = 'admin/Dashboard.php'; // Administrador
-} elseif ($usuario['id_rol'] == 2) {
-    $redirect = 'admin/Dashboard.php'; // Vendedor
-} elseif ($usuario['id_rol'] == 3) {
-    $redirect = 'index.php'; // Cliente
+} 
+// Vendedor (id_rol = 2)
+elseif ($usuario['id_rol'] == 2) {
+    $redirect = 'admin/Dashboard.php'; // Vendedor usa el dashboard
+} 
+// Cliente (id_rol = 3)
+elseif ($usuario['id_rol'] == 3) {
+    $redirect = 'index.php'; // Cliente vuelve a la página principal
 }
 
 /**

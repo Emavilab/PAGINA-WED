@@ -36,6 +36,9 @@ AUTOR: Sistema de gestión web
 
 require_once '../core/sesiones.php';   // Archivo encargado de manejar las sesiones y autenticación
 require_once '../core/conexion.php';   // Archivo que establece la conexión con la base de datos
+require_once '../core/csrf.php';
+
+validarCSRFMiddleware();
 
 // Establecer el tipo de respuesta como JSON
 header('Content-Type: application/json; charset=utf-8');
@@ -61,45 +64,43 @@ OBTENER EL ID DEL USUARIO ACTUAL
 ------------------------------------------------------------
 Se obtiene el identificador del usuario desde la sesión.
 */
-$id_usuario = obtenerIdUsuario();
+$id_usuario = (int)($_SESSION['id_usuario'] ?? ($_SESSION['id'] ?? 0));
+
+if ($id_usuario <= 0) {
+    echo json_encode([
+        "success" => false,
+        "message" => "Sesión inválida"
+    ]);
+    exit();
+}
 
 /* 🔥 OBTENER id_cliente REAL */
 
 /*
 ------------------------------------------------------------
-BUSCAR EL CLIENTE ASOCIADO AL USUARIO
+OBTENER ID DEL CLIENTE DESDE LA TABLA CLIENTES
 ------------------------------------------------------------
-Cada usuario tiene asociado un cliente dentro del sistema.
-Aquí se obtiene el id_cliente correspondiente.
+Buscar el id_cliente del usuario autenticado.
 */
-$stmtCliente = $conexion->prepare("SELECT id_cliente FROM clientes WHERE id_usuario = ?");
-$stmtCliente->bind_param("i", $id_usuario);
-$stmtCliente->execute();
-$resultCliente = $stmtCliente->get_result();
-$cliente = $resultCliente->fetch_assoc();
-$stmtCliente->close();
+$id_cliente = null;
+$stmt_cliente = $conexion->prepare("SELECT id_cliente FROM clientes WHERE id_usuario = ?");
+$stmt_cliente->bind_param("i", $id_usuario);
+$stmt_cliente->execute();
+$resultado = $stmt_cliente->get_result();
 
-/*
-------------------------------------------------------------
-VALIDAR QUE EL CLIENTE EXISTA
-------------------------------------------------------------
-Si no existe un cliente asociado al usuario,
-no se puede eliminar una dirección.
-*/
-if (!$cliente) {
+if ($resultado->num_rows > 0) {
+    $row = $resultado->fetch_assoc();
+    $id_cliente = $row['id_cliente'];
+}
+$stmt_cliente->close();
+
+if (!$id_cliente) {
     echo json_encode([
         "success" => false,
-        "message" => "Debes iniciar sesión para eliminar una dirección"
+        "message" => "Cliente no encontrado"
     ]);
     exit();
 }
-
-/*
-Guardar el ID del cliente obtenido
-*/
-$id_cliente = $cliente['id_cliente'];
-
-/* =============================== */
 
 /*
 ------------------------------------------------------------

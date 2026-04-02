@@ -1,6 +1,9 @@
 <?php
 require_once 'sesiones.php';
 require_once 'conexion.php';
+require_once 'audit_logging.php';
+require_once 'csrf.php';
+
 header('Content-Type: application/json; charset=utf-8');
 
 // Verificar autenticación y permisos
@@ -20,6 +23,15 @@ if ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2) {
 function responder($success, $message) {
     echo json_encode(['success' => $success, 'message' => $message]);
     exit();
+}
+
+function bindParamsDinamico($stmt, $types, array &$params) {
+    $args = [];
+    $args[] = &$types;
+    foreach ($params as $key => $value) {
+        $args[] = &$params[$key];
+    }
+    return call_user_func_array([$stmt, 'bind_param'], $args);
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -74,84 +86,128 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         if (empty($id)) {
-            $logo_sql = $logo_nombre ? ", logo" : "";
-            $logo_val = $logo_nombre ? ", '$logo_nombre'" : "";
-            $sql = "INSERT INTO marcas (nombre, estado$logo_sql) VALUES ('$nombre', '$estado'$logo_val)";
+            $sql = "INSERT INTO marcas (nombre, estado" . ($logo_nombre ? ", logo" : "") . ") VALUES (?, ?" . ($logo_nombre ? ", ?" : "") . ")";
+            $stmt = $conexion->prepare($sql);
+            if (!$stmt) {
+                responder(false, 'Error en BD: ' . $conexion->error);
+            }
+            
+            if ($logo_nombre) {
+                $stmt->bind_param("sss", $nombre, $estado, $logo_nombre);
+            } else {
+                $stmt->bind_param("ss", $nombre, $estado);
+            }
         } else {
             $id = intval($id);
-            $logo_update = $logo_nombre ? ", logo = '$logo_nombre'" : "";
-            $sql = "UPDATE marcas SET nombre = '$nombre', estado = '$estado'$logo_update WHERE id_marca = $id";
+            if ($logo_nombre) {
+                $sql = "UPDATE marcas SET nombre = ?, estado = ?, logo = ? WHERE id_marca = ?";
+                $stmt = $conexion->prepare($sql);
+                if (!$stmt) {
+                    responder(false, 'Error en BD: ' . $conexion->error);
+                }
+                $stmt->bind_param("sssi", $nombre, $estado, $logo_nombre, $id);
+            } else {
+                $sql = "UPDATE marcas SET nombre = ?, estado = ? WHERE id_marca = ?";
+                $stmt = $conexion->prepare($sql);
+                if (!$stmt) {
+                    responder(false, 'Error en BD: ' . $conexion->error);
+                }
+                $stmt->bind_param("ssi", $nombre, $estado, $id);
+            }
         }
 
-        if (mysqli_query($conexion, $sql)) {
+        if ($stmt->execute()) {
             responder(true, empty($_POST['id_marca']) ? 'Marca creada exitosamente' : 'Marca actualizada exitosamente');
         } else {
-            responder(false, 'Error en Marcas: ' . mysqli_error($conexion));
+            responder(false, 'Error en Marcas: ' . $stmt->error);
         }
+        $stmt->close();
     }
 
     // --- LÓGICA PARA MÉTODOS DE ENVÍO ---
     if ($accion == 'guardar_envio') {
         $id = $_POST['id_envio'] ?? '';
-        $nombre = mysqli_real_escape_string($conexion, $_POST['nombre']);
-        $costo = mysqli_real_escape_string($conexion, $_POST['costo']);
+        $nombre = trim($_POST['nombre'] ?? '');
+        $costo = floatval($_POST['costo'] ?? 0);
         $reduccion_dias = intval($_POST['reduccion_dias'] ?? 0);
         $estado = $_POST['estado'] ?? 'activo';
-        $descripcion = mysqli_real_escape_string($conexion, $_POST['descripcion'] ?? '');
+        $descripcion = trim($_POST['descripcion'] ?? '');
 
-        if (empty(trim($nombre))) {
+        if (empty($nombre)) {
             responder(false, 'El nombre del método de envío es requerido');
         }
 
         if (empty($id)) {
             $sql = "INSERT INTO metodos_envio (nombre, costo, reduccion_dias, estado, descripcion) 
-                    VALUES ('$nombre', '$costo', $reduccion_dias, '$estado', '$descripcion')";
+                    VALUES (?, ?, ?, ?, ?)";
+            $stmt = $conexion->prepare($sql);
+            if (!$stmt) {
+                responder(false, 'Error en BD: ' . $conexion->error);
+            }
+            $stmt->bind_param("sdiss", $nombre, $costo, $reduccion_dias, $estado, $descripcion);
         } else {
             $id = intval($id);
             $sql = "UPDATE metodos_envio SET 
-                    nombre = '$nombre', 
-                    costo = '$costo', 
-                    reduccion_dias = $reduccion_dias, 
-                    estado = '$estado', 
-                    descripcion = '$descripcion' 
-                    WHERE id_envio = $id";
+                    nombre = ?, 
+                    costo = ?, 
+                    reduccion_dias = ?, 
+                    estado = ?, 
+                    descripcion = ? 
+                    WHERE id_envio = ?";
+            $stmt = $conexion->prepare($sql);
+            if (!$stmt) {
+                responder(false, 'Error en BD: ' . $conexion->error);
+            }
+            $stmt->bind_param("sdissi", $nombre, $costo, $reduccion_dias, $estado, $descripcion, $id);
         }
 
-        if (mysqli_query($conexion, $sql)) {
+        if ($stmt->execute()) {
             responder(true, empty($_POST['id_envio']) ? 'Método de envío creado exitosamente' : 'Método de envío actualizado exitosamente');
         } else {
-            responder(false, 'Error en Envío: ' . mysqli_error($conexion));
+            responder(false, 'Error en Envío: ' . $stmt->error);
         }
+        $stmt->close();
     }
 
     // --- LÓGICA PARA MÉTODOS DE PAGO ---
     if ($accion == 'guardar_pago') {
         $id = $_POST['id_pago'] ?? '';
-        $nombre = mysqli_real_escape_string($conexion, $_POST['nombre']);
-        $descripcion = mysqli_real_escape_string($conexion, $_POST['descripcion'] ?? '');
+        $nombre = trim($_POST['nombre'] ?? '');
+        $descripcion = trim($_POST['descripcion'] ?? '');
         $estado = $_POST['estado'] ?? 'activo';
 
-        if (empty(trim($nombre))) {
+        if (empty($nombre)) {
             responder(false, 'El nombre del método de pago es requerido');
         }
 
         if (empty($id)) {
             $sql = "INSERT INTO metodos_pago (nombre, descripcion, estado) 
-                    VALUES ('$nombre', '$descripcion', '$estado')";
+                    VALUES (?, ?, ?)";
+            $stmt = $conexion->prepare($sql);
+            if (!$stmt) {
+                responder(false, 'Error en BD: ' . $conexion->error);
+            }
+            $stmt->bind_param("sss", $nombre, $descripcion, $estado);
         } else {
             $id = intval($id);
             $sql = "UPDATE metodos_pago SET 
-                    nombre = '$nombre', 
-                    descripcion = '$descripcion', 
-                    estado = '$estado' 
-                    WHERE id_metodo_pago = $id";
+                    nombre = ?, 
+                    descripcion = ?, 
+                    estado = ? 
+                    WHERE id_metodo_pago = ?";
+            $stmt = $conexion->prepare($sql);
+            if (!$stmt) {
+                responder(false, 'Error en BD: ' . $conexion->error);
+            }
+            $stmt->bind_param("sssi", $nombre, $descripcion, $estado, $id);
         }
 
-        if (mysqli_query($conexion, $sql)) {
+        if ($stmt->execute()) {
             responder(true, empty($_POST['id_pago']) ? 'Método de pago creado exitosamente' : 'Método de pago actualizado exitosamente');
         } else {
-            responder(false, 'Error en Pago: ' . mysqli_error($conexion));
+            responder(false, 'Error en Pago: ' . $stmt->error);
         }
+        $stmt->close();
     }
 
 
@@ -196,22 +252,22 @@ responder(false,"Error al guardar departamento");
 
     // --- LÓGICA PARA CONFIGURACIÓN GENERAL ---
     if ($accion == 'guardar_config_general') {
-        $nombre_negocio = mysqli_real_escape_string($conexion, $_POST['nombre_negocio'] ?? '');
-        $slogan = mysqli_real_escape_string($conexion, $_POST['slogan'] ?? '');
-        $correo = mysqli_real_escape_string($conexion, $_POST['correo'] ?? '');
-        $telefono = mysqli_real_escape_string($conexion, $_POST['telefono'] ?? '');
-        $direccion = mysqli_real_escape_string($conexion, $_POST['direccion'] ?? '');
-        $moneda = mysqli_real_escape_string($conexion, $_POST['moneda'] ?? 'USD');
-        $horario_atencion = mysqli_real_escape_string($conexion, $_POST['horario_atencion'] ?? '');
-        $texto_inicio = mysqli_real_escape_string($conexion, $_POST['texto_inicio'] ?? '');
-        $pie_pagina = mysqli_real_escape_string($conexion, $_POST['pie_pagina'] ?? '');
-        $texto_banner_superior = mysqli_real_escape_string($conexion, $_POST['texto_banner_superior'] ?? '');
-        $hero_etiqueta = mysqli_real_escape_string($conexion, $_POST['hero_etiqueta'] ?? '');
-        $hero_titulo = mysqli_real_escape_string($conexion, $_POST['hero_titulo'] ?? '');
-        $hero_subtitulo = mysqli_real_escape_string($conexion, $_POST['hero_subtitulo'] ?? '');
-        $hero_descripcion = mysqli_real_escape_string($conexion, $_POST['hero_descripcion'] ?? '');
-        $hero_btn_primario = mysqli_real_escape_string($conexion, $_POST['hero_btn_primario'] ?? '');
-        $hero_btn_secundario = mysqli_real_escape_string($conexion, $_POST['hero_btn_secundario'] ?? '');
+        $nombre_negocio = trim($_POST['nombre_negocio'] ?? '');
+        $slogan = trim($_POST['slogan'] ?? '');
+        $correo = trim($_POST['correo'] ?? '');
+        $telefono = trim($_POST['telefono'] ?? '');
+        $direccion = trim($_POST['direccion'] ?? '');
+        $moneda = trim($_POST['moneda'] ?? 'USD');
+        $horario_atencion = trim($_POST['horario_atencion'] ?? '');
+        $texto_inicio = trim($_POST['texto_inicio'] ?? '');
+        $pie_pagina = trim($_POST['pie_pagina'] ?? '');
+        $texto_banner_superior = trim($_POST['texto_banner_superior'] ?? '');
+        $hero_etiqueta = trim($_POST['hero_etiqueta'] ?? '');
+        $hero_titulo = trim($_POST['hero_titulo'] ?? '');
+        $hero_subtitulo = trim($_POST['hero_subtitulo'] ?? '');
+        $hero_descripcion = trim($_POST['hero_descripcion'] ?? '');
+        $hero_btn_primario = trim($_POST['hero_btn_primario'] ?? '');
+        $hero_btn_secundario = trim($_POST['hero_btn_secundario'] ?? '');
 
         // Colores del tema (se validan más abajo)
         $color_primary_raw = $_POST['color_primary'] ?? '';
@@ -232,14 +288,8 @@ responder(false,"Error al guardar departamento");
             $footer_cols_arr = [];
         }
 
-        $header_menu_json = mysqli_real_escape_string(
-            $conexion,
-            json_encode($header_menu_arr, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
-        );
-        $footer_cols_json = mysqli_real_escape_string(
-            $conexion,
-            json_encode($footer_cols_arr, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
-        );
+        $header_menu_json = json_encode($header_menu_arr, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $footer_cols_json = json_encode($footer_cols_arr, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
         // Redes sociales como JSON
         $redes = json_encode([
@@ -250,10 +300,8 @@ responder(false,"Error al guardar departamento");
             'twitter' => $_POST['red_twitter'] ?? '',
             'youtube' => $_POST['red_youtube'] ?? ''
         ], JSON_UNESCAPED_SLASHES);
-        $redes = mysqli_real_escape_string($conexion, $redes);
 
         // Manejar subida de logo
-        $logo_sql = '';
         $logo_nombre = '';
         if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
             $ext = strtolower(pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION));
@@ -269,13 +317,11 @@ responder(false,"Error al guardar departamento");
                             unlink($carpeta . $row_old['logo']);
                         }
                     }
-                    $logo_sql = ", logo = '$logo_nombre'";
                 }
             }
         }
 
         // Manejar subida de favicon
-        $favicon_sql = '';
         $favicon_nombre = '';
         if (isset($_FILES['favicon']) && $_FILES['favicon']['error'] === UPLOAD_ERR_OK) {
             $ext = strtolower(pathinfo($_FILES['favicon']['name'], PATHINFO_EXTENSION));
@@ -291,13 +337,11 @@ responder(false,"Error al guardar departamento");
                             unlink($carpeta . $row_old['favicon']);
                         }
                     }
-                    $favicon_sql = ", favicon = '$favicon_nombre'";
                 }
             }
         }
 
         // Manejar subida de hero_imagen
-        $hero_img_sql = '';
         $hero_img_nombre = '';
         if (isset($_FILES['hero_imagen']) && $_FILES['hero_imagen']['error'] === UPLOAD_ERR_OK) {
             $ext = strtolower(pathinfo($_FILES['hero_imagen']['name'], PATHINFO_EXTENSION));
@@ -312,7 +356,6 @@ responder(false,"Error al guardar departamento");
                             unlink($carpeta . $row_old['hero_imagen']);
                         }
                     }
-                    $hero_img_sql = ", hero_imagen = '$hero_img_nombre'";
                 }
             }
         }
@@ -333,33 +376,74 @@ responder(false,"Error al guardar departamento");
             $color_bg_dark = $normalizeColor($color_bg_dark_raw, '#101922');
 
             $sql = "UPDATE configuracion SET 
-                nombre_negocio = '$nombre_negocio',
-                slogan = '$slogan',
-                correo = '$correo',
-                telefono = '$telefono',
-                direccion = '$direccion',
-                moneda = '$moneda',
-                horario_atencion = '$horario_atencion',
-                texto_inicio = '$texto_inicio',
-                pie_pagina = '$pie_pagina',
-                redes_sociales = '$redes',
-                texto_banner_superior = '$texto_banner_superior',
-                header_menu = '$header_menu_json',
-                footer_columns = '$footer_cols_json',
-                color_primary = '$color_primary',
-                color_primary_dark = '$color_primary_dark',
-                color_background_light = '$color_bg_light',
-                color_background_dark = '$color_bg_dark',
-                hero_etiqueta = '$hero_etiqueta',
-                hero_titulo = '$hero_titulo',
-                hero_subtitulo = '$hero_subtitulo',
-                hero_descripcion = '$hero_descripcion',
-                hero_btn_primario = '$hero_btn_primario',
-                hero_btn_secundario = '$hero_btn_secundario'
-                $logo_sql
-                $favicon_sql
-                $hero_img_sql
-                WHERE id_config = 1";
+                nombre_negocio = ?,
+                slogan = ?,
+                correo = ?,
+                telefono = ?,
+                direccion = ?,
+                moneda = ?,
+                horario_atencion = ?,
+                texto_inicio = ?,
+                pie_pagina = ?,
+                redes_sociales = ?,
+                texto_banner_superior = ?,
+                header_menu = ?,
+                footer_columns = ?,
+                color_primary = ?,
+                color_primary_dark = ?,
+                color_background_light = ?,
+                color_background_dark = ?,
+                hero_etiqueta = ?,
+                hero_titulo = ?,
+                hero_subtitulo = ?,
+                hero_descripcion = ?,
+                hero_btn_primario = ?,
+                hero_btn_secundario = ?";
+
+            $params = [
+                $nombre_negocio,
+                $slogan,
+                $correo,
+                $telefono,
+                $direccion,
+                $moneda,
+                $horario_atencion,
+                $texto_inicio,
+                $pie_pagina,
+                $redes,
+                $texto_banner_superior,
+                $header_menu_json,
+                $footer_cols_json,
+                $color_primary,
+                $color_primary_dark,
+                $color_bg_light,
+                $color_bg_dark,
+                $hero_etiqueta,
+                $hero_titulo,
+                $hero_subtitulo,
+                $hero_descripcion,
+                $hero_btn_primario,
+                $hero_btn_secundario
+            ];
+            $types = str_repeat('s', count($params));
+
+            if (!empty($logo_nombre)) {
+                $sql .= ", logo = ?";
+                $params[] = $logo_nombre;
+                $types .= 's';
+            }
+            if (!empty($favicon_nombre)) {
+                $sql .= ", favicon = ?";
+                $params[] = $favicon_nombre;
+                $types .= 's';
+            }
+            if (!empty($hero_img_nombre)) {
+                $sql .= ", hero_imagen = ?";
+                $params[] = $hero_img_nombre;
+                $types .= 's';
+            }
+
+            $sql .= " WHERE id_config = 1";
         } else {
             // Normalizar colores para nuevo registro
             $normalizeColor = function($value, $default) {
@@ -373,32 +457,70 @@ responder(false,"Error al guardar departamento");
             $color_bg_light = $normalizeColor($color_bg_light_raw, '#F6F7F8');
             $color_bg_dark = $normalizeColor($color_bg_dark_raw, '#101922');
 
-            $logo_col = !empty($logo_sql) ? ', logo' : '';
-            $logo_val = !empty($logo_sql) ? ", '$logo_nombre'" : '';
-            $fav_col = !empty($favicon_sql) ? ', favicon' : '';
-            $fav_val = !empty($favicon_sql) ? ", '$favicon_nombre'" : '';
-            $sql = "INSERT INTO configuracion (nombre_negocio, slogan, correo, telefono, direccion, moneda, horario_atencion, texto_inicio, pie_pagina, redes_sociales, header_menu, footer_columns, color_primary, color_primary_dark, color_background_light, color_background_dark$logo_col$fav_col) 
-                        VALUES ('$nombre_negocio', '$slogan', '$correo', '$telefono', '$direccion', '$moneda', '$horario_atencion', '$texto_inicio', '$pie_pagina', '$redes', '$header_menu_json', '$footer_cols_json', '$color_primary', '$color_primary_dark', '$color_bg_light', '$color_bg_dark'$logo_val$fav_val)";
+            $columnas = [
+                'nombre_negocio', 'slogan', 'correo', 'telefono', 'direccion', 'moneda',
+                'horario_atencion', 'texto_inicio', 'pie_pagina', 'redes_sociales',
+                'texto_banner_superior', 'header_menu', 'footer_columns',
+                'color_primary', 'color_primary_dark', 'color_background_light', 'color_background_dark',
+                'hero_etiqueta', 'hero_titulo', 'hero_subtitulo', 'hero_descripcion',
+                'hero_btn_primario', 'hero_btn_secundario'
+            ];
+            $params = [
+                $nombre_negocio, $slogan, $correo, $telefono, $direccion, $moneda,
+                $horario_atencion, $texto_inicio, $pie_pagina, $redes,
+                $texto_banner_superior, $header_menu_json, $footer_cols_json,
+                $color_primary, $color_primary_dark, $color_bg_light, $color_bg_dark,
+                $hero_etiqueta, $hero_titulo, $hero_subtitulo, $hero_descripcion,
+                $hero_btn_primario, $hero_btn_secundario
+            ];
+
+            if (!empty($logo_nombre)) {
+                $columnas[] = 'logo';
+                $params[] = $logo_nombre;
+            }
+            if (!empty($favicon_nombre)) {
+                $columnas[] = 'favicon';
+                $params[] = $favicon_nombre;
+            }
+            if (!empty($hero_img_nombre)) {
+                $columnas[] = 'hero_imagen';
+                $params[] = $hero_img_nombre;
+            }
+
+            $placeholders = implode(', ', array_fill(0, count($columnas), '?'));
+            $sql = "INSERT INTO configuracion (" . implode(', ', $columnas) . ") VALUES (" . $placeholders . ")";
+            $types = str_repeat('s', count($params));
         }
 
-        if (mysqli_query($conexion, $sql)) {
+        $stmt = $conexion->prepare($sql);
+        if (!$stmt) {
+            responder(false, 'Error al preparar configuración: ' . $conexion->error);
+        }
+
+        if (!bindParamsDinamico($stmt, $types, $params)) {
+            responder(false, 'Error al vincular parámetros de configuración');
+        }
+
+        if ($stmt->execute()) {
+            $stmt->close();
             responder(true, 'Configuración general guardada exitosamente');
         } else {
-            responder(false, 'Error al guardar configuración: ' . mysqli_error($conexion));
+            $error = $stmt->error;
+            $stmt->close();
+            responder(false, 'Error al guardar configuración: ' . $error);
         }
     }
 
     // --- LÓGICA PARA BANNERS ---
     if ($accion == 'guardar_banner') {
         $id_banner = intval($_POST['id_banner'] ?? 0);
-        $titulo = mysqli_real_escape_string($conexion, $_POST['titulo'] ?? '');
-        $descripcion = mysqli_real_escape_string($conexion, $_POST['descripcion'] ?? '');
-        $texto_boton = mysqli_real_escape_string($conexion, $_POST['texto_boton'] ?? '');
-        $enlace = mysqli_real_escape_string($conexion, $_POST['enlace'] ?? '');
+        $titulo = trim($_POST['titulo'] ?? '');
+        $descripcion = trim($_POST['descripcion'] ?? '');
+        $texto_boton = trim($_POST['texto_boton'] ?? '');
+        $enlace = trim($_POST['enlace'] ?? '');
         $orden = intval($_POST['orden'] ?? 0);
         $estado_raw = $_POST['estado'] ?? 'activo';
         $estado = ($estado_raw === 'activo' || $estado_raw === '1' || $estado_raw === 1) ? 'activo' : 'inactivo';
-        $estado = mysqli_real_escape_string($conexion, $estado);
 
         if (empty(trim($titulo))) {
             responder(false, 'El título del banner es requerido');
@@ -406,7 +528,6 @@ responder(false,"Error al guardar departamento");
 
         // Manejar subida de imagen
         $img_nombre = '';
-        $img_sql = '';
         if (isset($_FILES['imagen_banner']) && $_FILES['imagen_banner']['error'] === UPLOAD_ERR_OK) {
             $ext = strtolower(pathinfo($_FILES['imagen_banner']['name'], PATHINFO_EXTENSION));
             $permitidas = ['jpg','jpeg','png','gif','webp','svg'];
@@ -424,50 +545,66 @@ responder(false,"Error al guardar departamento");
             }
             // Si editamos, eliminar imagen anterior
             if ($id_banner > 0) {
-                $res_old = mysqli_query($conexion, "SELECT imagen FROM banners WHERE id_banner = $id_banner");
-                if ($row_old = mysqli_fetch_assoc($res_old)) {
+                $stmtOld = $conexion->prepare("SELECT imagen FROM banners WHERE id_banner = ?");
+                $stmtOld->bind_param("i", $id_banner);
+                $stmtOld->execute();
+                $res_old = $stmtOld->get_result();
+                if ($row_old = $res_old->fetch_assoc()) {
                     if (!empty($row_old['imagen']) && file_exists($carpeta . $row_old['imagen'])) {
                         unlink($carpeta . $row_old['imagen']);
                     }
                 }
+                $stmtOld->close();
             }
-            $img_sql = ", imagen = '$img_nombre'";
         }
 
         if ($id_banner > 0) {
-            // Actualizar
-            $sql = "UPDATE banners SET 
-                titulo = '$titulo',
-                descripcion = '$descripcion',
-                texto_boton = '$texto_boton',
-                enlace = '$enlace',
-                orden = $orden,
-                estado = '$estado'
-                $img_sql
-                WHERE id_banner = $id_banner";
+            $sql = "UPDATE banners SET titulo = ?, descripcion = ?, texto_boton = ?, enlace = ?, orden = ?, estado = ?";
+            $params = [$titulo, $descripcion, $texto_boton, $enlace, $orden, $estado];
+            $types = "ssssis";
+            if (!empty($img_nombre)) {
+                $sql .= ", imagen = ?";
+                $params[] = $img_nombre;
+                $types .= 's';
+            }
+            $sql .= " WHERE id_banner = ?";
+            $params[] = $id_banner;
+            $types .= 'i';
         } else {
             // Crear nuevo - imagen requerida solo si es nuevo
             if (empty($img_nombre)) {
                 responder(false, 'La imagen del banner es requerida');
             }
-            $sql = "INSERT INTO banners (titulo, descripcion, imagen, texto_boton, enlace, orden, estado) 
-                    VALUES ('$titulo', '$descripcion', '$img_nombre', '$texto_boton', '$enlace', $orden, '$estado')";
+            $sql = "INSERT INTO banners (titulo, descripcion, imagen, texto_boton, enlace, orden, estado) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $params = [$titulo, $descripcion, $img_nombre, $texto_boton, $enlace, $orden, $estado];
+            $types = "sssssis";
         }
 
-        if (mysqli_query($conexion, $sql)) {
+        $stmt = $conexion->prepare($sql);
+        if (!$stmt) {
+            responder(false, 'Error al preparar banner: ' . $conexion->error);
+        }
+        if (!bindParamsDinamico($stmt, $types, $params)) {
+            responder(false, 'Error al vincular parámetros del banner');
+        }
+
+        if ($stmt->execute()) {
+            $stmt->close();
             responder(true, $id_banner > 0 ? 'Banner actualizado exitosamente' : 'Banner creado exitosamente');
         } else {
-            responder(false, 'Error al guardar banner: ' . mysqli_error($conexion));
+            $error = $stmt->error;
+            $stmt->close();
+            responder(false, 'Error al guardar banner: ' . $error);
         }
     }
 
     // --- LÓGICA PARA HERO SLIDES ---
     if ($accion == 'guardar_hero_slide') {
         $id_slide = intval($_POST['id_slide'] ?? 0);
-        $titulo = mysqli_real_escape_string($conexion, $_POST['titulo'] ?? '');
-        $subtitulo = mysqli_real_escape_string($conexion, $_POST['subtitulo'] ?? '');
-        $texto_boton = mysqli_real_escape_string($conexion, $_POST['texto_boton'] ?? '');
-        $enlace = mysqli_real_escape_string($conexion, $_POST['enlace'] ?? '');
+        $titulo = trim($_POST['titulo'] ?? '');
+        $subtitulo = trim($_POST['subtitulo'] ?? '');
+        $texto_boton = trim($_POST['texto_boton'] ?? '');
+        $enlace = trim($_POST['enlace'] ?? '');
         $orden = intval($_POST['orden'] ?? 0);
         $estado_raw = $_POST['estado'] ?? 'activo';
         $estado = ($estado_raw === 'activo') ? 'activo' : 'inactivo';
@@ -477,7 +614,6 @@ responder(false,"Error al guardar departamento");
         }
 
         $img_nombre = '';
-        $img_sql = '';
         if (isset($_FILES['imagen_slide']) && $_FILES['imagen_slide']['error'] === UPLOAD_ERR_OK) {
             $ext = strtolower(pathinfo($_FILES['imagen_slide']['name'], PATHINFO_EXTENSION));
             $permitidas = ['jpg','jpeg','png','gif','webp','svg'];
@@ -494,38 +630,55 @@ responder(false,"Error al guardar departamento");
                 responder(false, 'Error al subir la imagen del slide');
             }
             if ($id_slide > 0) {
-                $res_old = mysqli_query($conexion, "SELECT imagen FROM hero_slides WHERE id_slide = $id_slide");
-                if ($row_old = mysqli_fetch_assoc($res_old)) {
+                $stmtOld = $conexion->prepare("SELECT imagen FROM hero_slides WHERE id_slide = ?");
+                $stmtOld->bind_param("i", $id_slide);
+                $stmtOld->execute();
+                $res_old = $stmtOld->get_result();
+                if ($row_old = $res_old->fetch_assoc()) {
                     if (!empty($row_old['imagen']) && file_exists($carpeta . $row_old['imagen'])) {
                         unlink($carpeta . $row_old['imagen']);
                     }
                 }
+                $stmtOld->close();
             }
-            $img_sql = ", imagen = '$img_nombre'";
         }
 
         if ($id_slide > 0) {
-            $sql = "UPDATE hero_slides SET 
-                titulo = '$titulo',
-                subtitulo = '$subtitulo',
-                texto_boton = '$texto_boton',
-                enlace = '$enlace',
-                orden = $orden,
-                estado = '$estado'
-                $img_sql
-                WHERE id_slide = $id_slide";
+            $sql = "UPDATE hero_slides SET titulo = ?, subtitulo = ?, texto_boton = ?, enlace = ?, orden = ?, estado = ?";
+            $params = [$titulo, $subtitulo, $texto_boton, $enlace, $orden, $estado];
+            $types = "ssssis";
+            if (!empty($img_nombre)) {
+                $sql .= ", imagen = ?";
+                $params[] = $img_nombre;
+                $types .= 's';
+            }
+            $sql .= " WHERE id_slide = ?";
+            $params[] = $id_slide;
+            $types .= 'i';
         } else {
             if (empty($img_nombre)) {
                 responder(false, 'La imagen del slide es requerida');
             }
-            $sql = "INSERT INTO hero_slides (titulo, subtitulo, imagen, texto_boton, enlace, orden, estado) 
-                    VALUES ('$titulo', '$subtitulo', '$img_nombre', '$texto_boton', '$enlace', $orden, '$estado')";
+            $sql = "INSERT INTO hero_slides (titulo, subtitulo, imagen, texto_boton, enlace, orden, estado) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $params = [$titulo, $subtitulo, $img_nombre, $texto_boton, $enlace, $orden, $estado];
+            $types = "sssssis";
         }
 
-        if (mysqli_query($conexion, $sql)) {
+        $stmt = $conexion->prepare($sql);
+        if (!$stmt) {
+            responder(false, 'Error al preparar slide: ' . $conexion->error);
+        }
+        if (!bindParamsDinamico($stmt, $types, $params)) {
+            responder(false, 'Error al vincular parámetros del slide');
+        }
+
+        if ($stmt->execute()) {
+            $stmt->close();
             responder(true, $id_slide > 0 ? 'Slide actualizado exitosamente' : 'Slide creado exitosamente');
         } else {
-            responder(false, 'Error al guardar slide: ' . mysqli_error($conexion));
+            $error = $stmt->error;
+            $stmt->close();
+            responder(false, 'Error al guardar slide: ' . $error);
         }
     }
 
@@ -727,8 +880,12 @@ if(isset($_GET['eliminar_banco'])){
 
 $id = intval($_GET['eliminar_banco']);
 
-$res = mysqli_query($conexion,"SELECT logo FROM bancos WHERE id_banco=$id");
-$banco = mysqli_fetch_assoc($res);
+$stmtBanco = $conexion->prepare("SELECT logo FROM bancos WHERE id_banco = ?");
+$stmtBanco->bind_param("i", $id);
+$stmtBanco->execute();
+$res = $stmtBanco->get_result();
+$banco = $res->fetch_assoc();
+$stmtBanco->close();
 
 if(!empty($banco['logo'])){
 $ruta = "../img/bancos/".$banco['logo'];
@@ -737,7 +894,10 @@ unlink($ruta);
 }
 }
 
-mysqli_query($conexion,"DELETE FROM bancos WHERE id_banco=$id");
+$stmtDelBanco = $conexion->prepare("DELETE FROM bancos WHERE id_banco = ?");
+$stmtDelBanco->bind_param("i", $id);
+$stmtDelBanco->execute();
+$stmtDelBanco->close();
 
 echo json_encode([
 "success"=>true,

@@ -24,6 +24,7 @@
 
 // Archivo que contiene funciones de sesiones y autenticación
 require_once 'sesiones.php';
+require_once 'csrf.php';
 
 // Archivo que establece la conexión a la base de datos (si se necesitara)
 require_once 'conexion.php';

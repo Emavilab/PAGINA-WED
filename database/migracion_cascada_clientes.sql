@@ -1,7 +1,59 @@
 USE negocio_web;
 START TRANSACTION;
 
+-- Nota operativa:
+-- ALTER TABLE en MySQL/MariaDB realiza commit implicito.
+-- Esta transaccion no garantiza rollback total de cambios DDL si algo falla a mitad.
+
 DELIMITER $$
+
+CREATE PROCEDURE precheck_orphan_clientes_cleanup()
+BEGIN
+    DECLARE orphan_clientes_count INT DEFAULT 0;
+    DECLARE orphan_clientes_with_children_count INT DEFAULT 0;
+
+    -- Cantidad de clientes huerfanos (id_usuario inexistente)
+    SELECT COUNT(*)
+      INTO orphan_clientes_count
+      FROM clientes c
+ LEFT JOIN usuarios u ON u.id_usuario = c.id_usuario
+     WHERE u.id_usuario IS NULL;
+
+    -- Reporte previo para facilitar auditoria del despliegue
+    SELECT orphan_clientes_count AS orphan_clientes_detected;
+
+    IF orphan_clientes_count > 0 THEN
+        -- Si un cliente huerfano aun tiene filas relacionadas, abortar para evitar
+        -- borrados inesperados o fallas por restricciones vigentes.
+        SELECT
+            (SELECT COUNT(*)
+               FROM carritos ca
+               JOIN clientes c ON c.id_cliente = ca.id_cliente
+          LEFT JOIN usuarios u ON u.id_usuario = c.id_usuario
+              WHERE u.id_usuario IS NULL)
+          + (SELECT COUNT(*)
+               FROM pedidos p
+               JOIN clientes c ON c.id_cliente = p.id_cliente
+          LEFT JOIN usuarios u ON u.id_usuario = c.id_usuario
+              WHERE u.id_usuario IS NULL)
+          + (SELECT COUNT(*)
+               FROM direcciones_cliente dc
+               JOIN clientes c ON c.id_cliente = dc.id_cliente
+          LEFT JOIN usuarios u ON u.id_usuario = c.id_usuario
+              WHERE u.id_usuario IS NULL)
+          + (SELECT COUNT(*)
+               FROM lista_deseos ld
+               JOIN clientes c ON c.id_cliente = ld.id_cliente
+          LEFT JOIN usuarios u ON u.id_usuario = c.id_usuario
+              WHERE u.id_usuario IS NULL)
+          INTO orphan_clientes_with_children_count;
+
+        IF orphan_clientes_with_children_count > 0 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'ABORTADO: existen clientes huerfanos con registros hijos; revisar integridad antes de limpiar.';
+        END IF;
+    END IF;
+END$$
 
 CREATE PROCEDURE apply_fk_migration(
     IN p_table_name VARCHAR(64),
@@ -57,6 +109,17 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+CALL precheck_orphan_clientes_cleanup();
+
+-- Limpieza previa: elimina clientes que apuntan a usuarios inexistentes
+-- solo cuando no existen dependencias hijas detectadas por el precheck.
+DELETE c
+FROM clientes c
+LEFT JOIN usuarios u ON u.id_usuario = c.id_usuario
+WHERE u.id_usuario IS NULL;
+
+SELECT ROW_COUNT() AS orphan_clientes_deleted;
 
 CALL apply_fk_migration(
     'carrito_detalle',
@@ -127,6 +190,7 @@ CALL apply_fk_migration(
     'ALTER TABLE lista_deseos ADD CONSTRAINT fk_lista_deseos_producto FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE'
 );
 
+DROP PROCEDURE precheck_orphan_clientes_cleanup;
 DROP PROCEDURE apply_fk_migration;
 DROP PROCEDURE apply_index_migration;
 

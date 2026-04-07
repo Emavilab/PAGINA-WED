@@ -116,6 +116,40 @@ SMTP_PORT=587
 - **Panel Administrativo:** `http://localhost/PAGINA%20WED/admin/Dashboard.php`
 - **Login:** `http://localhost/PAGINA%20WED/pages/login.php`
 
+### 6. Ejecutar con Docker (Windows)
+
+Este proyecto incluye configuración lista para Docker Compose manteniendo la ruta actual del sistema (`/PAGINA%20WED`) para no romper rutas existentes.
+
+1. Asegúrate de tener Docker Desktop abierto.
+2. En la raíz del proyecto, ajustar `.env` con estos valores de base de datos:
+
+```bash
+DB_HOST=db
+DB_USER=controlplus
+DB_PASSWORD=controlplus123
+DB_NAME=negocio_web
+```
+
+3. Levantar contenedores:
+
+```bash
+docker compose up -d --build
+```
+
+4. Acceder:
+
+- App: `http://localhost:8080/PAGINA%20WED/`
+- Admin: `http://localhost:8080/PAGINA%20WED/admin/Dashboard.php`
+- phpMyAdmin: `http://localhost:8081` (usuario `root`, clave `root`)
+
+5. Detener servicios:
+
+```bash
+docker compose down
+```
+
+> Si quieres reiniciar también la base de datos desde cero, usar `docker compose down -v`.
+
 ---
 
 ## Estructura del Proyecto

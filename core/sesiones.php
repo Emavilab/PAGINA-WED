@@ -248,4 +248,3 @@ function registrarSesion($id_usuario, $correo, $nombre, $id_rol) {
     $_SESSION['id_rol'] = $id_rol;
     $_SESSION['inicio_sesion'] = time();
 }
-?> 

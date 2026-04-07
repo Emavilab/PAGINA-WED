@@ -364,5 +364,3 @@ function validarCredenciales($correo, $contraseña) {
     return false;
 }
 
-?>
-

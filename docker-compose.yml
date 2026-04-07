@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile
     container_name: pagina_wed_web
+    restart: always
     ports:
       - "8080:80"
     volumes:
